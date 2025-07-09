@@ -1,9 +1,10 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, asc, desc, eq, gte, lte, sql } from "@golf-district/database";
+import { and, asc, desc, eq, gt, gte, isNull, lte, or, sql } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import { authenticationMethod } from "@golf-district/database/schema/authenticationMethod";
 import { bookings } from "@golf-district/database/schema/bookings";
+import { courseSwitch } from "@golf-district/database/schema/courseSwitch";
 import { charities } from "@golf-district/database/schema/charities";
 import { charityCourseLink } from "@golf-district/database/schema/charityCourseLink";
 import { courseAllowedTimeToSell } from "@golf-district/database/schema/courseAllowedTimeToSell";
@@ -31,6 +32,10 @@ import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { loggerService } from "../webhooks/logging.service";
 import { courseSetting } from "@golf-district/database/schema/courseSetting";
 import { appSettingService } from "../app-settings/initialized";
+import { parseSettingValue } from "../../helpers";
+import { courseMerchandise } from "@golf-district/database/schema/courseMerchandise";
+import { courseMarkup } from "@golf-district/database/schema/courseMarkup";
+import { courseAdvancedBookingFee } from "@golf-district/database/schema/courseAdvancedBookingFee";
 
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -61,9 +66,9 @@ type CourseDetailsQuery = {
   supportsWaitlist: boolean;
   buyerFee: number | null;
   sellerFee: number | null;
-  internalId: string;
+  internalId?: string;
   roundUpCharityId: string | null;
-  providerConfiguration: string | null;
+  providerConfiguration?: string | null;
   isBookingDisabled: number;
 };
 
@@ -102,6 +107,43 @@ export class CourseService extends DomainService {
   ) {
     super(PROJECT_ID_VERCEL, TEAM_ID_VERCEL, AUTH_BEARER_TOKEN, Logger(CourseService.name));
   }
+
+  getAllSwitchCourses = async (courseId: string) => {
+    // const cacheKey = `allSwitchCourses`;
+    // const cacheTTL = 600; // Cache TTL in seconds
+
+    // let allSwitchCoursesQuery: any[] | null = await cacheManager.get(cacheKey);
+
+    const allSwitchCoursesQuery = await this.database
+      .select({
+        id: courseSwitch.id,
+        courseId: courseSwitch.courseId,
+        switchableCourseId: courseSwitch.switchableCourseId,
+        name: courses.name,
+      })
+      .from(courseSwitch)
+      .innerJoin(courses, eq(courses.id, courseSwitch.switchableCourseId))
+      .where(eq(courseSwitch.courseId, courseId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error getting all switch courses: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/getAllSwitchCourses",
+          userAgent: "",
+          message: "ERROR_GETTING_ALL_SWITCH_COURSES",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({}),
+        });
+        throw new Error("Error getting all switch courses");
+      });
+
+    // await cacheManager.set(cacheKey, allSwitchCoursesQuery, cacheTTL);
+    // }
+
+    // Format if needed; currently returning as-is
+    return allSwitchCoursesQuery;
+  };
 
   /**
    * Retrieves a course by its ID.
@@ -155,6 +197,9 @@ export class CourseService extends DomainService {
           supportsProviderMembership: courses.supportsProviderMembership,
           supportsGroupBooking: courses.supportsGroupBooking,
           timezoneISO: courses?.timezoneISO,
+          groupStartTime: courses.groupStartTime,
+          groupEndTime: courses.groupEndTime,
+          supportsSellingMerchandise: courses.supportsSellingMerchandise,
         })
         .from(courses)
         .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -204,12 +249,53 @@ export class CourseService extends DomainService {
     //Cache if possible
     const primarySaleTeeTimePriceQuery = this.database
       .select({
-        highestPrimarySaleTeeTime: sql`max(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
-        lowestPrimarySaleTeeTime: sql`min(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})`,
+        highestPrimarySaleTeeTime:
+          sql`max(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + 
+          CASE 
+            WHEN ${courseMarkup.fromDay} IS NOT NULL 
+              AND ${courseMarkup.toDay} IS NOT NULL 
+              AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) BETWEEN ${courseMarkup.fromDay} AND ${courseMarkup.toDay}
+            THEN COALESCE(${courseMarkup.markUp}, ${courses.markupFeesFixedPerPlayer})
+            ELSE ${courses.markupFeesFixedPerPlayer}
+          END + 
+          COALESCE(
+            CASE 
+              WHEN ${courseAdvancedBookingFee.fromDay} IS NOT NULL 
+                AND ${courseAdvancedBookingFee.toDay} IS NOT NULL 
+                AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) BETWEEN ${courseAdvancedBookingFee.fromDay} AND ${courseAdvancedBookingFee.toDay}
+              THEN ${courseAdvancedBookingFee.advancedBookingFeePerPlayer}
+              ELSE 0
+            END, 0)
+          )`,
+        lowestPrimarySaleTeeTime:
+          sql`min(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + 
+          CASE 
+            WHEN ${courseMarkup.fromDay} IS NOT NULL 
+              AND ${courseMarkup.toDay} IS NOT NULL 
+              AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) BETWEEN ${courseMarkup.fromDay} AND ${courseMarkup.toDay}
+            THEN COALESCE(${courseMarkup.markUp}, ${courses.markupFeesFixedPerPlayer})
+            ELSE ${courses.markupFeesFixedPerPlayer}
+          END + 
+          COALESCE(
+            CASE 
+              WHEN ${courseAdvancedBookingFee.fromDay} IS NOT NULL 
+                AND ${courseAdvancedBookingFee.toDay} IS NOT NULL 
+                AND DATEDIFF(${teeTimes.providerDate}, CURDATE()) BETWEEN ${courseAdvancedBookingFee.fromDay} AND ${courseAdvancedBookingFee.toDay}
+              THEN ${courseAdvancedBookingFee.advancedBookingFeePerPlayer}
+              ELSE 0
+            END, 0)
+          )`,
       })
       .from(teeTimes)
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
-      .where(and(eq(teeTimes.courseId, courseId), gte(teeTimes.providerDate, currentUtcTimestamp())))
+      .leftJoin(courseMarkup, eq(courseMarkup.courseId, teeTimes.courseId))
+      .leftJoin(courseAdvancedBookingFee, eq(courseAdvancedBookingFee.courseId, teeTimes.courseId))
+      .where(
+        and(
+          eq(teeTimes.courseId, courseId),
+          gte(teeTimes.providerDate, currentUtcTimestamp())
+        )
+      )
       .limit(1)
       .execute();
 
@@ -297,6 +383,7 @@ export class CourseService extends DomainService {
           id: courseSetting.id,
           internalName: courseSetting.internalName,
           value: courseSetting.value,
+          datatype: courseSetting.datatype,
         })
         .from(courseSetting)
         .where(eq(courseSetting.courseId, courseId))
@@ -331,10 +418,15 @@ export class CourseService extends DomainService {
 
       const isAllowSpecialRequest = courseSettings.find(
         (setting) => setting.internalName === "ALLOW_SPECIAL_REQUEST"
-      )?.value;
+      );
 
-      const isAllowClubRental = courseSettings.find((setting) => setting.internalName === "ALLOW_CLUB_RENTAL")
-        ?.value;
+      const isAllowClubRental = courseSettings.find(
+        (setting) => setting.internalName === "ALLOW_CLUB_RENTAL"
+      );
+
+      const isAllowCourseSwitching = courseSettings.find(
+        (setting) => setting.internalName === "ALLOW_COURSE_SWITCHING"
+      );
 
       if (isOnlyGroupOfFourAllowed) {
         let sliderMin = groupBookingMinSize;
@@ -354,8 +446,18 @@ export class CourseService extends DomainService {
         groupBookingMinSize,
         groupBookingMaxSize,
         isOnlyGroupOfFourAllowed,
-        isAllowSpecialRequest,
-        isAllowClubRental,
+        isAllowSpecialRequest: parseSettingValue(
+          isAllowSpecialRequest?.value ?? "",
+          isAllowSpecialRequest?.datatype ?? "string"
+        ),
+        isAllowClubRental: parseSettingValue(
+          isAllowClubRental?.value ?? "",
+          isAllowClubRental?.datatype ?? "string"
+        ),
+        isAllowCourseSwitching: parseSettingValue(
+          isAllowCourseSwitching?.value ?? "",
+          isAllowCourseSwitching?.datatype ?? "boolean"
+        ),
       };
     }
     return res;
@@ -470,7 +572,11 @@ export class CourseService extends DomainService {
       // .innerJoin(courses, eq(assets.courseId, courses.id))
       // .where(and(eq(assets.courseId, courseId), eq(assets.courseAssetId, courseAssets.id)))
       .innerJoin(courses, eq(courseAssets.courseId, courses.id))
-      .where(eq(courses.id, courseId))
+      .where(and(
+        eq(courses.id, courseId),
+        eq(courseAssets.isDeleted, false),
+        eq(assets.isDeleted, false)
+      ))
       .orderBy(asc(courseAssets.order))
       .execute()
       .catch((err) => {
@@ -548,7 +654,6 @@ export class CourseService extends DomainService {
       supportCharity?: boolean;
     }
   ) => {
-    this.logger.info(`Updating course ${courseId} with options: ${JSON.stringify(options)}`);
     if (options.logoAssetId) {
       const logo = await this.database
         .select()
@@ -873,7 +978,6 @@ export class CourseService extends DomainService {
     entityId: string,
     domain: string | "" //remove domain if empty string
   ) => {
-    this.logger.info(`Updating entity ${entityId} with domain ${domain}`);
     const courseDomain = await this.database
       .select({ customDomain: entities.customDomain })
       .from(entities)
@@ -1160,7 +1264,140 @@ export class CourseService extends DomainService {
 
   getMobileViewVersion = async (courseId: string) => {
     console.log(courseId);
-    const mobileViewVersion: string | undefined | null = await appSettingService.get("MOBILE_VIEW_VERSION");
-    return mobileViewVersion ?? "v1";
+    const rawValue = await appSettingService.get("MOBILE_VIEW_VERSION");
+    const mobileViewVersion: string | undefined =
+      typeof rawValue === "string" ? rawValue : String(rawValue ?? "");
+    return mobileViewVersion || "v1";
+  };
+  getDesktopViewVersion = async (courseId: string) => {
+    const courseSettings = await this.database
+      .select({
+        id: courseSetting.id,
+        internalName: courseSetting.internalName,
+        value: courseSetting.value,
+      })
+      .from(courseSetting)
+      .where(eq(courseSetting.courseId, courseId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error getting course settings for course: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/getCourseById",
+          userAgent: "",
+          message: "ERROR_GETTING_COURSE_SETTINGS_FOR_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          }),
+        });
+        throw new Error("Error getting course settings");
+      });
+
+    const desktopViewVersion = courseSettings.find(
+      (setting) => setting.internalName === "DESKTOP_VIEW_VERSION"
+    )?.value;
+
+    return desktopViewVersion ?? "v1";
+  };
+
+  getPhoneNumberMandatoryAtCheckout = async (courseId: string) => {
+    const courseSettings = await this.database
+      .select({
+        id: courseSetting.id,
+        internalName: courseSetting.internalName,
+        value: courseSetting.value,
+        datatype: courseSetting.datatype,
+      })
+      .from(courseSetting)
+      .where(eq(courseSetting.courseId, courseId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error getting course settings for course: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/getCourseById",
+          userAgent: "",
+          message: "ERROR_GETTING_COURSE_SETTINGS_FOR_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          }),
+        });
+        throw new Error("Error getting course settings");
+      });
+
+    const desktopViewVersion = courseSettings.find(
+      (setting) => setting.internalName === "PHONE_NUMBER_MANDATORY_AT_CHECKOUT"
+    );
+
+    return (
+      parseSettingValue(desktopViewVersion?.value ?? "", desktopViewVersion?.datatype ?? "string") ?? "v1"
+    );
+  };
+
+  getCourseMerchandise = async (courseId: string, teeTimeDate: string) => {
+    try {
+      const merchandise = await this.database
+        .select({
+          id: courseMerchandise.id,
+          caption: courseMerchandise.caption,
+          price: courseMerchandise.price,
+          description: courseMerchandise.description,
+          tooltip: courseMerchandise.tooltip,
+          logoURL: courseMerchandise.logoURL,
+          qoh: courseMerchandise.qoh,
+          maxQtyToAdd: courseMerchandise.maxQtyToAdd,
+          merchandiseTaxPercent: courseMerchandise.merchandiseTaxPercent,
+        })
+        .from(courseMerchandise)
+        .innerJoin(courses, eq(courseMerchandise.courseId, courses.id))
+        .where(
+          and(
+            eq(courseMerchandise.courseId, courseId),
+            eq(courseMerchandise.showDuringBooking, true),
+            gte(
+              sql`DATE_FORMAT(CONVERT_TZ(NOW() + INTERVAL ${courseMerchandise.showOnlyIfBookingIsWithinXDays} DAY, '+00:00', ${courses.timezoneISO}), '%Y-%m-%dT23:59:59')`,
+              teeTimeDate
+            ),
+            or(gt(courseMerchandise.qoh, 0), eq(courseMerchandise.qoh, -1)),
+            gt(courseMerchandise.price, 0)
+          )
+        )
+        .orderBy(
+          isNull(courseMerchandise.displayOrder),
+          asc(courseMerchandise.displayOrder),
+          asc(courseMerchandise.caption)
+        )
+        .execute()
+        .catch((err) => {
+          this.logger.error(`Error getting course merchandise for course: ${err}`);
+          void loggerService.errorLog({
+            userId: "",
+            url: "/CourseService/getCourseMerchandise",
+            userAgent: "",
+            message: "ERROR_GETTING_COURSE_MERCHANDISE_FOR_COURSE",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+            }),
+          });
+          throw new Error("Error getting course merchandise");
+        });
+      return merchandise;
+    } catch (error: any) {
+      this.logger.error(`Error fetching course merchandise: ${JSON.stringify(error)}`);
+      void loggerService.errorLog({
+        userId: "",
+        url: "/CourseService/getCourseMerchandise",
+        userAgent: "",
+        message: "ERROR_FETCHING_COURSE_MERCHANDISE",
+        stackTrace: `${error.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          courseId,
+        }),
+      });
+      return null;
+    }
   };
 }

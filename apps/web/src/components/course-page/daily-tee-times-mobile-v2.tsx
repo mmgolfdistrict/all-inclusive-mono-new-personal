@@ -5,7 +5,7 @@ import {
 } from "@golf-district/shared";
 import { WeatherIcons } from "~/constants/weather-icons";
 import { useCourseContext } from "~/contexts/CourseContext";
-import { useFiltersContext } from "~/contexts/FiltersContext";
+import { DateType, useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
 import { useEffect, useMemo, useRef } from "react";
@@ -16,8 +16,11 @@ import { Tooltip } from "../tooltip";
 import { ChevronUp } from "../icons/chevron-up";
 import { TeeTimeV2 } from "../cards/tee-time-v2";
 import { TeeTimeSkeletonV2 } from "./tee-time-skeleton-v2";
+import { OutlineButton } from "../buttons/outline-button";
+import dayjs from "dayjs";
+import { CancelIcon } from "../icons/cancel";
 
-export const DailyTeeTimesV2 = ({
+export const DailyTeeTimesMobileV2 = ({
   date,
   minDate,
   maxDate,
@@ -27,8 +30,11 @@ export const DailyTeeTimesV2 = ({
   pageDown,
   pageUp,
   scrollY,
-  divHeight
+  divHeight,
+  isLoadingTeeTimeDate,
+  allDatesArr,
   // datesWithData
+  toggleFilters
 }: {
   date: string;
   minDate: string;
@@ -39,14 +45,22 @@ export const DailyTeeTimesV2 = ({
   pageDown: () => void,
   pageUp: () => void
   scrollY: number,
-  divHeight?: number
+  divHeight?: number,
+  isLoadingTeeTimeDate: boolean,
+  allDatesArr: string[],
   // datesWithData:string[]
+  toggleFilters?: () => void;
 }) => {
   const overflowRef = useRef<HTMLDivElement>(null);
   const nextPageRef = useRef<HTMLDivElement>(null);
   const { onMouseDown } = useDraggableScroll(overflowRef, {
     direction: "horizontal",
   });
+
+  const {
+    dateType,
+    setDateType,
+  } = useFiltersContext();
 
   const entry = useIntersectionObserver(nextPageRef, {});
   const isVisible = !!entry?.isIntersecting;
@@ -65,6 +79,8 @@ export const DailyTeeTimesV2 = ({
     priceRange,
     startTime,
     sortValue,
+    setGolfers,
+    setStartTime,
   } = useFiltersContext();
   const teeTimeStartTime = startTime[0];
   const teeTimeEndTime = startTime[1];
@@ -144,6 +160,7 @@ export const DailyTeeTimesV2 = ({
     setError(error?.message ?? null);
   }, [error]);
 
+  const count = teeTimeData?.pages[0]?.count;
   const allTeeTimes =
     teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
 
@@ -154,7 +171,7 @@ export const DailyTeeTimesV2 = ({
   };
 
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && count !== allTeeTimes?.length) {
       void getNextPage();
     }
   }, [isVisible]);
@@ -179,44 +196,55 @@ export const DailyTeeTimesV2 = ({
     scrollLeft(width);
   }, [isLoading]);
 
-  const getTextColor = (type) => {
-    if (type === "FAILURE") return "red";
-    if (type === "SUCCESS") return "primary";
-    if (type === "WARNING") return "primary-gray";
-  };
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [date]);
 
-  // const getIconForException = (type) => {
-  //   if (type === "FAILURE") return <Error className="h-[20px] w-[20px] " />;
-  //   if (type === "SUCCESS") return <Success className="h-[20px] w-[20px] " />;
-  //   if (type === "WARNING") return <Warning className="h-[20px] w-[20px] " />;
-  // };
-
-  // if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
-  //   return null;
-  // }
+  const isAtStart = dayjs(allDatesArr[0]).format("YYYY-MM-DD") === dayjs(date).format("YYYY-MM-DD")
+  const isAtEnd = dayjs(allDatesArr[allDatesArr.length - 1]).format("YYYY-MM-DD") === dayjs(date).format("YYYY-MM-DD")
 
   return (
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
       <div className="flex flex-wrap justify-between gap-2 unmask-time">
-        {isLoading || isFetchingNextPage ? (
+        {isLoadingTeeTimeDate || isLoading || isFetchingNextPage ? (
           <div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
         ) : (
           <div className="w-full flex items-center gap-3 flex-col">
-            <div className={`w-full flex items-center justify-between ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-              ? `fixed bg-white left-0 w-full z-10 bg-secondary-white pt-2  px-4 pb-3 shadow-md`
-              : "relative"
-              }`} style={{
-                top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight + 54}px` : 'auto',
-
-              }}>
-              <ChevronUp fill="#000" className="-rotate-90" onClick={pageDown} />
+            <div
+              className={`w-full flex items-center justify-between bg-white bg-secondary-white px-4 pb-3 
+               ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                  ? `sticky shadow-md`
+                  : "relative"
+                }`}
+            >
+              {!isAtStart ?
+                <ChevronUp fill="#000" className="-rotate-90" onClick={pageDown} /> : <div></div>
+              }
               <div
                 id="tee-time-box"
                 className="text-[16px] md:text-[20px] unmask-time"
                 data-testid="date-group-id"
                 data-qa={dayMonthDate(date)}
               >
-                {dayMonthDate(date)}
+                <OutlineButton
+                  className="!px-3 !py-1 w-full flex items-center justify-between gap-2"
+                  onClick={toggleFilters}
+                >
+                  {dayMonthDate(date)}
+                  {(dateType !== ("All" as DateType) || golfers !== "Any" || course?.courseOpenTime !== startTime[0] || course?.courseCloseTime !== startTime[1])
+                    && (
+                      <CancelIcon
+                        width={16}
+                        height={16}
+                        onClick={(e) => {
+                          e.stopPropagation(); // prevent triggering parent button click
+                          setDateType("All");  // your function to reset
+                          setGolfers("Any"); // your function to reset
+                          setStartTime([course?.courseOpenTime ?? 0, course?.courseCloseTime ?? 0]); // reset to default open and close times
+                        }}
+                      />
+                    )}
+                </OutlineButton>
               </div>
               {isLoadingWeather && !weather ? (
                 <div className="h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
@@ -241,14 +269,18 @@ export const DailyTeeTimesV2 = ({
               ) : (
                 <div />
               )}
-              <ChevronUp fill="#000" className="rotate-90" onClick={pageUp} />
+              {!isAtEnd ?
+                <ChevronUp fill="#000" className="rotate-90" onClick={pageUp} /> : <div></div>
+              }
             </div>
             {courseException && (
               <div className="flex-1 flex items-center gap-1">
                 <p
-                  className={`text-${getTextColor(
-                    courseException.displayType
-                  )} inline text-left text-[13px] md:text-lg`}
+                  style={{
+                    backgroundColor: courseException.bgColor,
+                    color: courseException.color,
+                  }}
+                  className="inline text-left text-[13px] md:text-lg"
                 >
                   {courseException.shortMessage}
                 </p>
@@ -277,7 +309,7 @@ export const DailyTeeTimesV2 = ({
           ref={overflowRef}
           onMouseDown={onMouseDown}
         >
-          {allTeeTimes.length === 0 ?  isLoading || isFetchingNextPage ? Array(TAKE)
+          {allTeeTimes.length === 0 ? isLoadingTeeTimeDate || isLoading || isFetchingNextPage ? Array(TAKE)
             .fill(null)
             .map((_, idx) => <TeeTimeSkeletonV2 key={idx} />) : <div className="flex justify-center items-center h-[400px]">
             <div className="text-center">
@@ -313,6 +345,7 @@ export const DailyTeeTimesV2 = ({
                   handleLoading={handleLoading}
                   refetch={refetch}
                   groupId={i?.groupId}
+                  allowSplit={i?.allowSplit}
                 />
               );
             }
@@ -324,7 +357,7 @@ export const DailyTeeTimesV2 = ({
           >
             Loading
           </div>
-          
+
 
           {isLoading || isFetchingNextPage || !isFetchedAfterMount
             ? Array(TAKE)

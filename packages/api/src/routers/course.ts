@@ -7,6 +7,15 @@ export const courseRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getCourseService().getCoursePreviewImage(input.courseId);
     }),
+  getAllSwitchCourses: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getCourseService().getAllSwitchCourses(input.courseId);
+    }),
   getCourseById: publicProcedure
     .input(
       z.object({
@@ -58,7 +67,7 @@ export const courseRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getCourseService().getAuthenticationMethods(input.courseId);
     }),
-    getMobileViewVersion: publicProcedure
+  getMobileViewVersion: publicProcedure
     .input(
       z.object({
         courseId: z.string(),
@@ -66,5 +75,33 @@ export const courseRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getCourseService().getMobileViewVersion(input.courseId);
+    }),
+  getDesktopViewVersion: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getCourseService().getDesktopViewVersion(input.courseId);
+    }),
+  getPhoneNumberMandatoryAtCheckout: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getCourseService().getPhoneNumberMandatoryAtCheckout(input.courseId);
+    }),
+  getCourseMerchandise: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+        teeTimeDate: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getCourseService().getCourseMerchandise(input.courseId, input.teeTimeDate);
     }),
 });

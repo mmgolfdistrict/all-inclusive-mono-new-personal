@@ -64,7 +64,6 @@ export class CacheService {
 
     const data = await fetchFn();
     // Store the result in Redis cache
-    this.logger.debug(`Cache miss for key: ${key} storing in cache`);
     await this.redis.set(key, JSON.stringify(data), { ex: ttl });
 
     return data;
@@ -78,9 +77,7 @@ export class CacheService {
    * @returns {Promise<void>} A promise that resolves when the cache item is invalidated.
    */
   invalidateCache = async (key: string): Promise<void> => {
-    this.logger.info(`Invalidating cache for key: ${key}`);
     await this.redis.del(key);
-    this.logger.debug(`Cache invalidated for key: ${key}`);
   };
 
   /**
@@ -98,9 +95,8 @@ export class CacheService {
     data: T,
     ttl = 1200 // default 20 minutes
   ): Promise<void> => {
-    this.logger.info(`Setting cache for key: ${key}`);
+    // this.logger.info(`Setting cache for key: ${key}`);
     await this.redis.set(key, JSON.stringify(data), { ex: ttl });
-    this.logger.debug(`Cache set for key: ${key}`);
   };
 
   /**
@@ -110,17 +106,15 @@ export class CacheService {
    * @returns A Promise that resolves to the updated count in the cache.
    */
   incrementOrSetKey = async (key: string): Promise<number> => {
-    this.logger.info(`Incrementing cache for key: ${key}`);
+    // this.logger.info(`Incrementing cache for key: ${key}`);
     const keyExists = await this.redis.exists(key);
     let count;
 
     if (!keyExists) {
-      this.logger.info(`Cache miss for key: ${key}, setting to 1`);
       await this.redis.set(key, 1);
       count = 1;
     } else {
       count = await this.redis.incr(key);
-      this.logger.debug(`Cache incremented for key: ${key}`);
     }
 
     return count;
@@ -135,7 +129,7 @@ export class CacheService {
    * const data = await cacheService.getCache('myKey');
    */
   getCache = async <T>(key: string): Promise<T | null> => {
-    this.logger.info(`Getting cache for key: ${key}`);
+    // this.logger.info(`Getting cache for key: ${key}`);
     const cachedData = await this.redis.get<any>(key).catch((err) => {
       this.logger.error(`Error getting cache for key: ${key}, ${err}`);
       loggerService.errorLog({
@@ -151,10 +145,10 @@ export class CacheService {
       return null;
     });
     if (cachedData) {
-      this.logger.info(`Cache hit for key: ${key}`);
+      // this.logger.info(`Cache hit for key: ${key}`);
       return cachedData;
     }
-    this.logger.info(`Cache miss for key: ${key}`);
+    // this.logger.info(`Cache miss for key: ${key}`);
     return null;
   };
 }

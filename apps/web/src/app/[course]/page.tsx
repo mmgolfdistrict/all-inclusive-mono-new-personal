@@ -37,7 +37,8 @@ import { toast } from "react-toastify";
 import { ViewportList } from "react-viewport-list";
 import { useMediaQuery } from "usehooks-ts";
 import { LoadingContainer } from "./loader";
-import { DailyTeeTimesV2 } from "~/components/course-page/daily-tee-times-v2";
+import { DailyTeeTimesMobileV2 } from "~/components/course-page/daily-tee-times-mobile-v2";
+import { DailyTeeTimesDesktopV2 } from "~/components/course-page/daily-tee-time-desktop-v2";
 
 dayjs.extend(Weekday);
 dayjs.extend(RelativeTime);
@@ -67,20 +68,21 @@ export default function CourseHomePage() {
   const [pageNumber, setPageNumber] = useState<number>(1);
   const { user } = useUserContext();
   const { course } = useCourseContext();
+  const ALLOW_COURSE_SWITCHING = course?.isAllowCourseSwitching;
   const { setBookingSource } = useBookingSourceContext();
-  const {  isNavExpanded,setActivePage } = useAppContext();
+  const { isNavExpanded, setActivePage } = useAppContext();
   setActivePage("teeTime")
   function getUserTimezone() {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }
 
   function compareTimesWithTimezones() {
-    const date1 = dayjs().tz(getUserTimezone()).format("ddd, DD MMM YYYY HH:mm:ss [GMT]")
-    const date2 = dayjs().tz(course?.timezoneISO).format("ddd, DD MMM YYYY HH:mm:ss [GMT]")
+    const date1 = dayjs().tz(getUserTimezone()).utcOffset()
+    const date2 = dayjs().tz(course?.timezoneISO).utcOffset()
 
-    if (date1.valueOf() > date2.valueOf()) {
+    if (date1 > date2) {
       return "user";
-    } else if (date1.valueOf() < date2.valueOf()) {
+    } else if (date1 < date2) {
       return "course";
     } else {
       return "user";
@@ -93,8 +95,9 @@ export default function CourseHomePage() {
     if (!date) {
       return ""; // Handle the case where date is null or undefined
     }
+    const compareTimeZone = compareTimesWithTimezones()
 
-    if (compareTimesWithTimezones() === "user") {
+    if (compareTimeZone === "user") {
       return dayjs(date).format("ddd, DD MMM YYYY HH:mm:ss [GMT]");
     }
     return dayjs(date)
@@ -137,6 +140,21 @@ export default function CourseHomePage() {
   const courseId = course?.id;
   const { data: MOBILE_VIEW_VERSION } =
     api.course.getMobileViewVersion.useQuery({
+      courseId: courseId ?? "",
+    });
+
+  const entityId = entity?.id;
+
+  const { data: allCoursesData, isLoading: allCoursesDataLoading } =
+    api.entity.getCoursesByEntityId.useQuery(
+      { entityId: entityId! },
+      { enabled: entityId !== undefined }
+    );
+
+  const { data: allSwitchCoursesData } = api.course.getAllSwitchCourses.useQuery({ courseId: course?.id ?? "" })
+
+  const { data: DESKTOP_VIEW_VERSION } =
+    api.course.getDesktopViewVersion.useQuery({
       courseId: courseId ?? "",
     });
 
@@ -219,11 +237,7 @@ export default function CourseHomePage() {
           ? "Any"
           : Number(queryPlayerCount);
       setGolfers((playerCount as GolferType) || "Any");
-    }
-  }, [queryDateType]);
 
-  useEffect(() => {
-    if (queryDateType === "custom" && queryDate) {
       const [year, month, day] = queryDate.split("-");
       if (year && month && day) {
         setSelectedDay({
@@ -231,19 +245,17 @@ export default function CourseHomePage() {
           to: { year: Number(year), month: Number(month), day: Number(day) },
         });
       }
-    }
-    const specialDate = getSpecialDayDate(queryDateType);
-    if (queryDateType) {
-      if (specialDate) {
-        setDateType(queryDateType as DateType); // Set the DateType to queryDateType if specialDate exists
-      } else {
-        setDateType("All"); // If no specialDate, set the DateType to "All"
+      const specialDate = getSpecialDayDate(queryDateType);
+      if (queryDateType) {
+        if (specialDate) {
+          setDateType(queryDateType as DateType);
+        }
       }
     }
-  }, [specialEvents, queryDateType]);
+  }, [queryDateType, specialEvents]);
 
   const getSpecialDayDate = (label) => {
-    const today = dayjs(new Date())
+    const today = dayjs(new Date());
     const specialDay = specialEvents?.find((day) => day.eventName === label);
 
     if (specialDay) {
@@ -265,16 +277,102 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.start);
     }
-    setPageNumber(1)
+    setPageNumber(1);
     switch (dateType) {
-      case "All":
-      case "Today":
-      case "This Week":
-      case "This Month":
+      case "All": {
+        const currentTime = dayjs(new Date());
+        const currentTimePlus30 = currentTime.add(30, 'minute');
+
+        const closingHour = Math.floor(startTime[1] / 100);
+        const closingMinute = startTime[1] % 100;
+
+        const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+
+        if (currentTimePlus30.isAfter(closingTime)) {
+          return formatDateString(currentTime.add(1, 'day').startOf('day'))
+        }
+
+        return formatDateString(currentTimePlus30);
+      }
+      case "This Week": {
+        if (isMobile) {
+          const currentTime = dayjs(new Date());
+          const currentTimePlus30 = currentTime.add(30, 'minute');
+
+          const closingHour = Math.floor(startTime[1] / 100);
+          const closingMinute = startTime[1] % 100;
+
+          const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+
+          if (currentTimePlus30.isAfter(closingTime)) {
+            return formatDateString(currentTime.add(1, 'day').startOf('day'))
+          }
+
+          return formatDateString(currentTimePlus30);
+        }
+      }
+      // eslint-disable-next-line no-fallthrough
+      case "This Month": {
+        if (isMobile) {
+          const currentTime = dayjs(new Date());
+          const currentTimePlus30 = currentTime.add(30, 'minute');
+
+          const closingHour = Math.floor(startTime[1] / 100);
+          const closingMinute = startTime[1] % 100;
+
+          const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+
+          if (currentTimePlus30.isAfter(closingTime)) {
+            return formatDateString(currentTime.add(1, 'day').startOf('day'))
+          }
+
+          return formatDateString(currentTimePlus30);
+        }
+      }
+      // eslint-disable-next-line no-fallthrough
       case "Furthest Day Out To Book":
         return formatDateString(dayjs(new Date()).add(30, "minute"));
-      case "This Weekend":
-        return formatDateString(dayjs().day(5).add(30, "minute").toDate());
+      case "Today": {
+        const currentTime = dayjs();
+        const currentTimePlus30 = currentTime.add(30, 'minute');
+
+        const closingHour = Math.floor(startTime[1] / 100);
+        const closingMinute = startTime[1] % 100;
+
+        const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+
+        if (currentTimePlus30.isAfter(closingTime)) {
+          return formatDateString(currentTime.add(1, 'day').startOf('day').add(30, 'minute'));
+        }
+
+        return formatDateString(currentTimePlus30);
+      }
+      case "This Weekend": {
+        if (isMobile) {
+          const today = dayjs().startOf("day");
+          const weekend = dayjs().day(5); // This Friday
+
+          const currentTime = dayjs();
+          const currentTimePlus30 = currentTime.add(30, "minute");
+
+          const closingHour = Math.floor(startTime[1] / 100);
+          const closingMinute = startTime[1] % 100;
+
+          const closingTime = currentTime.set("hour", closingHour).set("minute", closingMinute).set("second", 0);
+
+          // If today is Friday or later
+          if (weekend.isSame(today, "day") || weekend.isBefore(today, "day")) {
+            if (currentTimePlus30.isAfter(closingTime)) {
+              return formatDateString(currentTime.add(1, "day").startOf("day"));
+            }
+            return formatDateString(currentTimePlus30);
+          }
+
+          // Weekend is in the future
+          return formatDateString(weekend.startOf("day").toDate());
+        }
+      }
+      // eslint-disable-next-line no-fallthrough
       case "Custom": {
         if (!selectedDay.from) return formatDateString(new Date());
         const customDate = dayjs(
@@ -296,19 +394,56 @@ export default function CourseHomePage() {
     if (specialDate) {
       return formatDateString(specialDate.end);
     }
-    setPageNumber(1)
+    setPageNumber(1);
 
     switch (dateType) {
       case "All":
         return formatDateStringEnd(farthestDateOut);
       case "Today":
-        return formatDateStringEnd(dayjs().endOf("day").toDate());
-      case "This Week":
-        return formatDateStringEnd(dayjs().endOf("isoWeek").toDate());
-      case "This Weekend":
-        return formatDateStringEnd(dayjs().day(7).toDate());
-      case "This Month":
-        return formatDateStringEnd(dayjs().endOf("month").toDate());
+        {
+          const currentTime = dayjs();
+          const currentTimePlus30 = currentTime.add(30, 'minute');
+
+          const closingHour = Math.floor(startTime[1] / 100);
+          const closingMinute = startTime[1] % 100;
+
+          const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+
+          if (currentTimePlus30.isAfter(closingTime)) {
+            return formatDateStringEnd(dayjs().add(1, "day").endOf("day").toDate());
+          }
+
+          return formatDateStringEnd(dayjs().endOf("day").toDate());
+        }
+      case "This Week": {
+        const currentDay = dayjs();
+        const isSunday = currentDay.day() === 0;
+
+        if (isSunday) {
+          return formatDateStringEnd(currentDay.add(1, 'week').endOf('isoWeek').toDate());
+        }
+
+        return formatDateStringEnd(currentDay.endOf('isoWeek').toDate());
+      }
+      case "This Weekend": {
+        const currentDay = dayjs();
+        const isSunday = currentDay.day() === 0;
+
+        if (isSunday) {
+          return formatDateStringEnd(currentDay.add(1, 'week').endOf('isoWeek'));
+        }
+
+        return formatDateStringEnd(currentDay.day(7).endOf('day'));
+      }
+      case "This Month": {
+        const today = dayjs();
+        const lastDayOfMonth = today.endOf('month');
+        if (today.isSame(lastDayOfMonth, 'day')) {
+          return formatDateStringEnd(lastDayOfMonth.add(1, 'month').endOf('month').toDate());
+        }
+
+        return formatDateStringEnd(lastDayOfMonth.toDate());
+      }
       case "Furthest Day Out To Book":
         return formatDateStringEnd(dayjs(farthestDateOut).toDate());
       case "Custom": {
@@ -462,17 +597,89 @@ export default function CourseHomePage() {
   };
 
   const pageUp = () => {
-    if (pageNumber === amountOfPage) return;
-    setPageNumber((prev) => prev + 1);
-    setTake((prev) => prev + TAKE);
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (isMobile) {
+      if (dateType === "Furthest Day Out To Book") {
+        setSelectedDate((prev) => {
+          if (!prev) return null;
+
+          const prevDate = dayjs(prev).subtract(1, "day");
+          const start = dayjs(startDate);
+
+          if (prevDate.isBefore(start, "day")) return prev; // don't go before startDate
+
+          // update state
+          setPageNumber((prevPage) => prevPage - 1);
+          setTake((prevTake) => prevTake - TAKE);
+          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+          return prevDate.toDate().toUTCString();
+        });
+      } else {
+        setSelectedDate((prev) => {
+          if (!prev) return null;
+
+          const nextDate = dayjs(prev).add(1, "day");
+          const end = dayjs(endDate);
+
+          if (nextDate.isAfter(end, "day")) return prev; // don't exceed endDate
+
+          // update state
+          setPageNumber((prevPage) => prevPage + 1);
+          setTake((prevTake) => prevTake + TAKE);
+          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+          return nextDate.toDate().toUTCString();
+        });
+      }
+    } else {
+      if (pageNumber === amountOfPage) return;
+      setPageNumber((prev) => prev + 1);
+      setTake((prev) => prev + TAKE);
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const pageDown = () => {
-    if (pageNumber === 1) return;
-    setPageNumber((prev) => prev - 1);
-    setTake((prev) => prev - TAKE);
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (isMobile) {
+      if (dateType === "Furthest Day Out To Book") {
+        setSelectedDate((prev) => {
+          if (!prev) return null;
+
+          const nextDate = dayjs(prev).add(1, "day");
+          const end = dayjs(endDate);
+
+          if (nextDate.isAfter(end, "day")) return prev; // don't exceed endDate
+
+          // update state
+          setPageNumber((prevPage) => prevPage + 1);
+          setTake((prevTake) => prevTake + TAKE);
+          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+          return nextDate.toDate().toUTCString();
+        });
+      } else {
+        setSelectedDate((prev) => {
+          if (!prev) return null;
+
+          const prevDate = dayjs(prev).subtract(1, "day");
+          const start = dayjs(startDate);
+
+          if (prevDate.isBefore(start, "day")) return prev; // don't go before startDate
+
+          // update state
+          setPageNumber((prevPage) => prevPage - 1);
+          setTake((prevTake) => prevTake - TAKE);
+          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+          return prevDate.toDate().toUTCString();
+        });
+      }
+    } else {
+      if (pageNumber === 1) return;
+      setPageNumber((prev) => prev - 1);
+      setTake((prev) => prev - TAKE);
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const handleLoading = (val: boolean) => {
@@ -502,14 +709,23 @@ export default function CourseHomePage() {
       });
     }
   }, []);
-  let datesArr = JSON.parse(
+
+  const getWeekends = (dates: string[]): string[] => {
+    return Array.isArray(dates)
+      ? dates.filter((dateStr) => {
+        return dateStr.includes('Fri') || dateStr.includes('Sat') || dateStr.includes('Sun');
+      })
+      : [];
+  };
+
+  let datesArr = dateType === "This Weekend" ? getWeekends(datesWithData ?? daysData.arrayOfDates) : JSON.parse(
     JSON.stringify(datesWithData ?? daysData.arrayOfDates)
   );
   const amountOfPage = Math.ceil(
-    (datesWithData
-      ? datesWithData.length - 1 === 0
+    (datesArr
+      ? datesArr.length - 1 === 0
         ? 1
-        : datesWithData.length
+        : datesArr.length
       : daysData.amountOfPages) / TAKE
   );
 
@@ -524,7 +740,6 @@ export default function CourseHomePage() {
     (pageNumber - 1) * TAKE,
     pageNumber * TAKE
   );
-
 
   const [scrollY, setScrollY] = useState(0);
 
@@ -572,34 +787,127 @@ export default function CourseHomePage() {
   const openForecastModal = () => {
     setIsForecastModalOpen(true);
   };
-  const divHeight = document?.getElementById('notification-container')?.offsetHeight;
+  const divHeight =
+    typeof window != "undefined"
+      ? document?.getElementById("notification-container")?.offsetHeight
+      : undefined;
 
   // Function to close the modal
   const closeForecastModal = () => {
     setIsForecastModalOpen(false);
-  };  
+  };
+
+  const [selectedCourse, setSelectedCourse] = useState<string>("Select a course");
+
+  const handleCourseSwitch = (courseName: string) => {
+    setSelectedCourse(courseName);
+
+    const selected = allSwitchCoursesData && allSwitchCoursesData.length > 0 ?
+      allSwitchCoursesData?.find((c) => c.name === courseName) :
+      allCoursesData?.find((c) => c.name === courseName);
+
+    if (selected) {
+      allSwitchCoursesData && allSwitchCoursesData.length > 0 ? router.push(`/${selected?.switchableCourseId}`) : router.push(`/${selected?.id}`);
+    }
+  };
+
+  const [selectedDate, setSelectedDate] = useState<string | null>(startDate);
+
+  useEffect(() => {
+    if (selectedDate && startDate) {
+      const diff = dayjs(selectedDate).diff(dayjs(startDate), 'day');
+      setPageNumber(diff + 1); // Assuming page 1 is the startDate
+    }
+  }, [selectedDate, startDate]);
+
+  const dateRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (selectedDate) {
+        const ref = dateRefs.current[dayjs(selectedDate).format("YYYY-MM-DD")];
+        if (ref) {
+          ref.scrollIntoView({
+            behavior: "smooth",
+            inline: "center",
+            block: "nearest",
+          });
+        }
+      }
+    }, 100); // Waits 100ms to ensure rendering is done
+
+    return () => clearTimeout(timeout);
+  }, [selectedDate, isLoadingTeeTimeDate, isLoading, specialEventsLoading, allCoursesDataLoading]);
+
+  useEffect(() => {
+    if (dateType === "Furthest Day Out To Book") {
+      if (isMobile) {
+        const formattedEndDate = dayjs.utc(endDate).format("ddd, DD MMM YYYY 00:00:00 [GMT]");
+        setSelectedDate(formattedEndDate);
+      } else {
+        setSelectedDate(startDate); // use swapped logic for desktop
+      }
+    } else if (startDate) {
+      setSelectedDate(startDate);
+    }
+  }, [startDate, endDate, dateType, isMobile]);
+
+
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date);
+  };
+
   return (
     <main className={`bg-secondary-white py-4 md:py-6`}>
       <LoadingContainer
-        isLoading={isLoadingTeeTimeDate || isLoading || specialEventsLoading}
+        isLoading={isLoadingTeeTimeDate || isLoading || specialEventsLoading || allCoursesDataLoading}
       >
         <div></div>
       </LoadingContainer>
       {
         !isMobile &&
-        <div className="flex items-center justify-between px-4 md:px-6">
-          {entity?.redirectToCourseFlag ? null : (
-            <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
-          )}
+        <div className="flex gap-8 items-center px-4 md:px-6 ">
+          <div className="min-w-[310px]">
+            {ALLOW_COURSE_SWITCHING ? <Select
+              className="w-full"
+              values={
+                allSwitchCoursesData && allSwitchCoursesData.length > 0
+                  ? allSwitchCoursesData.map((courseItem: { name: string }) => courseItem.name)
+                  : (allCoursesData ?? [])
+                    .filter((courseItem: { id: string }) => courseItem.id !== course.id)
+                    .map((courseItem: { name: string }) => courseItem.name)
+              }
+              value={selectedCourse}
+              setValue={handleCourseSwitch}
+            />
+              : entity?.redirectToCourseFlag ? null : (
+                <GoBack href="/" text={`Back to All Courses`} />
+              )}
+          </div>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex justify-between gap-4  px-4 md:px-0">
+              <div className="text-secondary-black">
+                {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
+                <span className="text-justify text-sm text-primary-gray">
+                  All times shown in course time zone
+                </span>
+              </div>
+            </div>
+            {/* <Select
+              value={sortValue}
+              setValue={handleSetSortValue}
+              values={SortOptions}
+            /> */}
+          </div>
         </div>
       }
       {/* <CourseTitle
         courseName={course?.name ?? ""}
         description={course?.description ?? ""}
-        className="px-4 md:px-6"
+        className="px-4 md:px-6"  
       /> */}
       <CourseBanner
-        className={ !isMobile ? "pt-4" : ""}
+        className={!isMobile ? "pt-4" : ""}
         userId={user?.id ?? ""}
         updateHandle={updateHandle}
       />
@@ -616,51 +924,92 @@ export default function CourseHomePage() {
             }}
             className="sticky overflow-y-auto overflow-x-hidden flex flex-col gap-4"
           >
-            <Select
-              value={sortValue}
-              setValue={handleSetSortValue}
-              values={SortOptions}
-            />
+
             <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
-        <div className={`fixed ${ isNavExpanded ? "bottom-32" :"bottom-16"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
+        <div className={`fixed ${isNavExpanded ? "bottom-[9.6rem]" : "bottom-[4.8rem]"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
           {/* mobile  for filter/sort */}
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
-        <div className="flex justify-between gap-4  px-4 md:px-0">
-            <div className="text-secondary-black">
-              {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
-              <span className="text-sm text-primary-gray">
-                All times shown in course time zone
-              </span>
+          {/* scrollable dates  */}
+
+          {isMobile && (
+            <div
+              className={`w-full overflow-x-auto left-0 top-0 z-10 bg-secondary-white pt-2 pb-2 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                ? "fixed shadow-md"
+                : ""
+                }`}
+              style={{
+                top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                  ? `${divHeight || 0}px`
+                  : "auto",
+              }}
+            >
+              <div
+                className="flex gap-2 overflow-x-auto overflow-y-hidden px-2"
+                style={{
+                  maxWidth: "100%",
+                  WebkitOverflowScrolling: "touch",
+                  scrollbarWidth: "none", // Firefox
+                  msOverflowStyle: "none", // IE/Edge
+                }}
+              >
+                <div
+                  className="flex gap-2 min-w-max"
+                  style={{
+                    display: "flex",
+                  }}
+                >
+                  {datesArr.map((dateStr: string, idx: number) => {
+                    // const dateObj = dayjs(dateStr as string | number | Date | Dayjs | null | undefined);
+                    const dateObj = dayjs.utc(dateStr as string | number | Date | Dayjs | null | undefined);
+
+                    const isSelected =
+                      selectedDate &&
+                      dayjs(selectedDate).utc().format("YYYY-MM-DD") === dateObj.format("YYYY-MM-DD");
+
+                    return (
+                      (isLoadingTeeTimeDate || isLoading || specialEventsLoading || allCoursesDataLoading)
+                        ? Array.from({ length: 7 }).map((_, idx) => (
+                          <div
+                            key={`skeleton-${idx}`}
+                            className="w-12 h-20 bg-gray-200 rounded-lg animate-pulse"
+                          />
+                        )) : <button
+                          ref={(el) => {
+                            if (el) dateRefs.current[dateObj.format("YYYY-MM-DD")] = el;
+                          }}
+                          key={idx} // unique index-based key
+                          onClick={() => handleDateSelect(dateStr)}
+                          className={`flex flex-col items-center justify-center rounded-lg px-2 text-sm border transition-all shadow-sm
+              ${isSelected
+                              ? "text-white font-semibold"
+                              : "bg-white text-primary-black border-gray-300 hover:bg-gray-100"
+                            }`}
+                          style={{
+                            borderColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                            backgroundColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                          }}
+                        >
+                          <span className="text-md font-med tracking-wide">
+                            {dateObj.format("MMM")}
+                          </span>
+                          <span className="text-xl font-bold leading-tight">
+                            {dateObj.format("D")}
+                          </span>
+                          <span className="text-[13px] font-medium">
+                            {dateObj.format("ddd")}
+                          </span>
+                        </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          </div>
-          <div
-            className={`flex space-x-2 md:hidden px-4 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-                ? `fixed left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md`
-                : "relative"
-              }`}
-            style={{
-              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45) ? `${divHeight && divHeight * 1}px` : 'auto',
-            }}
-          >
-            <button
-              onClick={toggleFilters}
-              className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
-            >
-              <FiltersIcon className="h-[14px] w-[14px]" />
-              All Filters
-            </button>
-            <button
-              onClick={toggleDates}
-              className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
-            >
-              <Calendar className="h-[14px] w-[14px]" /> Date
-            </button>
-          </div>
-       
+          )}
+
           {error ? (
             <div className="flex justify-center items-center h-[200px]">
               <div className="text-center">Error: {error}</div>
@@ -679,13 +1028,13 @@ export default function CourseHomePage() {
                 <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
                   <ViewportList viewportRef={ref} items={finalRes}>
                     {(date, idx) => (
-                      <DailyTeeTimesV2
+                      <DailyTeeTimesMobileV2
                         setError={(e: string | null) => {
                           setError(e);
                         }}
                         courseException={getCourseException(date as string)}
                         key={idx}
-                        date={date}
+                        date={selectedDate || date}
                         minDate={startDate.toString()}
                         maxDate={endDate.toString()}
                         handleLoading={handleLoading}
@@ -693,90 +1042,116 @@ export default function CourseHomePage() {
                         pageDown={pageDown}
                         scrollY={scrollY}
                         divHeight={divHeight}
-                      // datesWithData={datesWithData}
+                        isLoadingTeeTimeDate={isLoadingTeeTimeDate}
+                        // datesWithData={datesWithData}
+                        allDatesArr={datesArr}
+                        toggleFilters={toggleFilters}
                       />
                     )}
                   </ViewportList>
                 </div>
               </>
               :
-              <>
-                <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
-                  <ViewportList viewportRef={ref} items={finalRes}>
-                    {(date, idx) => (
-                      <DailyTeeTimes
-                        setError={(e: string | null) => {
-                          setError(e);
-                        }}
-                        courseException={getCourseException(date as string)}
-                        key={idx}
-                        date={date}
-                        minDate={startDate.toString()}
-                        maxDate={endDate.toString()}
-                        handleLoading={handleLoading}
-                      />
-                    )}
-                  </ViewportList>
-                </div>
-                {daysData.amountOfPages > 1 ? (
-                  <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
-                    <FilledButton
-                      className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
-                      onClick={pageDown}
-                      data-testid="chevron-down-id"
-                    >
-                      <ChevronUp fill="#fff" className="-rotate-90" />
-                    </FilledButton>
-                    <div className="text-primary-gray px-3 py-2 bg-[#ffffff] rounded-md unmask-pagination">
-                      {pageNumber} / {amountOfPage}
-                    </div>
-                    <FilledButton
-                      className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                        }`}
-                      onClick={pageUp}
-                      data-testid="chevron-up-id"
-                    >
-                      <ChevronUp fill="#fff" className="rotate-90" />
-                    </FilledButton>
+              DESKTOP_VIEW_VERSION === "v2" ?
+                <>
+                  <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
+                    <DailyTeeTimesDesktopV2
+                      setError={(e: string | null) => {
+                        setError(e);
+                      }}
+                      minDate={startDate.toString()}
+                      maxDate={endDate.toString()}
+                      handleLoading={handleLoading}
+                      dateType={dateType}
+                      dates={datesArr}
+                      isLoadingTeeTimeDate={isLoadingTeeTimeDate}
+                    />
                   </div>
-                ) : null}
-              </>
+                </>
+                :
+                <>
+                  <div className="flex w-full flex-col gap-1 md:gap-4" ref={ref}>
+                    <ViewportList viewportRef={ref} items={finalRes}>
+                      {(date, idx) => (
+                        <DailyTeeTimes
+                          setError={(e: string | null) => {
+                            setError(e);
+                          }}
+                          courseException={getCourseException(date as string)}
+                          key={idx}
+                          date={date}
+                          minDate={startDate.toString()}
+                          maxDate={endDate.toString()}
+                          handleLoading={handleLoading}
+                          dateType={dateType}
+                        />
+                      )}
+                    </ViewportList>
+                  </div>
+                  {daysData.amountOfPages > 1 ? (
+                    <div className="flex items-center justify-center gap-2 pt-1 md:pt-0 md:pb-4">
+                      <FilledButton
+                        className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === 1 ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
+                        onClick={pageDown}
+                        data-testid="chevron-down-id"
+                      >
+                        <ChevronUp fill="#fff" className="-rotate-90" />
+                      </FilledButton>
+                      <div className="text-primary-gray px-3 py-2 bg-[#ffffff] rounded-md unmask-pagination">
+                        {pageNumber} / {amountOfPage}
+                      </div>
+                      <FilledButton
+                        className={`!px-3 !py-2 !min-w-fit !rounded-md ${pageNumber === amountOfPage
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                          }`}
+                        onClick={pageUp}
+                        data-testid="chevron-up-id"
+                      >
+                        <ChevronUp fill="#fff" className="rotate-90" />
+                      </FilledButton>
+                    </div>
+                  ) : null}
+                </>
           )}
         </div>
       </section>
 
-      {showSort && (
+      {/* {showSort && (
         <MobileSort
           setShowSort={setShowSort}
           toggleSort={toggleSort}
           setSortValue={handleSetSortValue}
           sortValue={sortValue}
         />
-      )}
-      {showFilters && (
-        <MobileFilters
-          setShowFilters={setShowFilters}
-          toggleFilters={toggleFilters}
-          openForecastModal={openForecastModal}
-        />
-      )}
-      {showDates && (
-        <MobileDates
-          setShowFilters={setShowDates}
-          toggleFilters={toggleDates}
-          openForecastModal={openForecastModal}
-        />
-      )}
-      {isForecastModalOpen && (
-        <ForecastModal
-          closeForecastModal={closeForecastModal}
-          startDate={startDate}
-          endDate={endDate}
-        />
-      )}
-    </main>
+      )} */}
+      {
+        showFilters && (
+          <MobileFilters
+            setShowFilters={setShowFilters}
+            toggleFilters={toggleFilters}
+            openForecastModal={openForecastModal}
+          />
+        )
+      }
+      {
+        showDates && (
+          <MobileDates
+            setShowFilters={setShowDates}
+            toggleFilters={toggleDates}
+          />
+        )
+      }
+      {
+        isForecastModalOpen && (
+          <ForecastModal
+            closeForecastModal={closeForecastModal}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        )
+      }
+    </main >
   );
 }

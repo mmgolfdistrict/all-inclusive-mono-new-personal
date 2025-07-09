@@ -5,32 +5,47 @@ on:
     branches:
       - main
       - pre-production
-      - club-prophet-mergeing-main
 
 jobs:
-  Deploy-pre-prod:
+  Stage1:
     runs-on: ubuntu-latest
     environment:
       name: pre-production
-    if: github.ref == 'refs/heads/pre-production'
+    if: github.ref == 'refs/heads/main'
 
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.PRE_PRODUCTION_VERCEL_PROJECT_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.STAGING_VERCEL_PROJECT_ID }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
       - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+        run: |
+          echo "Current Date: $(date)"
+          npm install --global vercel@latest
+
       - name: Test build
-        run: npm i && npm run build
+        run: |
+          echo "Current Date: $(date)"
+          npm i && npm run build
+
       - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          echo "Current Date: $(date)"
+          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
       - name: Build Project Artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          echo "Current Date: $(date)"
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
       - name: Deploy Project Artifacts to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          echo "Current Date: $(date)"
+          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
         id: deploy
+
 
   Dev-prod:
     runs-on: ubuntu-latest

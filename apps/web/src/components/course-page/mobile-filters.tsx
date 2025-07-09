@@ -74,7 +74,7 @@ export const MobileFilters = ({
         />
         <div className="fixed bottom-10 left-1/2 z-10 flex w-full -translate-x-1/2 gap-2 px-4">
           <OutlineButton
-            className="min-w-[40%]"
+            className="w-full"
             onClick={() => setShowFilters(false)}
           >
             Cancel

@@ -96,9 +96,8 @@ export class UploadService {
     parts: Record<number, string>;
     s3Key: string;
   }> => {
-    this.logger.info(`createPresignedUploadURL called with fileName: ${originalFileName}`);
+    // this.logger.info(`createPresignedUploadURL called with fileName: ${originalFileName}`);
     const extension = originalFileName.split(".").pop()?.toLowerCase();
-    this.logger.debug(`createPresignedUploadURL extension: ${extension}`);
     const allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp"];
     if (!allowedExtensions.includes(extension!)) {
       this.logger.warn(`Invalid file type. Only image files are accepted. fileName: ${originalFileName}`);
@@ -115,7 +114,6 @@ export class UploadService {
     };
     const multiPartUploadCommand = new CreateMultipartUploadCommand(params);
     const uploadURL = await this.s3.send(multiPartUploadCommand);
-    this.logger.debug(`createPresignedUploadURL uploadURL: ${JSON.stringify(uploadURL)}`);
     const parts = await this.generatePresignedUrlsParts(
       this.s3,
       uploadURL.UploadId!,
@@ -221,7 +219,7 @@ export class UploadService {
    * @throws Will throw an error if the abort operation fails.
    */
   abortUpload = async (s3Key: string, uploadId: string): Promise<void> => {
-    this.logger.info(`abortUpload called with s3Key: ${s3Key}, uploadId: ${uploadId}`);
+    // this.logger.info(`abortUpload called with s3Key: ${s3Key}, uploadId: ${uploadId}`);
     const params = {
       Bucket: this.bucketName,
       Key: s3Key,
@@ -243,7 +241,6 @@ export class UploadService {
       });
       throw err;
     });
-    this.logger.debug(`abortUpload upload aborted for s3Key: ${s3Key}, uploadId: ${uploadId}`);
   };
 
   /**
@@ -336,7 +333,7 @@ export class UploadService {
    */
   deleteFile = async (userId: string, imageType: "profileImage" | "bannerImage"): Promise<void> => {
     let assetId;
-    this.logger.info("userId", userId);
+    // this.logger.info("userId", userId);
 
     if (imageType === "profileImage") {
       const [asset] = await db
@@ -363,7 +360,7 @@ export class UploadService {
       }
       assetId = asset.assetId;
     }
-    this.logger.info("assetId", assetId);
+    // this.logger.info("assetId", assetId);
     if (!assetId) {
       throw new Error("asset not found");
     }

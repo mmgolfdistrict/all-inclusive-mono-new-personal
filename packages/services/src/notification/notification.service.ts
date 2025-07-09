@@ -14,6 +14,7 @@ import type pino from "pino";
 import twilio from "twilio";
 import { AppSettingsService } from "../app-settings/app-settings.service";
 import { loggerService } from "../webhooks/logging.service";
+import { S } from "vitest/dist/reporters-5f784f42";
 
 interface EmailParams {
   CustomerFirstName?: string;
@@ -48,6 +49,27 @@ interface EmailParams {
   ManageTeeTimesURL?: string;
   GreenFeesPerPlayer?: string;
   GroupReservationID?: string;
+  PreviousPlayerCount?: number;
+  NewPlayerCount?: number;
+  PreviousListedPrice?: number;
+  NewListedPrice?: number;
+  USERNAME?: string;
+  PAYMENT_URL?: string;
+  COURSE_NAME?: string;
+  AMOUNT?: string;
+  PLAY_TIME?: string;
+  FACILITY?: string;
+  COURSE_RESERVATION_ID?: string;
+  MyTeeBoxCollectPaymentUrl?: string;
+  TRACKING_URL?: string;
+  SUBJECT_LINE?: string;
+  LOGO_URL?: string;
+  ADDITIONAL_MESSAGE?: string;
+  PurchasedMerchandise?: boolean;
+  MerchandiseDetails?: {
+    caption: string;
+    qty: number;
+  }[];
 }
 
 interface Attachment {
@@ -128,7 +150,7 @@ export class NotificationService {
    * @returns A promise that resolves when the email is successfully sent.
    */
   sendEmail = async (email: string, subject: string, body: string) => {
-    this.logger.info(`Sending email to ${email}`);
+    // this.logger.info(`Sending email to ${email}`);
 
     const bccEmailsList = process.env.BCC_CUSTOMER_EMAIL_LIST ? process.env.BCC_CUSTOMER_EMAIL_LIST : "";
     const bccEmails = bccEmailsList.split(",");
@@ -141,21 +163,22 @@ export class NotificationService {
         subject: subject,
         html: body,
         bcc: bccEmails,
+        trackingSettings: { subscriptionTracking: { enable: false } },
       })
       .catch((err) => {
-        this.logger.error(err);
-        loggerService.errorLog({
-          userId: "",
-          url: "/NotificationService/sendEmail",
-          userAgent: "",
-          message: "ERROR_SENDING_EMAIL",
-          stackTrace: `${err.stack}`,
-          additionalDetailsJSON: JSON.stringify({
-            email,
-            subject,
-            body,
-          }),
-        });
+      this.logger.error(err);
+      loggerService.errorLog({
+        userId: "",
+        url: "/NotificationService/sendEmail",
+        userAgent: "",
+        message: "ERROR_SENDING_EMAIL",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          email,
+          subject,
+          body,
+        }),
+      });
         throw new Error(`Failed to send email to: ${email}, Response: ${JSON.stringify(response)}`);
       });
     // } else {
@@ -174,7 +197,13 @@ export class NotificationService {
     template: EmailParams,
     attachments: Attachment[]
   ) => {
-    this.logger.info(`Sending email to ${email.toString()}`);
+    let emailList = email;
+    if (email instanceof Array) {
+      const emailListLowercase = email.map((email) => email.toLowerCase());
+      const emailListSet = new Set(emailListLowercase);
+      emailList = Array.from(emailListSet);
+    }
+    // this.logger.info(`Sending email to ${emailList.toString()}`);
     const appSettingService = new AppSettingsService(
       this.database,
       process.env.REDIS_URL!,
@@ -184,15 +213,16 @@ export class NotificationService {
     const bccEmails = bccEmailsList.split(",");
 
     const appSettings = await appSettingService.getMultiple("ENABLE_ICS_ATTACHMENT");
-    if (appSettings?.ENABLE_ICS_ATTACHMENT === "false") {
+      if (appSettings?.ENABLE_ICS_ATTACHMENT === "false") {
       const response = await this.sendGridClient
         .send({
-          to: email,
+          to: emailList,
           from: this.sendGrid_email,
           subject,
           templateId,
           dynamicTemplateData: { ...template },
           bcc: bccEmails,
+          trackingSettings: { subscriptionTracking: { enable: false } },
         })
         .catch((err) => {
           this.logger.error(err);
@@ -203,7 +233,7 @@ export class NotificationService {
             message: "ERROR_SENDING_EMAIL_BY_TEMPLATE",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              email,
+              emailList,
               subject,
               template,
               templateId,
@@ -211,38 +241,39 @@ export class NotificationService {
             }),
           });
           throw new Error(
-            `Failed to send email to: ${email.toString()}, Response: ${JSON.stringify(response)}`
+            `Failed to send email to: ${emailList.toString()}, Response: ${JSON.stringify(response)}`
           );
         });
-    } else {
+      } else {
       const response = await this.sendGridClient
         .send({
-          to: email,
+          to: emailList,
           from: this.sendGrid_email,
           subject,
           templateId,
           dynamicTemplateData: { ...template },
           attachments,
           bcc: bccEmails,
+          trackingSettings: { subscriptionTracking: { enable: false } },
         })
         .catch((err) => {
-          this.logger.error(err);
-          loggerService.errorLog({
-            userId: "",
-            url: "/NotificationService/sendEmailByTemplate",
-            userAgent: "",
-            message: "ERROR_SENDING_EMAIL_BY_TEMPLATE",
-            stackTrace: `${err.stack}`,
-            additionalDetailsJSON: JSON.stringify({
-              email,
-              subject,
-              template,
-              templateId,
-              attachments,
-            }),
-          });
+      this.logger.error(err);
+      loggerService.errorLog({
+        userId: "",
+        url: "/NotificationService/sendEmailByTemplate",
+        userAgent: "",
+        message: "ERROR_SENDING_EMAIL_BY_TEMPLATE",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+              emailList,
+          subject,
+          template,
+          templateId,
+          attachments,
+        }),
+      });
           throw new Error(
-            `Failed to send email to: ${email.toString()}, Response: ${JSON.stringify(response)}`
+            `Failed to send email to: ${emailList.toString()}, Response: ${JSON.stringify(response)}`
           );
         });
     }
@@ -261,7 +292,7 @@ export class NotificationService {
    * await sendSMS('+1234567890', 'Hello, this is the SMS body.');
    */
   sendSMS = async (phoneNumber: string, body: string) => {
-    this.logger.info(`Sending SMS to ${phoneNumber}`);
+    // this.logger.info(`Sending SMS to ${phoneNumber}`);
     if (process.env.NODE_ENV === "production") {
       this.twilioClient.messages
         .create({
@@ -329,34 +360,6 @@ export class NotificationService {
       .limit(1)
       .execute();
 
-    // const [data] = await this.database
-    //   .select({
-    //     unreadCount: sql<number>`COUNT(*)`.as("unreadCount"),
-    //   })
-    //   .from(offers)
-    //   .leftJoin(offerRead, and(eq(offerRead.userId, userId), eq(offerRead.courseId, offers.courseId)))
-    //   .innerJoin(userBookingOffers, eq(userBookingOffers.offerId, offers.id))
-    //   .leftJoin(bookings, eq(bookings.id, userBookingOffers.bookingId))
-    //   .where(
-    //     and(
-    //       eq(offerRead.userId, userId),
-    //       eq(bookings.ownerId, userId),
-    //       or(
-    //         isNull(offerRead.lastRead),
-    //         and(
-    //           eq(offers.courseId, courseId),
-    //           eq(offers.isDeleted, false),
-    //           gt(offers.createdAt, offerRead.lastRead)
-    //         )
-    //       )
-    //     )
-    //   )
-    //   .groupBy(offers.courseId)
-    //   .execute()
-    //   .catch((err) => {
-    //     this.logger.error(err);
-    //     throw new Error("Failed to retrieve unread offers");
-    //   });
     if (!data) {
       return 0;
     }
@@ -497,17 +500,10 @@ export class NotificationService {
         throw new Error("Failed to create notification");
       });
 
-    // if (user[0].phoneNotifications && user[0].phoneNumber) {
-    //   this.logger.debug(`Sending SMS to ${user[0].phoneNumber}`);
-    //   await this.sendSMS(user[0].phoneNumber, subject);
-    // }
-
     if (user.emailNotifications && user.email) {
       if (templateId && template) {
-        this.logger.debug(`Sending email to ${user.email}`);
         await this.sendEmailByTemplate(user.email, subject, templateId, template, attachments || []);
       } else {
-        this.logger.debug(`Sending email to ${user.email}`);
         await this.sendEmail(user.email, subject, body);
       }
     }

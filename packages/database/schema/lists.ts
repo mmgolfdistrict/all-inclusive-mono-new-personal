@@ -26,6 +26,7 @@ export const lists = mySqlTable(
     lastUpdatedDateTime: datetime("lastUpdatedDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`)
       .notNull(),
+    allowSplit: boolean("allowSplit").default(false).notNull()
   },
   (table) => {
     return {

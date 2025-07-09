@@ -1,7 +1,10 @@
+"use client";
 import { GoBack } from "~/components/buttons/go-back";
 import { DownChevron } from "~/components/icons/down-chevron";
 import { TableView } from "~/components/my-tee-box-page/table-view";
 import { OpenSection } from "~/utils/tee-box-helper";
+import { useMediaQuery } from "usehooks-ts";
+import { TableViewMobile } from "~/components/my-tee-box-page/table-view-mobile";
 
 type OpenSectionDescriptionType = Record<string, string>;
 
@@ -26,6 +29,7 @@ export default function MyTeeBox({
       : "owned"
   ) as string;
   const courseId = params.course;
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
@@ -40,17 +44,16 @@ export default function MyTeeBox({
               <DownChevron className="w-[12px] -rotate-90" fill={"353B3F"} />
               {section.replaceAll("-", " ")}
             </h1>
-            <p className=" text-[14px] text-primary-gray md:text-[20px]">
+            <p className="text-justify text-[14px] text-primary-gray md:text-[20px]">
               {OpenSectionDescription[section]}
             </p>
-            <p className="mt-4 mb-2 text-[14px] text-primary-gray md:text-[16px] font-semibold text-left">
+            <p className="mt-4 mb-2 text-[14px] text-primary-gray md:text-[16px] font-semibold text-justify">
               Tip: If you know you can’t make your time, the earlier you can
               list, the greater the chance it sells.
             </p>
           </div>
         </div>
-
-        <TableView />
+        {isMobile ? <TableViewMobile /> : <TableView />}
       </section>
     </main>
   );

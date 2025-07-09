@@ -562,12 +562,12 @@ export class SensibleService extends CacheService {
    * @returns The response from the API.
    */
   cancelQuote = async (quoteId: string): Promise<any> => {
-    this.logger.info(`cancelQuote called with quoteId: ${quoteId}`);
+    // this.logger.info(`cancelQuote called with quoteId: ${quoteId}`);
     let bearerToken = await this.getCache("sensible_access_token");
     if (!bearerToken) {
       try {
         await this.getToken();
-        this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
+        // this.logger.info(`getQuote retrieved access token from SensibleWeather API.`);
         bearerToken = await this.getCache("sensible_access_token");
       } catch (err: any) {
         this.logger.error(`Error getting access token: ${err}`);

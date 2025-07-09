@@ -105,6 +105,10 @@ export type FullCourseType = {
   isOnlyGroupOfFourAllowed?: boolean;
   isAllowSpecialRequest?: boolean;
   isAllowClubRental?: boolean;
+  groupStartTime: number | null;
+  groupEndTime: number | null;
+  isAllowCourseSwitching?: boolean;
+  supportsSellingMerchandise: boolean;
 };
 
 export type SupportedCharity = {
@@ -191,6 +195,8 @@ export type SearchObject = {
   firstHandPurchasePrice?: number;
   ownerId: string;
   groupId?: string;
+  allowSplit?: boolean;
+  totalMerchandiseAmount?: number;
 };
 
 export type CombinedObject = {
@@ -213,6 +219,7 @@ export type CombinedObject = {
   firstHandPurchasePrice?: number;
   listedSlots: number | null;
   groupId?: string;
+  allowSplit: boolean;
 };
 
 export type ReserveTeeTimeResponse = {
@@ -222,6 +229,7 @@ export type ReserveTeeTimeResponse = {
   isEmailSend: boolean;
   courseMembershipId?: string;
   playerCountForMemberShip?: string;
+  isValidForCollectPayment: boolean;
 };
 
 export type NotificationObject = {
@@ -232,6 +240,8 @@ export type NotificationObject = {
   displayType: string;
   startDate: string;
   endDate: string;
+  bgColor: string;
+  color: string;
 };
 
 export enum AuthenticationMethodEnum {

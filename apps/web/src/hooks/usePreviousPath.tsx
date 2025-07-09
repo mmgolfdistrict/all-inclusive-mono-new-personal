@@ -1,4 +1,4 @@
-import { usePathname } from "next/navigation";
+import { usePathname,useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useSessionStorage } from "usehooks-ts";
 
@@ -16,7 +16,8 @@ export const usePreviousPath = () => {
     null
   );
   const pathname = usePathname();
-
+  const searchParams = useSearchParams();
+  const newFullUrl = `${pathname}?${searchParams.toString()}`;
   const isPathExpired = (timeString: string | undefined) => {
     const MAX_ALLOWED_DIFFERENCE = 10;
 
@@ -40,7 +41,7 @@ export const usePreviousPath = () => {
       createdAt: new Date().toISOString(),
     };
     const current = {
-      path: pathname,
+      path: newFullUrl,
       createdAt: new Date().toISOString(),
     };
     setPrevPath(prev);
@@ -50,7 +51,7 @@ export const usePreviousPath = () => {
   useEffect(() => {
     if (prevPath?.path?.includes("checkout")) return;
     storePathValues();
-  }, [pathname]);
+  }, [newFullUrl]);
 
   return { prevPath, setPrevPath, isPathExpired };
 };

@@ -6,11 +6,13 @@ export const Tooltip = ({
   content,
   className,
   isDisabled = false,
+  delay = 0,
 }: {
   trigger: ReactNode;
   content: ReactNode;
   className?: string;
   isDisabled?: boolean;
+  delay?: number;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -39,7 +41,7 @@ export const Tooltip = ({
           <RadixTooltip.Root
             open={isOpen}
             onOpenChange={setIsOpen}
-            delayDuration={0}
+            delayDuration={delay}
           >
             <RadixTooltip.Trigger
               className={`${className ?? ""}`}
@@ -52,7 +54,7 @@ export const Tooltip = ({
             </RadixTooltip.Trigger>
             <RadixTooltip.Portal>
               <RadixTooltip.Content
-                className="rounded-md max-w-[15rem] md:max-w-[30rem] border relative z-50 border-stroke bg-white px-4 py-2 text-sm shadow-lg"
+                className="text-justify rounded-md max-w-[15rem] md:max-w-[30rem] border relative z-50 border-stroke bg-white px-4 py-2 text-sm shadow-lg"
                 sideOffset={5}
                 onClick={() => setIsOpen(false)} // Close tooltip on click
               >

@@ -1,3 +1,4 @@
+import { TeeTimeType } from "@golf-district/shared";
 import { loadHyper } from "@juspay-tech/hyper-js";
 import { HyperElements } from "@juspay-tech/react-hyper-js";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
@@ -34,11 +35,14 @@ type Options = {
   };
 };
 
-let hyperPromise: Promise<unknown> | undefined = undefined;
+let hyperPromise: Promise<HyperInstance> | undefined = undefined;
 
 if (typeof window !== "undefined") {
-  console.log("Hyperswitch - publishable key",process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY);
-  hyperPromise = loadHyper(process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY);
+  console.log(
+    "Hyperswitch - publishable key",
+    process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY
+  );
+  hyperPromise = loadHyper(process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY || "");
 }
 
 export const HyperSwitch = ({
@@ -52,18 +56,18 @@ export const HyperSwitch = ({
   teeTimeData,
   isAppleWidgetReload,
 }: // maxReservation,
-{
-  cartData: CartProduct[];
-  isBuyNowAuction: boolean;
-  teeTimeId: string;
-  teeTimeDate: string | undefined;
-  listingId: string | undefined;
-  setIsLoading?: (isLoading: boolean) => void;
-  playerCount: string | undefined;
-  teeTimeData: SearchObject | null | undefined;
-  isAppleWidgetReload?: boolean;
-  // maxReservation: MaxReservationResponse;
-}) => {
+  {
+    cartData: CartProduct[];
+    isBuyNowAuction: boolean;
+    teeTimeId: string;
+    teeTimeDate: string | undefined;
+    listingId: string | undefined;
+    setIsLoading?: (isLoading: boolean) => void;
+    playerCount: string | undefined;
+    teeTimeData: SearchObject | null | undefined;
+    isAppleWidgetReload?: boolean;
+    // maxReservation: MaxReservationResponse;
+  }) => {
   const { amountOfPlayers, shouldAddSensible } = useCheckoutContext();
   const [showCheckout, setShowCheckout] = useState(true);
   const [options, setOptions] = useState<Options | undefined>(undefined);
@@ -95,14 +99,10 @@ export const HyperSwitch = ({
 
   const buildSession = async () => {
     initialLoad = false;
-    if (!user) return;
+    let clientSecret: string | null = null;
+    if (!user) return clientSecret;
     try {
       setError(undefined);
-      // setIsLoadingSession(true);
-
-      if (Number(playerCount ?? 0) !== amountOfPlayers) {
-        return;
-      }
 
       const data = (await checkout({
         userId: user.id,
@@ -115,8 +115,8 @@ export const HyperSwitch = ({
         paymentId: options?.paymentId
           ? options.paymentId
           : paymentId
-          ? paymentId
-          : null,
+            ? paymentId
+            : null,
         //@ts-ignore
         cart: cartData,
         cartId,
@@ -126,10 +126,20 @@ export const HyperSwitch = ({
           teeTimeData?.date ?? "",
           course?.timezoneCorrection
         ),
+        playerCount: playerCount ?? "",
+        teeTimeType:
+          teeTimeData?.firstOrSecondHandTeeTime === TeeTimeType.SECOND_HAND
+            ? "SECONDARY"
+            : teeTimeData?.firstOrSecondHandTeeTime === TeeTimeType.FIRST_HAND
+              ? "PRIMARY"
+              : "UNLISTED",
+        listingId: listingId ?? "",
+        purpose: "tee_time_purchase"
       })) as CreatePaymentResponse;
       if (data?.error) {
         toast.error(data?.error);
       }
+      clientSecret = data?.client_secret;
 
       if (data?.next_action) {
         setNextaction(data?.next_action);
@@ -151,10 +161,15 @@ export const HyperSwitch = ({
       // setIsLoadingSession(false);
       setError(
         (error?.message as string) ??
-          "An error occurred building checkout seesion."
+        "An error occurred building checkout seesion."
       );
     }
+    return clientSecret;
   };
+
+  useEffect(() => {
+    void buildSession();
+  }, [playerCount]);
 
   useEffect(() => {
     if (!user) return;
@@ -179,13 +194,15 @@ export const HyperSwitch = ({
   }, [err]);
   const reloadCheckout = () => {
     setShowCheckout(false);
-  
+
     setTimeout(() => {
-      void buildSession().then(() => {
-        setShowCheckout(true);
-      }).catch((error) => {
-        console.error("Error in buildSession:", error);
-      });
+      buildSession()
+        .then(() => {
+          setShowCheckout(true);
+        })
+        .catch((error) => {
+          console.error("Error in buildSession:", error);
+        });
     }, 100);
   };
   useEffect(() => {
@@ -225,7 +242,7 @@ export const HyperSwitch = ({
             playerCount={playerCount}
             roundOffStatus={roundOffStatus}
             setRoundOffStatus={setRoundOffStatus}
-            // maxReservation={maxReservation}
+            updateBuildSession={buildSession}
           />
         </HyperElements>
       ) : nextaction ? (

@@ -19,6 +19,9 @@ import type {
   TeeTimeResponse,
 } from "./sheet-providers/types/interface";
 import { QuickEighteen } from "./sheet-providers/quickEighteen";
+import type {
+  LightspeedGetCustomerResponse,
+} from "./sheet-providers/types/lightspeed.type";
 
 export interface Customer {
   playerNumber: number | null;
@@ -70,7 +73,7 @@ export class ProviderService extends CacheService {
     courseId: string,
     providerCourseConfiguration?: string
   ): Promise<{ provider: ProviderAPI; token: string }> => {
-    this.logger.info(`getProvider called with providerId: ${internalProviderIdentifier}`);
+    // this.logger.info(`getProvider called with providerId: ${internalProviderIdentifier}`);
 
     const provider = this.teeSheetProviders.find((p) => p.providerId === internalProviderIdentifier);
     if (!provider) {
@@ -120,7 +123,7 @@ export class ProviderService extends CacheService {
         }
       } catch (error) {
         this.logger.error(`Error fetching token: ${error}`);
-        this.logger.info("Token needs to be generated locally");
+        // this.logger.info("Token needs to be generated locally");
         tokenNeedsLocalGeneration = true;
       } finally {
         if (tokenNeedsLocalGeneration) {
@@ -169,7 +172,7 @@ export class ProviderService extends CacheService {
     endTime: string,
     date: string
   ): Promise<TeeTimeResponse[]> {
-    this.logger.info(`getTeeTimes called with courseId: ${courseId}`);
+    // this.logger.info(`getTeeTimes called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
 
     return provider.getTeeTimes(token, courseId, teeSheetId, startTime, endTime, date);
@@ -189,7 +192,7 @@ export class ProviderService extends CacheService {
     options: { data: any },
     userId: string
   ): Promise<BookingResponse> {
-    this.logger.info(`createBooking called with courseId: ${courseId}`);
+    // this.logger.info(`createBooking called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
 
     return provider.createBooking(token, courseId, teeTimeId, options, userId);
@@ -210,7 +213,7 @@ export class ProviderService extends CacheService {
     options: any,
     slotId: string
   ): Promise<BookingResponse> {
-    this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
+    // this.logger.info(`updateTeeTime called with courseId: ${courseId}`);
     const { provider, token } = await this.getProviderAndKey(providerId, courseId);
 
     return provider.updateTeeTime(token, courseId, teeTimeId, bookingId, options, slotId);
@@ -315,17 +318,21 @@ export class ProviderService extends CacheService {
         throw new Error(`Error finding user id`);
       }
       const userProviderCourseLinkId: string = randomUUID();
+      let includePhone = true;
       //Try to find customer on provider
       try {
         const [firstName, lastName] = buyer.name.split(" ");
         const customerDetails: FetchCustomerDetails = {
           firstName: firstName ?? "",
           lastName: lastName ?? "",
-          email: buyer.email,
+          email: buyer.email.toLowerCase(),
           phone: buyer.phone ?? ""
         }
         const customerResponse = await provider.getCustomer(token, providerCourseId, customerDetails);
-        if (customerResponse) {
+        if (Object.hasOwn(customerResponse ?? {}, "includePhone")) {
+          includePhone = (customerResponse as LightspeedGetCustomerResponse)?.includePhone ?? true
+        }
+        if (customerResponse && !Object.hasOwn(customerResponse, "includePhone")) {
           const customerIds = provider.getCustomerIdFromGetCustomerResponse(customerResponse);
           if (customerIds.customerId) {
             await this.updateCustomer({
@@ -362,7 +369,7 @@ export class ProviderService extends CacheService {
       }
 
       let customer: CustomerCreationData;
-      customer = provider.getCustomerCreationData({ ...buyer, accountNumber });
+      customer = provider.getCustomerCreationData({ ...buyer, email: buyer.email.toLowerCase(), accountNumber, includePhone: includePhone ? true : false });
       if (!customer) {
         this.logger.fatal(`Course internal Id doesn't match for user: ${userId}`);
         throw new Error(`Error matching provider Internal Id`);

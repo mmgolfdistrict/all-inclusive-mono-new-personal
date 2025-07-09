@@ -55,6 +55,8 @@ export const bookings = mySqlTable(
     canResell: tinyint("canResell").notNull().default(0),
     courseMembershipId: varchar("courseMembershipId", { length: 36 }),
     groupId: varchar("groupId", { length: 36 }),
+    totalMerchandiseAmount: int("totalMerchandiseAmount").default(0),
+    totalMerchandiseTaxAmount: int("totalMerchandiseTaxAmount").default(0),
   },
   (table) => {
     return {

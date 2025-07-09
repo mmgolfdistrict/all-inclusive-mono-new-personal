@@ -84,6 +84,7 @@ export type SearchObject = {
   bookingIds?: string[];
   listingId?: string;
   listedSlots?: number;
+  allowSplit?: boolean;
 };
 
 export type InviteFriend = {
@@ -120,21 +121,25 @@ export type CartProduct = {
   display_price: string; //$4.00
   product_data: {
     metadata:
-      | FirstHandProduct
-      | SecondHandProduct
-      | SensibleProduct
-      | AuctionProduct
-      | CharityProduct
-      | Offer
-      | MarkupProduct
-      | ConvenienceFeeProduct
-      | TaxProduct
-      | CartFeeMetaData
-      | WeatherGuaranteeTaxPercentMetaData
-      | MarkupTaxPercentMetaData
-      | GreenFeeTaxPercentMetaData
-      | CartFeeTaxPercentMetaData
-      | FirstHandGroupProduct;
+    | FirstHandProduct
+    | SecondHandProduct
+    | SensibleProduct
+    | AuctionProduct
+    | CharityProduct
+    | Offer
+    | MarkupProduct
+    | ConvenienceFeeProduct
+    | TaxProduct
+    | CartFeeMetaData
+    | WeatherGuaranteeTaxPercentMetaData
+    | MarkupTaxPercentMetaData
+    | GreenFeeTaxPercentMetaData
+    | CartFeeTaxPercentMetaData
+    | FirstHandGroupProduct
+    | MerchandiseProduct
+    | MerchandiseTaxPercentMetaData
+    | MerchandiseWithTaxOverride
+    | AdvancedBookingFees;
   };
 };
 
@@ -159,6 +164,9 @@ export interface WeatherGuaranteeTaxPercentMetaData {
 }
 export interface MarkupTaxPercentMetaData {
   type: "markupTaxPercent";
+}
+export interface MerchandiseTaxPercentMetaData {
+  type: "merchandiseTaxPercent";
 }
 export interface SecondHandProduct {
   type: "second_hand";
@@ -202,11 +210,38 @@ export interface FirstHandGroupProduct {
   min_players_per_booking: number;
 }
 
+export interface MerchandiseProduct {
+  type: "merchandise";
+  merchandiseItems: MerchandiseItem[];
+}
+
+export interface MerchandiseWithTaxOverride {
+  type: "merchandiseWithTaxOverride";
+  merchandiseItems: MerchandiseItemWithTax[];
+  priceWithoutTax: number;
+  taxAmount: number;
+}
+
+interface MerchandiseItem {
+  id: string;
+  qty: number;
+  pricePerItem: number;
+  taxAmountPerItem: number;
+}
+
+interface MerchandiseItemWithTax extends MerchandiseItem {
+  merchandiseTaxPercent: number;
+}
+
+export interface AdvancedBookingFees {
+  type: "advanced_booking_fees_per_player";
+}
+
 export type MaxReservationResponse =
   | {
-      success: boolean;
-      message?: string;
-    }
+    success: boolean;
+    message?: string;
+  }
   | undefined;
 
 export type CountryData = {

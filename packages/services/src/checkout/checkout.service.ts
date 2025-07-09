@@ -51,6 +51,7 @@ import type {
 } from "./types";
 import { CartValidationErrors } from "./types";
 import { courseSetting } from "@golf-district/database/schema/courseSetting";
+import { CacheService } from "../infura/cache.service";
 
 /**
  * Configuration options for the CheckoutService.
@@ -117,6 +118,7 @@ export class CheckoutService {
   private readonly profileId: string;
   private clubProphetWebhook: clubprophetWebhookService;
   private appSettings: AppSettingsService;
+  private cacheService: CacheService;
   //private stripeService: StripeService;
 
   /**
@@ -142,6 +144,8 @@ export class CheckoutService {
       process.env.REDIS_URL!,
       process.env.REDIS_TOKEN!
     );
+    this.cacheService = new CacheService(process.env.REDIS_URL!, process.env.REDIS_TOKEN!);
+
     //this.stripeService = new StripeService(config.stripeApiKey);
     //this.appSettings=new AppSettingsService()
   }
@@ -262,6 +266,22 @@ export class CheckoutService {
     //     errors: errors,
     //   };
     // }
+
+    const cachedListingData = await this.cacheService.getCache(`listing_id_${customerCartData?.listingId}`);
+    if (this.cacheService && customerCartData?.teeTimeType === "SECONDARY" && !cachedListingData) {
+      const LIST_TEETIME_ID_TTL = 600; // in seconds
+      console.log("Setting listing_id in Redis Cache: ", customerCartData?.listingId);
+      const listingCacheData = JSON.stringify({
+        listingId: customerCartData?.listingId,
+        userId,
+      });
+      await this.cacheService.setCache(
+        `listing_id_${customerCartData?.listingId}`,
+        listingCacheData,
+        LIST_TEETIME_ID_TTL
+      );
+    }
+
     console.log("userId ", userId);
     console.log("customerCartData ", JSON.stringify(customerCartData));
     console.log("cartId ", cartId);
@@ -280,8 +300,6 @@ export class CheckoutService {
 
   createCheckoutSession = async (userId: string, customerCartData: CustomerCart, ipAddress?: string) => {
     const { paymentId: _, ...customerCart } = customerCartData;
-
-    this.logger.debug(`${JSON.stringify(customerCart)}`);
     const [user] = await this.database
       .select({
         name: users.name,
@@ -317,6 +335,9 @@ export class CheckoutService {
       "cartFeeTaxPercent",
       "weatherGuaranteeTaxPercent",
       "markupTaxPercent",
+      "merchandiseTaxPercent",
+      "merchandiseWithTaxOverride",
+      "advanced_booking_fees_per_player",
     ];
 
     let total = customerCart.cart
@@ -343,6 +364,25 @@ export class CheckoutService {
       customerCartData?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const merchandiseCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandise")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const merchandiseWithTaxOverrideCharge = customerCartData?.cart
+      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride")
+      ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.priceWithoutTax, 0);
+    const merchandiseOverriddenTaxAmount =
+      customerCartData?.cart
+        ?.filter(
+          ({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride"
+        )
+        ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.taxAmount, 0) / 100;
+    const advancedBookingAmount =
+      customerCartData?.cart
+        ?.filter(
+          ({ product_data }: ProductData) => product_data.metadata.type === "advanced_booking_fees_per_player"
+        )
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) ?? 0;
     if (isFirstHand.length) {
       if (isFirstHand[0]?.product_data.metadata.type === "first_hand") {
         const teetimeId = customerCart?.teeTimeId ?? "";
@@ -355,6 +395,7 @@ export class CheckoutService {
             cartFeeTaxPercent: courses.cartFeeTaxPercent,
             weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
             markupTaxPercent: courses.markupTaxPercent,
+            merchandiseTaxPercent: courses.merchandiseTaxPercent,
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -365,14 +406,22 @@ export class CheckoutService {
           });
         const playerCount = isFirstHand[0]?.product_data.metadata.number_of_bookings;
         const greenFeeTaxTotal =
-          ((teeTime?.greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+          (((teeTime?.greenFees ?? 0) + advancedBookingAmount) / 100) *
+          ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) *
+          playerCount;
         const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
         const weatherGuaranteeTaxTotal =
           (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
         const cartFeeTaxPercentTotal =
           ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const merchandiseTaxTotal = (merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100;
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+          greenFeeTaxTotal +
+          markupTaxTotal +
+          weatherGuaranteeTaxTotal +
+          cartFeeTaxPercentTotal +
+          merchandiseTaxTotal +
+          merchandiseOverriddenTaxAmount
         );
         total = total + additionalTaxes * 100;
       }
@@ -393,6 +442,7 @@ export class CheckoutService {
             markupTaxPercent: courses.markupTaxPercent,
             groupBookingPriceSelectionMethod: courseSetting.value,
             availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+            merchandiseTaxPercent: courses.merchandiseTaxPercent,
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -436,25 +486,36 @@ export class CheckoutService {
         }
 
         const greenFeeTaxTotal =
-          ((greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+          (((teeTime?.greenFees ?? 0) + advancedBookingAmount) / 100) *
+          ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) *
+          playerCount;
         const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
         const weatherGuaranteeTaxTotal =
           (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
         const cartFeeTaxPercentTotal =
           ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const merchandiseTaxTotal = (merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100;
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+          (
+            greenFeeTaxTotal +
+            markupTaxTotal +
+            weatherGuaranteeTaxTotal +
+            cartFeeTaxPercentTotal +
+            merchandiseTaxTotal +
+            merchandiseOverriddenTaxAmount
+          )
         );
-        total = total + additionalTaxes * 100;
+        total = total + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
       }
     }
     // const tax = await this.stripeService.getTaxRate(customerCart.cart).catch((err) => {
     //   this.logger.error(`Error calculating tax: ${err}`);
     //   throw new Error(`Error calculating tax: ${err}`);
     // });
+    // ceil the total
+    total = Math.ceil(total);
     //@TODO: metadata to include sensible
     //@TODO: update total form discount
-    // debugger;
     const [record] = await this.database
       .select({
         internalId: providers.internalId,
@@ -480,6 +541,9 @@ export class CheckoutService {
         courseName: customerCart?.courseName,
         playDateTime: customerCart?.playDateTime,
         cartId: customerCart?.cartId,
+        playerCount: customerCart?.playerCount,
+        teeTimeType: customerCart?.teeTimeType,
+        purpose: customerCart?.purpose,
       },
       merchant_order_reference_id: customerCartData?.cartId ?? "",
       setup_future_usage: "off_session",
@@ -585,73 +649,6 @@ export class CheckoutService {
         next_action: "",
       };
     }
-    // }
-
-    // const paymentIntent = await this.hyperSwitch.createPaymentIntent(paymentData).catch((err) => {
-    //   this.logger.error(` ${err}`);
-    //   loggerService.errorLog({
-    //     userId,
-    //     url: "/CheckoutService/createCheckoutSession",
-    //     userAgent: "",
-    //     message: "ERROR_CREATING_PAYMENT_INTENT",
-    //     stackTrace: `${err.stack}`,
-    //     additionalDetailsJSON: JSON.stringify({
-    //       customerCartData,
-    //       paymentData,
-    //     }),
-    //   });
-    //   throw new Error(`Error creating payment intent: ${err}`);
-    // });
-    //   /* Add respective env enpoints
-    //    - Sandbox - https://sandbox.hyperswitch.io
-    //    - Prod - https://api.hyperswitch.io
-    //   */
-    //  console.log("api key used hyperswitch",process.env.HYPERSWITCH_API_KEY);
-    //  console.log("payment data used",paymentData);
-    //    const url = "https://sandbox.hyperswitch.io";
-    //   const apiResponse = await fetch(`${url}/payments`, {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //       Accept: "application/json",
-    //       "api-key": process.env.HYPERSWITCH_API_KEY as string,
-    //     },
-    //     body: JSON.stringify(paymentData),
-    //   });
-    //   this.logger.info({
-    //     "path":"create-intent hyperswitch"
-    //   },`${JSON.stringify(apiResponse)}`)
-    //   this.logger.info({
-    //     "path":"create-intent hyperswitch",
-    //   },`api response json- ${JSON.stringify(apiResponse.json())}`)
-
-    //   const paymentIntent = await apiResponse.json();
-
-    //   if (paymentIntent.error) {
-    //     console.error("Error - ", paymentIntent.error);
-    //     throw new Error(paymentIntent?.error?.message ?? "Something went wrong.");
-    //   }
-
-    //save customerCart to database
-    // const cartId: string = randomUUID();
-    // const ipInfo = await this.ipInfoService.getIpInfo(ipAddress);
-    // await this.database.insert(customerCarts).values({
-    //   id: cartId,
-    //   userId: userId,
-    //   // courseId: customerCart.courseId,
-    //   paymentId: paymentIntent.payment_id,
-    //   cart: customerCart,
-    //   listingId,
-    //   teeTimeId,
-    //   ipinfoJSON: ipInfo,
-    // });
-
-    // return {
-    //   clientSecret: paymentIntent.client_secret,
-    //   paymentId: paymentIntent.payment_id,
-    //   cartId: cartId,
-    //   next_action: paymentIntent.next_action,
-    // };
   };
 
   updateCheckoutSession = async (userId: string, customerCartData: CustomerCart, cartId: string) => {
@@ -667,6 +664,9 @@ export class CheckoutService {
       "cartFeeTaxPercent",
       "weatherGuaranteeTaxPercent",
       "markupTaxPercent",
+      "merchandiseTaxPercent",
+      "merchandiseWithTaxOverride",
+      "advanced_booking_fees_per_player",
     ];
 
     let total: number = customerCart.cart
@@ -693,6 +693,25 @@ export class CheckoutService {
       customerCartData?.cart
         ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "cart_fee")
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const merchandiseCharge =
+      customerCartData?.cart
+        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandise")
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
+    const merchandiseWithTaxOverrideCharge = customerCartData?.cart
+      ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride")
+      ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.priceWithoutTax, 0);
+    const merchandiseOverriddenTaxAmount =
+      customerCartData?.cart
+        ?.filter(
+          ({ product_data }: ProductData) => product_data.metadata.type === "merchandiseWithTaxOverride"
+        )
+        ?.reduce((acc: number, i: any) => acc + i.product_data.metadata.taxAmount, 0) / 100;
+    const advancedBookingAmount =
+      customerCartData?.cart
+        ?.filter(
+          ({ product_data }: ProductData) => product_data.metadata.type === "advanced_booking_fees_per_player"
+        )
+        ?.reduce((acc: number, i: any) => acc + i.price, 0) ?? 0;
     if (isFirstHand.length) {
       if (isFirstHand[0]?.product_data.metadata.type === "first_hand") {
         const teetimeId = customerCart?.teeTimeId ?? "";
@@ -705,6 +724,7 @@ export class CheckoutService {
             cartFeeTaxPercent: courses.cartFeeTaxPercent,
             weatherGuaranteeTaxPercent: courses.weatherGuaranteeTaxPercent,
             markupTaxPercent: courses.markupTaxPercent,
+            merchandiseTaxPercent: courses.merchandiseTaxPercent,
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -715,16 +735,26 @@ export class CheckoutService {
           });
         const playerCount = isFirstHand[0]?.product_data.metadata.number_of_bookings;
         const greenFeeTaxTotal =
-          ((teeTime?.greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+          (((teeTime?.greenFees ?? 0) + advancedBookingAmount) / 100) *
+          ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) *
+          playerCount;
         const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
         const weatherGuaranteeTaxTotal =
           (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
         const cartFeeTaxPercentTotal =
           ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const merchandiseTaxTotal = (merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100;
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+          (
+            greenFeeTaxTotal +
+            markupTaxTotal +
+            weatherGuaranteeTaxTotal +
+            cartFeeTaxPercentTotal +
+            merchandiseTaxTotal +
+            merchandiseOverriddenTaxAmount
+          )
         );
-        total = total + additionalTaxes * 100;
+        total = total + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
       }
     }
     if (isFirstHandGroup.length) {
@@ -742,6 +772,7 @@ export class CheckoutService {
             markupTaxPercent: courses.markupTaxPercent,
             groupBookingPriceSelectionMethod: courseSetting.value,
             availableFirstHandSpots: teeTimes.availableFirstHandSpots,
+            merchandiseTaxPercent: courses.merchandiseTaxPercent,
           })
           .from(teeTimes)
           .leftJoin(courses, eq(teeTimes.courseId, courses.id))
@@ -785,16 +816,26 @@ export class CheckoutService {
         }
 
         const greenFeeTaxTotal =
-          ((greenFees ?? 0) / 100) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+          (((teeTime?.greenFees ?? 0) + advancedBookingAmount) / 100) *
+          ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) *
+          playerCount;
         const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
         const weatherGuaranteeTaxTotal =
           (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
         const cartFeeTaxPercentTotal =
           ((cartFeeCharge * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
+        const merchandiseTaxTotal = (merchandiseCharge * ((teeTime?.merchandiseTaxPercent ?? 0) / 100)) / 100;
         const additionalTaxes = Number(
-          (greenFeeTaxTotal + markupTaxTotal + weatherGuaranteeTaxTotal + cartFeeTaxPercentTotal).toFixed(2)
+          (
+            greenFeeTaxTotal +
+            markupTaxTotal +
+            weatherGuaranteeTaxTotal +
+            cartFeeTaxPercentTotal +
+            merchandiseTaxTotal +
+            merchandiseOverriddenTaxAmount
+          )
         );
-        total = total + additionalTaxes * 100;
+        total = total + merchandiseWithTaxOverrideCharge + additionalTaxes * 100;
       }
     }
     console.log(`paymentId = ${paymentId}`);
@@ -814,6 +855,10 @@ export class CheckoutService {
       .where(eq(providerCourseLink.courseId, customerCart.courseId))
       .execute();
 
+    // ceil the total
+    total = Math.ceil(total);
+
+    console.log("====>>>> manavtest", parseInt(total.toString()));
     const intentData = {
       currency: "USD",
       amount: parseInt(total.toString()),
@@ -827,6 +872,9 @@ export class CheckoutService {
         courseName: customerCart?.courseName,
         playDateTime: customerCart?.playDateTime,
         cartId: customerCart?.cartId,
+        playerCount: customerCart?.playerCount,
+        teeTimeType: customerCart?.teeTimeType,
+        purpose: customerCart?.purpose,
       },
     };
 
@@ -995,6 +1043,12 @@ export class CheckoutService {
           break;
         case "first_hand_group":
           // errors.push(...(await this.validateFirstHandGroupItem(item as FirstHandGroupProduct)));
+          break;
+        case "merchandise":
+          break;
+        case "merchandiseTaxPercent":
+          break;
+        case "merchandiseWithTaxOverride":
           break;
         default:
           this.logger.error(`Unknown product type: ${JSON.stringify(item.product_data.metadata)}`);
@@ -1714,6 +1768,22 @@ export class CheckoutService {
   };
   isAppleEnabledReloadWidget = async () => {
     const appSettingsResult = await this.appSettings.getAppSetting("IS_ENABLED_APPLE_PAY");
-    return appSettingsResult?.value === "1" ? true : false;
+    return appSettingsResult?.value;
+  };
+  isCollectPaymentEnabled = async () => {
+    const appSettingsResult = await this.appSettings.getAppSetting("COLLECT_PAYMENTS_ENABLED");
+    return appSettingsResult?.value;
+  };
+  collectPaymentProcessorPercent = async () => {
+    const appSettingsResult = await this.appSettings.getAppSetting(
+      "COLLECT_PAYMENT_PAYMENT_PROCESSOR_PERCENT"
+    );
+    return appSettingsResult?.value;
+  };
+  blockCheckoutWhenGreenFeeTimesXLtMarkup = async () => {
+    const appSettingsResult = await this.appSettings.getAppSetting(
+      "BLOCK_CHECKOUT_WHEN_GREEN_FEE_TIMES_X_LT_MARKUP"
+    );
+    return appSettingsResult?.value;
   };
 }

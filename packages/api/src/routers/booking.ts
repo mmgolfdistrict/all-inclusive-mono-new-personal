@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const bookingRouter = createTRPCRouter({
   checkIfTeeTimeStillListed: protectedProcedure
@@ -11,7 +11,7 @@ export const bookingRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return ctx.serviceFactory.getBookingService().checkIfTeeTimeStillListed(input.bookingId);
     }),
-  checkIfTeeTimeStillListedByListingId: protectedProcedure
+  checkIfTeeTimeStillListedByListingId: publicProcedure
     .input(
       z.object({
         listingId: z.string(),
@@ -64,6 +64,7 @@ export const bookingRouter = createTRPCRouter({
     .input(
       z.object({
         courseId: z.string(),
+        userTime: z.string().optional(),
         limit: z.number().optional(),
         cursor: z.string().optional(),
       })
@@ -71,7 +72,7 @@ export const bookingRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .getOwnedTeeTimes(ctx.session.user.id, input.courseId, input.limit, input.cursor);
+        .getOwnedTeeTimes(ctx.session.user.id, input.courseId, input.userTime, input.limit, input.cursor);
     }),
   getOffersForBooking: protectedProcedure
     .input(
@@ -106,6 +107,7 @@ export const bookingRouter = createTRPCRouter({
         listPrice: z.number(),
         endTime: z.date(),
         slots: z.number(),
+        allowSplit: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -116,7 +118,32 @@ export const bookingRouter = createTRPCRouter({
           input.listPrice,
           input.bookingIds,
           input.endTime,
-          input.slots
+          input.slots,
+          input.allowSplit
+        );
+    }),
+  updateListingForBookings: protectedProcedure
+    .input(
+      z.object({
+        listId: z.string(),
+        updatedPrice: z.number(),
+        updatedSlots: z.number(),
+        bookingIds: z.array(z.string()),
+        endTime: z.date(),
+        allowSplit: z.boolean(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.serviceFactory
+        .getBookingService()
+        .updateListingForBookings(
+          ctx.session.user.id,
+          input.listId,
+          input.updatedPrice,
+          input.updatedSlots,
+          input.bookingIds,
+          input.endTime,
+          input.allowSplit
         );
     }),
   getOwnedBookingsForTeeTime: protectedProcedure
@@ -260,7 +287,7 @@ export const bookingRouter = createTRPCRouter({
         payment_id: z.string(),
         sensibleQuoteId: z.string(),
         source: z.string(),
-        additionalNoteFromUser: z.string().max(200).optional(),
+        additionalNoteFromUser: z.string().max(150).optional(),
         needRentals: z.boolean(),
         redirectHref: z.string().url(),
         courseMembershipId: z.string().optional(),
@@ -292,7 +319,7 @@ export const bookingRouter = createTRPCRouter({
         listingId: z.string(),
         payment_id: z.string(),
         source: z.string(),
-        additionalNoteFromUser: z.string().max(200).optional(),
+        additionalNoteFromUser: z.string().max(150).optional(),
         needRentals: z.boolean(),
         redirectHref: z.string().url(),
       })
@@ -356,7 +383,12 @@ export const bookingRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .checkIfTeeTimeGroupAvailableOnProvider(input.teeTimeIds, input.golfersCount, input.minimumPlayersPerBooking, ctx.session.user.id);
+        .checkIfTeeTimeGroupAvailableOnProvider(
+          input.teeTimeIds,
+          input.golfersCount,
+          input.minimumPlayersPerBooking,
+          ctx.session.user.id
+        );
     }),
   reserveGroupBooking: protectedProcedure
     .input(
@@ -365,7 +397,7 @@ export const bookingRouter = createTRPCRouter({
         payment_id: z.string(),
         sensibleQuoteId: z.string(),
         source: z.string(),
-        additionalNoteFromUser: z.string().max(200).optional(),
+        additionalNoteFromUser: z.string().max(150).optional(),
         needRentals: z.boolean(),
         redirectHref: z.string().url(),
         courseMembershipId: z.string().optional(),

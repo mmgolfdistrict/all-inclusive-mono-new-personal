@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, eq, inArray } from "@golf-district/database";
+import { and, db, eq, inArray } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -18,13 +18,15 @@ import createICS from "@golf-district/shared/createICS";
 import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
 import dayjs from "dayjs";
-import type { ProductData } from "../checkout/types";
+import type { MerchandiseProduct, MerchandiseWithTaxOverride, ProductData } from "../checkout/types";
 import type { NotificationService } from "../notification/notification.service";
 import type { SensibleService } from "../sensible/sensible.service";
 import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { loggerService } from "../webhooks/logging.service";
 import type { ProviderBooking } from "../booking/booking.service";
 import { groupBookings } from "@golf-district/database/schema/groupBooking";
+import { bookingMerchandise, type InsertBookingMerchandise } from "@golf-district/database/schema/bookingMerchandise";
+import { courseMerchandise, type SelectCourseMerchandise } from "@golf-district/database/schema/courseMerchandise";
 
 
 /**
@@ -36,9 +38,17 @@ interface AcceptedQuoteParams {
   price_charged: number;
 }
 interface BookingTypes {
+  validForCollectPayment: boolean;
   bookingId: string;
   isEmailSend: boolean;
 }
+
+export interface MerchandiseItem {
+  id: string;
+  qoh: number;
+  caption: string;
+}
+
 export class TokenizeService {
   private logger = Logger(TokenizeService.name);
 
@@ -53,7 +63,7 @@ export class TokenizeService {
     private readonly database: Db,
     private readonly notificationService: NotificationService,
     private readonly sensibleService: SensibleService
-  ) {}
+  ) { }
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -168,7 +178,8 @@ export class TokenizeService {
     playerCountForMemberShip,
     providerCourseMembershipId,
     isFirstHandGroupBooking,
-    providerBookings
+    providerBookings,
+    purchasedMerchandise = [],
   }: {
     redirectHref: string;
     userId: string;
@@ -201,6 +212,7 @@ export class TokenizeService {
       weatherGuaranteeTaxTotal: number;
       cartFeeTaxPercentTotal: number;
       additionalTaxes: number;
+      merchandiseTaxTotal: number;
     };
     source: string;
     additionalNoteFromUser?: string;
@@ -208,8 +220,9 @@ export class TokenizeService {
     courseMembershipId?: string;
     playerCountForMemberShip?: string;
     providerCourseMembershipId?: string;
-      isFirstHandGroupBooking?: boolean;
-      providerBookings?: ProviderBooking[];
+    isFirstHandGroupBooking?: boolean;
+    providerBookings?: ProviderBooking[];
+    purchasedMerchandise?: MerchandiseItem[];
   }): Promise<BookingTypes> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -314,6 +327,9 @@ export class TokenizeService {
     const bookingsToCreate: InsertBooking[] = [];
     const transfersToCreate: InsertTransfer[] = [];
     let bookingSlots: InsertBookingSlots[] = [];
+    const merchandiseEntriesToCreate: InsertBookingMerchandise[] = [];
+    const merchandiseItemsToUpdate: MerchandiseItem[] = [];
+    const merchandiseDetails: { caption: string, qty: number }[] = [];
     const transactionId = randomUUID();
     const bookingId = randomUUID();
     const groupId = randomUUID();
@@ -399,10 +415,81 @@ export class TokenizeService {
           });
         }
       }
+
+      const merchandiseData = normalizedCartData.cart?.cart?.filter(
+        (item: ProductData) => item.product_data.metadata.type === "merchandise"
+      ) as MerchandiseProduct[];
+
+      if (merchandiseData?.length > 0 && merchandiseData[0]!.price > 0) {
+        const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems
+        for (const merchandise of merchandiseItems) {
+          merchandiseEntriesToCreate.push({
+            id: randomUUID(),
+            bookingId: isFirstHandGroupBooking ? groupId : bookingId,
+            courseMerchandiseId: merchandise.id,
+            qty: merchandise.qty,
+            merchandiseAmountPerItem: merchandise.pricePerItem,
+            totalMerchandiseItemTaxAmount: Number(merchandise.taxAmountPerItem * merchandise.qty)
+          })
+        }
+
+        if (purchasedMerchandise?.length > 0) {
+          for (const merchandise of purchasedMerchandise) {
+            const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
+            if (merchandiseItem) {
+              merchandiseItemsToUpdate.push({
+                ...merchandise,
+                qoh: merchandise.qoh !== -1 ? merchandise.qoh - merchandiseItem.qty : -1
+              })
+              merchandiseDetails.push({
+                caption: merchandise.caption,
+                qty: merchandiseItem?.qty ?? 0
+              })
+            }
+          }
+        }
+      }
+
+      const merchandiseWithTaxOverrideData = normalizedCartData.cart?.cart?.filter(
+        (item: ProductData) => item.product_data.metadata.type === "merchandiseWithTaxOverride"
+      ) as MerchandiseWithTaxOverride[];
+
+      if (merchandiseWithTaxOverrideData?.length > 0 && merchandiseWithTaxOverrideData[0]!.price > 0) {
+        const merchandiseItems = merchandiseWithTaxOverrideData[0]!.product_data.metadata.merchandiseItems
+        for (const merchandise of merchandiseItems) {
+          merchandiseEntriesToCreate.push({
+            id: randomUUID(),
+            bookingId: isFirstHandGroupBooking ? groupId : bookingId,
+            courseMerchandiseId: merchandise.id,
+            qty: merchandise.qty,
+            merchandiseAmountPerItem: merchandise.pricePerItem,
+            totalMerchandiseItemTaxAmount: Number(merchandise.taxAmountPerItem * merchandise.qty)
+          })
+        }
+
+        if (purchasedMerchandise?.length > 0) {
+          for (const merchandise of purchasedMerchandise) {
+            const merchandiseItem = merchandiseItems.find((item) => item.id === merchandise.id);
+            if (merchandiseItem) {
+              merchandiseItemsToUpdate.push({
+                ...merchandise,
+                qoh: merchandise.qoh !== -1 ? merchandise.qoh - merchandiseItem.qty : -1
+              })
+              merchandiseDetails.push({
+                caption: merchandise.caption,
+                qty: merchandiseItem?.qty ?? 0
+              })
+            }
+          }
+        }
+      }
     }
 
     if (isFirstHandGroupBooking && providerBookings) {
+      let remainingAmount = Math.ceil((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100);
+
       for (const booking of providerBookings) {
+        const isLastBooking = (providerBookings.length - bookingIds.length) === 1;
         const teeTimeData = existingTeeTimes.find((existingTeeTime) => existingTeeTime.id === booking.teeTimeId);
         if (!teeTimeData) {
           this.logger.fatal(`TeeTime with ID: ${booking.teeTimeId} does not exist.`);
@@ -420,6 +507,7 @@ export class TokenizeService {
         const bookingId = randomUUID();
         bookingIds.push(bookingId);
         const totalAmountPerPlayer = ((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100) / players;
+        const totalAmountForBooking = Math.round(totalAmountPerPlayer * booking.playerCount);
 
         bookingsToCreate.push({
           id: bookingId,
@@ -434,11 +522,11 @@ export class TokenizeService {
           listId: null,
           cartId: normalizedCartData.cartId,
           playerCount: courseMembershipId ? Number(playerCountForMemberShip) : booking.playerCount ?? 0,
-          greenFeePerPlayer: teeTimeData.greenFee || 0,
+          greenFeePerPlayer: teeTimeData.greenFee + (normalizedCartData.advancedBookingAmount * 100) || 0,
           totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
           charityId: normalizedCartData.charityId || null,
           totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
-          totalAmount: totalAmountPerPlayer * booking.playerCount,
+          totalAmount: (isLastBooking && remainingAmount !== totalAmountForBooking) ? remainingAmount : totalAmountForBooking,
           providerPaymentId: paymentId,
           weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
           weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
@@ -455,6 +543,8 @@ export class TokenizeService {
           courseMembershipId: courseMembershipId,
           canResell: courseMembershipId ? 1 : 0,
           groupId: groupId,
+          totalMerchandiseAmount: normalizedCartData.merchandiseCharge * 100,
+          totalMerchandiseTaxAmount: additionalTaxes.merchandiseTaxTotal * 100,
         });
         transfersToCreate.push({
           id: randomUUID(),
@@ -518,6 +608,7 @@ export class TokenizeService {
           availableSecondHandSpots: teeTimeData.availableSecondHandSpots + booking.playerCount,
           availableFirstHandSpots: teeTimeData.availableFirstHandSpots - booking.playerCount,
         })
+        remainingAmount = remainingAmount - totalAmountForBooking;
       }
     } else {
       bookingsToCreate.push({
@@ -538,11 +629,11 @@ export class TokenizeService {
         // entityId: existingTeeTime.entityId,
         cartId: normalizedCartData.cartId,
         playerCount: courseMembershipId ? Number(playerCountForMemberShip) : players ?? 0,
-        greenFeePerPlayer: (isFirstHandBooking ? existingTeeTime.greenFee : purchasePrice) || 0,
+        greenFeePerPlayer: (isFirstHandBooking ? existingTeeTime.greenFee + (normalizedCartData.advancedBookingAmount * 100) : purchasePrice) || 0,
         totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
         charityId: normalizedCartData.charityId || null,
         totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
-        totalAmount: (normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100,
+        totalAmount: Math.ceil((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100),
         providerPaymentId: paymentId,
         weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
         weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
@@ -558,6 +649,8 @@ export class TokenizeService {
         needClubRental: needRentals,
         courseMembershipId: courseMembershipId,
         canResell: courseMembershipId ? 1 : 0,
+        totalMerchandiseAmount: normalizedCartData.merchandiseCharge * 100,
+        totalMerchandiseTaxAmount: additionalTaxes.merchandiseTaxTotal * 100,
       });
       transfersToCreate.push({
         id: randomUUID(),
@@ -705,13 +798,13 @@ export class TokenizeService {
           }
         } else {
           await tx
-          .update(teeTimes)
-          .set({
-            availableSecondHandSpots: existingTeeTime.availableSecondHandSpots + players,
-            availableFirstHandSpots: existingTeeTime.availableFirstHandSpots - players,
-          })
-          .where(eq(teeTimes.id, existingTeeTime.id))
-          .execute();
+            .update(teeTimes)
+            .set({
+              availableSecondHandSpots: existingTeeTime.availableSecondHandSpots + players,
+              availableFirstHandSpots: existingTeeTime.availableFirstHandSpots - players,
+            })
+            .where(eq(teeTimes.id, existingTeeTime.id))
+            .execute();
         }
       }
 
@@ -735,9 +828,44 @@ export class TokenizeService {
           });
           tx.rollback();
         });
+
+      // merchandise transactions
+      if (purchasedMerchandise?.length > 0 && merchandiseItemsToUpdate.length > 0) {
+        console.log("purchasedMerchandise", purchasedMerchandise);
+        console.log("merchandiseItemsToUpdate", merchandiseItemsToUpdate);
+        await tx
+          .insert(bookingMerchandise)
+          .values(merchandiseEntriesToCreate)
+          .execute()
+          .catch((err) => {
+            this.logger.error(err);
+            void loggerService.errorLog({
+              userId: userId,
+              url: `/TokenizeService/tokenizeBooking`,
+              userAgent: "",
+              message: "ERROR_CREATING_BOOKING_MERCHANDISE",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                providerTeeTimeId,
+                providerBookingId,
+                merchandiseEntriesToCreate,
+              })
+            })
+          });
+        await Promise.all(merchandiseItemsToUpdate.map(
+          async (merchandiseItem) => {
+            await tx
+              .update(courseMerchandise)
+              .set(merchandiseItem)
+              .where(eq(courseMerchandise.id, merchandiseItem.id))
+              .execute();
+          }
+        ))
+      }
+
     });
 
-    loggerService.auditLog({
+    void loggerService.auditLog({
       id: randomUUID(),
       userId,
       teeTimeId: existingTeeTime?.id,
@@ -747,6 +875,15 @@ export class TokenizeService {
       eventId: "TEE_TIME_PURCHASED",
       json: "Tee time purchased",
     });
+    let validForCollectPayment = false;
+
+    if (players > 1) {
+      validForCollectPayment = true;
+    } else {
+      validForCollectPayment = false;
+    }
+
+    const collectPaymentUrl = `http://localhost:3000/${existingTeeTime.courseId}/my-tee-box/?bookingId=${bookingId}&collectPayment=${validForCollectPayment}`
     const finalAmount =
       Math.floor(purchasePrice + (cartFeeCharge ?? 0)) * Number(players) +
       (normalizedCartData?.markupCharge ?? 0) * 100 +
@@ -758,8 +895,9 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     ${providerBookingId}
 
     This is a first party purchase from the course
-    `;
 
+    you can now collect the payment ${collectPaymentUrl}
+    `;
     let event: Event, template;
     if (isFirstHandGroupBooking) {
       event = {
@@ -791,6 +929,9 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         SellTeeTImeURL: `${redirectHref}/my-tee-box`,
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
         GroupReservationID: groupId,
+        MyTeeBoxCollectPaymentUrl: `${redirectHref}/my-tee-box/?bookingId=${bookingId}&collectPayment=${validForCollectPayment}`,
+        PurchasedMerchandise: purchasedMerchandise?.length > 0 ? true : false,
+        MerchandiseDetails: merchandiseDetails
       };
     } else {
       event = {
@@ -817,8 +958,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         NumberOfHoles: existingTeeTime.numberOfHoles,
         GreenFeesPerPlayer:
           `$${(
-            (existingTeeTime.greenFee + Number(cartFeeCharge) + (normalizedCartData?.markupCharge ?? 0) * 100) /
-            100
+            ((existingTeeTime.greenFee + Number(cartFeeCharge) + (normalizedCartData?.markupCharge ?? 0) * 100) /
+              100) + normalizedCartData.advancedBookingAmount
           ).toLocaleString("en-US", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -827,7 +968,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
           `$${(
             ((existingTeeTime.greenFee +
               Number(cartFeeCharge) +
-              (normalizedCartData?.markupCharge ?? 0) * 100) *
+              ((normalizedCartData?.markupCharge ?? 0) * 100) +
+              normalizedCartData.advancedBookingAmount * 100) *
               players) /
             100
           ).toLocaleString("en-US", {
@@ -852,6 +994,9 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         // CashOutURL: `${redirectHref}/account-settings/${userId}`,
         SellTeeTImeURL: `${redirectHref}/my-tee-box`,
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
+        MyTeeBoxCollectPaymentUrl: `${redirectHref}/my-tee-box/?bookingId=${bookingId}&collectPayment=${validForCollectPayment}`,
+        PurchasedMerchandise: purchasedMerchandise?.length > 0 ? true : false,
+        MerchandiseDetails: merchandiseDetails
       };
     }
 
@@ -896,9 +1041,10 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         }),
       });
     }
-    const bookingIdObject: { bookingId: string; isEmailSend: boolean } = {
+    const bookingIdObject: { bookingId: string; isEmailSend: boolean, validForCollectPayment: boolean } = {
       bookingId: isFirstHandGroupBooking ? bookingIds.toString() : bookingId,
       isEmailSend,
+      validForCollectPayment
     };
     return bookingIdObject;
   }
@@ -1000,7 +1146,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
 
     const message2 = `
     ${bookingIds.length} bookings have been purchased this is to the old owner of the bookings
-    Transfers bookings: 
+    Transfers bookings:
     `;
     // await this.notificationService.createNotification(
     //   userId,

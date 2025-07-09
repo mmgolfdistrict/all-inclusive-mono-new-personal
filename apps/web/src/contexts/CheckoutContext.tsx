@@ -23,6 +23,14 @@ type ValidatePlayerType = {
   courseMemberShipId?: string;
   providerCourseMembershipId?: string;
 };
+
+type MerchandiseData = {
+  id: string;
+  qty: number;
+  price: number;
+  merchandiseTaxPercent?: number | null;
+}[];
+
 interface CheckoutContextType {
   shouldAddSensible: boolean;
   handleShouldAddSensible: (bool: boolean) => void;
@@ -45,6 +53,8 @@ interface CheckoutContextType {
   setValidatePlayers: Dispatch<SetStateAction<ValidatePlayerType[]>>;
   setIsSensibleLoading: Dispatch<SetStateAction<boolean>>;
   isSensibleLoading: boolean;
+  merchandiseData: MerchandiseData;
+  setMerchandiseData: Dispatch<SetStateAction<MerchandiseData>>;
 }
 
 const CheckoutContext = createContext<CheckoutContextType>({
@@ -71,6 +81,8 @@ const CheckoutContext = createContext<CheckoutContextType>({
   setValidatePlayers: () => undefined,
   setIsSensibleLoading: () => undefined,
   isSensibleLoading: false,
+  merchandiseData: [],
+  setMerchandiseData: () => undefined,
 });
 
 export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
@@ -95,6 +107,7 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
   const [validatePlayers, setValidatePlayers] = useState<ValidatePlayerType[]>(
     []
   );
+  const [merchandiseData, setMerchandiseData] = useState<MerchandiseData>([]);
   const { course } = useCourseContext();
 
   const handleShouldAddSensible = (bool: boolean) => {
@@ -141,6 +154,8 @@ export const CheckoutWrapper = ({ children }: { children: ReactNode }) => {
     setValidatePlayers,
     isSensibleLoading,
     setIsSensibleLoading,
+    merchandiseData,
+    setMerchandiseData,
   };
 
   return (

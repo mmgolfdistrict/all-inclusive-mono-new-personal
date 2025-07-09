@@ -2,7 +2,7 @@
 
 import type { Day } from "@taak/react-modern-calendar-datepicker";
 import { Calendar } from "@taak/react-modern-calendar-datepicker";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "@taak/react-modern-calendar-datepicker/lib/DatePicker.css";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { GoBack } from "~/components/buttons/go-back";
@@ -21,20 +21,50 @@ import GroupBookingPage from "./GroupBookingPage";
 import { api } from "~/utils/api";
 import { toast } from "react-toastify";
 import { useAppContext } from "~/contexts/AppContext";
+import { Info } from "~/components/icons/info";
+import { Tooltip } from "~/components/tooltip";
+import { SelectGroupSize } from "~/components/input/select-group-size";
+import { useSearchParams } from "next/navigation";
 const tomorrow = dayjs().add(1, "day");
 
 function GroupBooking({ params }: { params: { course: string } }) {
+  const searchParams = useSearchParams();
+  const time = searchParams.get("time");
+  const date = searchParams.get("date");
+  const dateObject = date !== "undefined" && date !== "null" ? {
+    day: Number(date?.split("-")[2]),
+    month: Number(date?.split("-")[1]),
+    year: Number(date?.split("-")[0]),
+  } : null;
   const { course } = useCourseContext();
   const STEP = course?.isOnlyGroupOfFourAllowed ? 4 : 1;
   const SLIDER_MIN = course?.groupBookingMinSize ?? 0;
   const SLIDER_MAX = course?.groupBookingMaxSize ?? 0;
+  // const showDropdownForPlayers = SLIDER_MAX > 15;
+
+  function getSliderSteps(min, max, step) {
+    let count = 0;
+    for (let i = min; i <= max; i += step) {
+      count++;
+    }
+    return count;
+  }
+  const showNumberInBetween = getSliderSteps(SLIDER_MIN, SLIDER_MAX, STEP);
+
   const courseId = params.course;
-  const [selectedDate, setSelectedDate] = useState<Day>({ day: tomorrow.date(), month: tomorrow.month() + 1, year: tomorrow.year() });
+  const [courseStartTimeNumber, courseEndTimeNumber] = useMemo(() => {
+    if (course?.groupStartTime && course?.groupEndTime) {
+      return [course?.groupStartTime, course?.groupEndTime]
+    } else {
+      const endTime = course?.courseCloseTime ?? 9;
+      const startTime = course?.courseOpenTime ?? 9;
+      return [startTime, endTime];
+    }
+  }, [course]);
+  const [selectedDate, setSelectedDate] = useState<Day>(date && dateObject ? dateObject : { day: tomorrow.date(), month: tomorrow.month() + 1, year: tomorrow.year() });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [displayDates, setDisplayDates] = useState<string>("");
   const [players, setPlayers] = useState(SLIDER_MIN);
-  const courseStartTimeNumber = course?.courseOpenTime ?? 9;
-  const courseEndTimeNumber = course?.courseCloseTime ?? 9;
   const { setActivePage } = useAppContext();
   setActivePage("group-booking")
   const [startTime, setStartTime] = useState<[number, number]>([
@@ -43,6 +73,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
   ]);
   const [timeMobile, setTimeMobile] = useState(startTime);
   const [teeTimeData, setTeeTimeData] = useState<TeeTimeGroups | null>(null);
+  const [selectedTime, setSelectedTime] = useState<number[]>([0]);
 
   const formatTime = (hour: number, minute: number) => {
     const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
@@ -147,6 +178,38 @@ function GroupBooking({ params }: { params: { course: string } }) {
     handleResetQueryResults();
   }, [selectedDate]);
 
+  useEffect(() => {
+    if (filteredStartTimeOptions.length > 0 && time && time !== 'undefined' && time !== 'null') {
+      if (filteredStartTimeOptions[0] === undefined) return;
+      let selectedTimeOption = filteredStartTimeOptions[0];
+      let optionIndex = 0;
+
+      for (const option of filteredStartTimeOptions) {
+        if (option.value > Number(time)) {
+          break;
+        }
+        selectedTimeOption = option;
+        optionIndex++;
+      }
+      setLocalStartTime((prev) => [
+        selectedTimeOption.value,
+        prev[1],
+      ]);
+
+      setFilter("time", [
+        selectedTimeOption.value,
+        localStartTime[1],
+      ]);
+      setSelectedTime([optionIndex]);
+      setStartTime((prev) => {
+        return [
+          selectedTimeOption.value,
+          prev[1],
+        ];
+      })
+    }
+  }, [filteredStartTimeOptions])
+
   const handleSingleSliderChange = (value: number[]) => {
     if (value[0]) {
       setPlayers(value[0]);
@@ -180,7 +243,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Set Your Preferences
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   Choose your ideal play date, time range, and number of
                   players.
                 </p>
@@ -196,7 +259,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Visual Time Breakdown
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   See your times visually how they are spread apart.
                 </p>
               </div>
@@ -211,7 +274,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Book in Seconds
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   Act fast to lock in your spots before someone else does!
                 </p>
               </div>
@@ -226,7 +289,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Enjoy Your Round
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   Confirm your bookings, hit the greens, and make the most of
                   your day!
                 </p>
@@ -273,7 +336,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                       onClick={() => setIsDatePickerOpen(false)}
                     />
                     <h1 className="text-[20px] md:text-2xl">Select Your Date</h1>
-                    <p className="text-[14px] mb-4 md:text-md">
+                    <p className="text-justify text-[14px] mb-4 md:text-md">
                       *Schedule your notifications for the rest of the year
                     </p>
                     <Calendar
@@ -318,6 +381,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                   min={0}
                   max={filteredStartTimeOptions.length - 1}
                   step={1}
+                  value={selectedTime}
                   onValueChange={(values) => {
                     const startIndex = values[0];
                     if (
@@ -337,6 +401,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                           startOption.value,
                           localStartTime[1],
                         ]);
+                        setSelectedTime([startIndex]);
                       }
                     }
                   }
@@ -347,46 +412,69 @@ function GroupBooking({ params }: { params: { course: string } }) {
                 />
               </section>
             </div>
-            <div className="" id="pick-number-of-players-field">
-              <label className="text-[14px] text-primary-gray">
-                {"Select Group Size"}
-              </label>
-              <div className="relative mt-2">
-                <div className="flex justify-between text-sm mb-2 ">
-                  {Array.from({ length: (SLIDER_MAX - SLIDER_MIN) + 1 }, (_, i) => (SLIDER_MIN + i) % STEP === 0 ? (SLIDER_MIN + i) : "").map(
-                    (number, idx) => (
-                      <span
-                        key={`${number}_${idx}`}
-                        className="text-center"
-                        style={{ width: `20px` }}
-                      >
-                        {number}
-                      </span>
-                    )
-                  )}
-                </div>
-                <SingleSlider
-                  min={SLIDER_MIN}
-                  max={SLIDER_MAX}
-                  step={STEP}
-                  onValueChange={(value) => handleSingleSliderChange(value)}
-                  aria-label="Select number of players"
-                  data-testid="slider-number-of-players"
+            <div className="grid grid-cols-1 gap-2" id="pick-number-of-players-field">
+              <div className="flex items-center gap-1">
+                <label htmlFor="slider-number-of-players" className="text-[14px] text-primary-gray">
+                  Select Group Size
+                </label>
+                <Tooltip
+                  trigger={<Info className="h-[14px] w-[14px] text-primary-gray" />}
+                  content="For groups over the maximum size, call the course for special accommodations. All other bookings must be made online."
                 />
               </div>
+              {showNumberInBetween > 15 ? (
+                <div className="w-full">
+                  <SelectGroupSize
+                    values={Array.from(
+                      { length: Math.floor((SLIDER_MAX - SLIDER_MIN) / STEP) + 1 },
+                      (_, i) => (SLIDER_MIN + STEP * i).toString()
+                    )}
+                    value={players.toString()}
+                    setValue={(val) => {
+                      setPlayers(Number(val));
+                      handleResetQueryResults();
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="relative mt-2">
+                  <div className="flex justify-between text-sm mb-2 ">
+                    {Array.from({ length: (SLIDER_MAX - SLIDER_MIN) + 1 }, (_, i) => (SLIDER_MIN + i) % STEP === 0 ? (SLIDER_MIN + i) : "").map(
+                      (number, idx) => (
+                        <span
+                          key={`${number}_${idx}`}
+                          className="text-center"
+                          style={{ width: `20px` }}
+                        >
+                          {number}
+                        </span>
+                      )
+                    )}
+                  </div>
+                  <SingleSlider
+                    id="slider-number-of-players"
+                    min={SLIDER_MIN}
+                    max={SLIDER_MAX}
+                    step={STEP}
+                    onValueChange={(value) => handleSingleSliderChange(value)}
+                    aria-label="Select number of players"
+                    data-testid="slider-number-of-players"
+                  />
+                </div>
+              )}
             </div>
           </div>
-            
+
           <div className="flex items-center justify-center" id="see-available-times">
-          <FilledButton
-            onClick={handleSubmit}
-            className="flex items-center justify-center gap-1 max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
-            disabled={isTeeTimesLoading || !displayDates}
+            <FilledButton
+              onClick={handleSubmit}
+              className="flex items-center justify-center gap-1 max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
+              disabled={isTeeTimesLoading || !displayDates}
             >
-            See Available Times
-          </FilledButton>
-            </div>
-          <div className="flex justify-center items-center mt-2 italic text-primary-gray text-[12px] md:text-[16px] px-4 py-2 md:px-8 md:py-6">
+              See Available Times
+            </FilledButton>
+          </div>
+          <div className="text-justify flex justify-center items-center mt-2 italic text-primary-gray text-[12px] md:text-[16px] px-4 py-2 md:px-8 md:py-6">
             <p>
               Bookings are paid in advance and non-refundable. If plans change
               simply list your time for sale, and easily cash out.

@@ -4,11 +4,12 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../avatar";
 import { OutlineButton } from "../buttons/outline-button";
 import { ManageTeeTimeListing } from "./manage-tee-time-listing";
 import { SkeletonRow } from "./skeleton-row";
+import { useSearchParams } from "next/navigation";
 
 export type MyListedTeeTimeType = {
   listingId: string | null;
@@ -24,11 +25,19 @@ export type MyListedTeeTimeType = {
   teeTimeId: string;
   listedSlotsCount?: number;
   groupId: string | null;
+  weatherGuaranteeAmount?: number;
+  isGroupBooking?: boolean;
+  playerCount?: number;
+  listingIdFromRedis?: string | null;
+  allowSplit?: boolean;
+  totalMerchandiseAmount: number;
 };
 
 export const MyListedTeeTimes = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const searchParams = useSearchParams();
+  const listId = searchParams.get("listId");
   const [isManageTeeTimeListingOpen, setIsManageTeeTimeListingOpen] =
     useState<boolean>(false);
   const [selectedTeeTime, setSelectedTeeTime] = useState<
@@ -56,6 +65,15 @@ export const MyListedTeeTimes = () => {
     setSelectedTeeTime(teeTime);
     setIsManageTeeTimeListingOpen(true);
   };
+
+  useEffect(() => {
+    if (listId && myListedTeeTimes) {
+      const teeTime = myListedTeeTimes.find((teeTime) => teeTime.listingId === listId);
+      if (teeTime) {
+        openManageListTeeTimeListing(teeTime);
+      }
+    }
+  }, [listId, myListedTeeTimes])
 
   if (isError && error) {
     return (
@@ -94,26 +112,26 @@ export const MyListedTeeTimes = () => {
           <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
-                  .fill(null)
-                  .map((_, idx) => <SkeletonRow key={idx} />)
+                .fill(null)
+                .map((_, idx) => <SkeletonRow key={idx} />)
               : myListedTeeTimes?.map((i, idx) => (
-                  <TableRow
-                    course={i.courseName}
-                    date={i.date}
-                    iconSrc={i.courseLogo}
-                    key={idx}
-                    listedPrice={i?.listPrice ?? 0}
-                    golfers={i?.listedSlotsCount || 0}
-                    status={i.status}
-                    courseId={i.courseId}
-                    teeTimeId={i.teeTimeId}
-                    listingId={i.listingId ?? ""}
-                    timezoneCorrection={course?.timezoneCorrection}
-                    openManageListTeeTimeListing={() =>
-                      openManageListTeeTimeListing(i)
-                    }
-                  />
-                ))}
+                <TableRow
+                  course={i.courseName}
+                  date={i.date}
+                  iconSrc={i.courseLogo}
+                  key={idx}
+                  listedPrice={i?.listPrice ?? 0}
+                  golfers={i?.listedSlotsCount || 0}
+                  status={i.status}
+                  courseId={i.courseId}
+                  teeTimeId={i.teeTimeId}
+                  listingId={i.listingId ?? ""}
+                  timezoneCorrection={course?.timezoneCorrection}
+                  openManageListTeeTimeListing={() =>
+                    openManageListTeeTimeListing(i)
+                  }
+                />
+              ))}
           </tbody>
         </table>
       </div>
@@ -170,23 +188,17 @@ const TableRow = ({
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
       <td className="gap-2 px-4 py-3">
-        <Link
-          href={`/${courseId}/${teeTimeId}/listing/${listingId}`}
-          className="flex items-center gap-2"
-          data-testid="course-listing-id"
-          data-test={listingId}
-          data-qa={teeTimeId}
-        >
+        <div className="flex items-center gap-2">
           <Avatar src={iconSrc} />
           <div className="flex flex-col">
-            <div className="whitespace-nowrap underline text-secondary-black">
+            <div className="whitespace-nowrap text-secondary-black">
               {course}
             </div>
             <div className="text-primary-gray unmask-time">
               {formatTime(date, false, timezoneCorrection)}
             </div>
           </div>
-        </Link>
+        </div>
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         {formatMoney(listedPrice)}

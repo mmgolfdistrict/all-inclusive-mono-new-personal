@@ -12,7 +12,7 @@ export const OrderSummary = ({
   sensibleDataToMountComp,
   isSensibleInvalid,
   privacyPolicyAndTCByCourseUrl,
-  isGroupBooking = false
+  isGroupBooking = false,
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;
@@ -22,17 +22,18 @@ export const OrderSummary = ({
     privacyPolicyURL: string | null;
     termsAndConditionsURL: string | null;
   };
-    isGroupBooking?: boolean
+  isGroupBooking?: boolean;
 }) => {
   return (
     <section className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4">
       <h1 className="text-center md:text-start">Order Summary</h1>
-      <div className="rounded-md bg-primary p-2 text-white">
+      <div className="rounded-md bg-gray-300 p-2 text-black">
         <h2 className="text-lg">
           Plans change. No worries! Resell your time.{" "}
           <Tooltip
-            trigger={<Info className="h-[14px] w-[14px]" />}
-            content="Easily resell your tee time through our website. Please note that selling outside our platform is prohibited and may result in both the buyer and seller forfeiting their money and time."
+            className="!text-black"
+            trigger={<Info color="#000000" className="h-[14px] w-[14px]" />}
+            content="Easily resell your tee time through our Golf District platforms. Tee times bought and resold through Golf District—an approved technology partner—are verified and supported because they sync directly with the golf course’s official tee sheet. Reselling through unaffiliated platforms may not be compatible with course systems and could result in an invalid booking."
           />
         </h2>
       </div>
@@ -47,10 +48,8 @@ export const OrderSummary = ({
         />
       </div>
       <h2 className="italic">
-        This purchase in non-refundable. All fees are included.
-      </h2>
-      <h2 className="italic">
-        Please send your feedback to{" "}
+        This purchase in non-refundable. All fees are included. Please send your
+        feedback to{" "}
         <a href="mailto:support@golfdistrict.com">support@golfdistrict.com</a>.
       </h2>
       {privacyPolicyAndTCByCourseUrl?.privacyPolicyURL && (

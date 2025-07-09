@@ -51,24 +51,18 @@ export class DomainService {
       this.getConfigResponse(domain),
     ]);
     if (domainJson?.error?.code == "not_found") {
-      this.logger.debug(`Domain ${domain} not found`);
       status = "Domain Not Found";
     } else if (domainJson.error) {
-      this.logger.debug(`Domain ${domain} error: ${domainJson.error.message}`);
       status = "Unknown Error";
     } else if (!domainJson.verified) {
-      this.logger.debug(`Domain ${domain} not verified`);
       status = "Pending Verification";
       const verificationJson = await this.verifyDomain(domain);
       if (verificationJson && verificationJson.verified) {
-        this.logger.debug(`Domain ${domain} verified`);
         status = "Valid Configuration";
       }
     } else if (configResponse.misconfigured) {
-      this.logger.debug(`Domain ${domain} misconfigured`);
       status = "Invalid Configuration";
     } else {
-      this.logger.debug(`Domain ${domain} valid configuration`);
       status = "Valid Configuration";
     }
     return {
@@ -220,7 +214,7 @@ export class DomainService {
    * console.log(verificationResult);
    */
   private verifyDomain = async (domain: string): Promise<DomainVerificationResponse> => {
-    this.logger.info(`verifyDomain called with domain: ${domain}`);
+    // this.logger.info(`verifyDomain called with domain: ${domain}`);
     return await fetch(
       `https://api.vercel.com/v9/projects/${this.PROJECT_ID_VERCEL}/domains/${domain}/verify?teamId=${this.TEAM_ID_VERCEL}`,
       {

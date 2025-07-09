@@ -4,8 +4,6 @@ import type { Day } from "@taak/react-modern-calendar-datepicker";
 import { Calendar } from "@taak/react-modern-calendar-datepicker";
 import React, { useEffect, useState } from "react";
 import "@taak/react-modern-calendar-datepicker/lib/DatePicker.css";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { GoBack } from "~/components/buttons/go-back";
 import { Bell } from "~/components/icons/bell";
@@ -18,6 +16,7 @@ import { ChoosePlayers } from "~/components/input/choose-players";
 import { Input } from "~/components/input/input";
 import { Slider } from "~/components/input/slider";
 import Waitlists from "~/components/waitlist-page/waitlists";
+import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useMe } from "~/hooks/useMe";
 import { api } from "~/utils/api";
@@ -25,7 +24,6 @@ import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
-import { useAppContext } from "~/contexts/AppContext";
 
 function NotifyMe({ params }: { params: { course: string } }) {
   const router = useRouter();
@@ -35,16 +33,11 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const [selectedDates, setSelectedDates] = useState<Day[]>([]);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [displayDates, setDisplayDates] = useState<string>("");
-  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
-  const [timeRange, setTimeRange] = useState<string>("");
   const [players, setPlayers] = useState("1");
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const courseStartTime = dayjs(course?.openTime).format("hh:mm A");
-  const courseEndTime = dayjs(course?.closeTime).format("hh:mm A");
   const courseStartTimeNumber = course?.courseOpenTime ?? 9;
   const courseEndTimeNumber = course?.courseCloseTime ?? 9;
   const { setActivePage } = useAppContext();
-  setActivePage("notify-me")
+  setActivePage("notify-me");
 
   const [startTime, setStartTime] = useState<[number, number]>([
     courseStartTimeNumber,
@@ -70,9 +63,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
       });
     }
   }
-
-  const courseStartTimeObj = dayjs(courseStartTime, "hh:mm A");
-  const courseEndTimeObj = dayjs(courseEndTime, "hh:mm A");
 
   const [filteredStartTimeOptions, setFilteredStartTimeOptions] = useState<
     { displayTime: string; value: number }[]
@@ -126,43 +116,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
     day: currentDate.date(),
   };
 
-  const handleDoneSetTimeRange = () => {
-    let startTimeNum;
-    let endTimeNum;
-    if (startTime && startTime.length > 1) {
-      startTimeNum = Number(startTime[0]);
-      endTimeNum = Number(startTime[1]);
-    } else {
-      console.error("startTime is invalid:", startTime);
-    }
-    const courseStartNum = Number(courseStartTimeObj.format("HHmm"));
-    const courseEndNum = Number(courseEndTimeObj.format("HHmm"));
-
-    const formatTime = (time: string | number) => {
-      const timeString = time.toString().padStart(4, "0");
-      const hours = parseInt(timeString.slice(0, 2), 10);
-      const minutes = parseInt(timeString.slice(2), 10);
-      return dayjs().hour(hours).minute(minutes).format("hh:mm a");
-    };
-
-    if (startTimeNum < courseStartNum || endTimeNum > courseEndNum) {
-      setErrorMessage("Please select a time within the available duration.");
-      return;
-    }
-
-    if (startTimeNum > endTimeNum) {
-      setErrorMessage("Start time must be before end time");
-      const startTimeString = formatTime(courseStartNum);
-      const endTimeString = formatTime(courseEndNum);
-      setTimeRange(`${startTimeString} - ${endTimeString}`);
-      // setTimeRange("");
-      return;
-    } else {
-      setErrorMessage("");
-      setIsTimePickerOpen(false);
-    }
-  };
-
   const setFilter = (type, value) => {
     switch (type) {
       case "time": {
@@ -177,11 +130,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
       default:
         break;
     }
-  };
-
-  const handleTimePickerClose = () => {
-    setIsTimePickerOpen(false);
-    setErrorMessage("");
   };
 
   const handleSubmit = async () => {
@@ -214,13 +162,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
       playerCount: Number(players),
     };
 
-    const formatTime = (time: string | number) => {
-      const timeString = time.toString().padStart(4, "0");
-      const hours = parseInt(timeString.slice(0, 2), 10);
-      const minutes = parseInt(timeString.slice(2), 10);
-      return dayjs().hour(hours).minute(minutes).format("hh:mm a");
-    };
-
     await createNotifications(notificationsData, {
       onSuccess: (data) => {
         const toastContent = (
@@ -236,10 +177,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
         toast.success(toastContent);
 
         setSelectedDates([]);
-        const startTimeString = formatTime(courseStartTimeNumber);
-        const endTimeString = formatTime(courseEndTimeNumber);
-        setTimeRange(`${startTimeString} - ${endTimeString}`);
-        // setTimeRange("");
         setLocalStartTime([courseStartTimeNumber, courseEndTimeNumber]);
         setStartTime([courseStartTimeNumber, courseEndTimeNumber]);
         setPlayers("1");
@@ -263,22 +200,6 @@ function NotifyMe({ params }: { params: { course: string } }) {
     setDisplayDates(datesToDisplay.join(", "));
   }, [selectedDates]);
 
-  useEffect(() => {
-    if (startTime[0] && startTime[1]) {
-      const formatTime = (time: string | number) => {
-        const timeString = time.toString().padStart(4, "0");
-        const hours = parseInt(timeString.slice(0, 2), 10);
-        const minutes = parseInt(timeString.slice(2), 10);
-        return dayjs().hour(hours).minute(minutes).format("hh:mm a");
-      };
-
-      const startTimeString = formatTime(startTime[0]);
-      const endTimeString = formatTime(startTime[1]);
-      setTimeRange(`${startTimeString} - ${endTimeString}`);
-      setErrorMessage("");
-    }
-  }, [startTime[0], startTime[1]]);
-
   return (
     <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
       <div className="flex items-center justify-between px-4 md:px-6">
@@ -300,7 +221,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Set Your Preferences
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   Choose your ideal play date, time range, and number of
                   players.
                 </p>
@@ -316,7 +237,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Receive Alerts Instantly
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   We will alert you when a tee time becomes available or listed
                   for sale.
                 </p>
@@ -332,7 +253,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Book in Seconds
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   Act fast to lock in your spots before someone else does!
                 </p>
               </div>
@@ -347,7 +268,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 <h2 className="text-[14px] md:text-[18px] font-semibold">
                   Enjoy Your Round
                 </h2>
-                <p className="text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
                   Confirm your bookings, hit the greens, and make the most of
                   your day!
                 </p>
@@ -414,151 +335,100 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 </>
               )}
             </div>
-            <div className="" id="notify-select-time-range">
-              <Input
-                readOnly
-                className="cursor-pointer text-ellipsis"
-                label="Select Time Range"
-                placeholder="Times..."
-                name="times"
-                register={() => undefined}
-                onClick={() => setIsTimePickerOpen(true)}
-                value={timeRange}
-                onChange={() => null}
-              />
-              {isTimePickerOpen && (
-                <>
-                  <div
-                    className={`fixed left-0 top-0 z-20 h-[100dvh] w-screen backdrop-blur unmask-time`}
-                    onClick={() => setIsTimePickerOpen(false)}
-                  >
-                    <div className="h-screen bg-[#00000099]" />
-                  </div>
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <div className="w-[95%] flex flex-col max-w-[500px] p-6 gap-4 mt-14 rounded-xl bg-white fixed top-[50%] left-[50%] -translate-x-[50%] -translate-y-[60%] z-50">
-                      <Close
-                        className="absolute right-4 top-4 cursor-pointer"
-                        height={24}
-                        width={24}
-                        onClick={handleTimePickerClose}
-                      />
-                      <div>
-                        <span>
-                          Tee time available hours : {courseStartTime} -{" "}
-                          {courseEndTime}
-                        </span>
-                      </div>
-                      <h1 className="text-[20px] md:text-2xl">
-                        Select Time Range
-                      </h1>
-                      <section className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between">
-                          <div>Start Time</div>
-                          <div>
-                            {isMobile
-                              ? startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[0]
-                                  )
-                                ]?.displayTime
-                              : startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[0]
-                                  )
-                                ]?.displayTime}
-                            -
-                            {isMobile
-                              ? startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[1]
-                                  )
-                                ]?.displayTime
-                              : startTimeOptions[
-                                  startTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[1]
-                                  )
-                                ]?.displayTime}
-                          </div>
-                        </div>
-                        <Slider
-                          min={0}
-                          max={filteredStartTimeOptions.length - 1}
-                          step={1}
-                          value={
-                            isMobile
-                              ? [
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[0]
-                                  ),
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === timeMobile[1]
-                                  ),
-                                ]
-                              : [
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[0]
-                                  ),
-                                  filteredStartTimeOptions.findIndex(
-                                    (i) => i.value === localStartTime[1]
-                                  ),
-                                ]
-                          }
-                          onValueChange={(values) => {
-                            if (Array.isArray(values) && values.length === 2) {
-                              const startIndex = values[0];
-                              const endIndex = values[1];
+            <div className="flex flex-col gap-2" id="pick-start-time-field">
+              <div className="flex items-center justify-between">
+                <label
+                  className="text-[14px] text-primary-gray"
+                  htmlFor="time-range"
+                >
+                  Select Time Range
+                </label>
+                <div>
+                  {isMobile
+                    ? startTimeOptions[
+                      startTimeOptions.findIndex(
+                        (i) => i.value === timeMobile[0]
+                      )
+                    ]?.displayTime
+                    : startTimeOptions[
+                      startTimeOptions.findIndex(
+                        (i) => i.value === localStartTime[0]
+                      )
+                    ]?.displayTime}
+                  -
+                  {isMobile
+                    ? startTimeOptions[
+                      startTimeOptions.findIndex(
+                        (i) => i.value === timeMobile[1]
+                      )
+                    ]?.displayTime
+                    : startTimeOptions[
+                      startTimeOptions.findIndex(
+                        (i) => i.value === localStartTime[1]
+                      )
+                    ]?.displayTime}
+                </div>
+              </div>
+              <section className="flex flex-col gap-2">
+                <Slider
+                  min={0}
+                  max={filteredStartTimeOptions.length - 1}
+                  step={1}
+                  value={
+                    isMobile
+                      ? [
+                        filteredStartTimeOptions.findIndex(
+                          (i) => i.value === timeMobile[0]
+                        ),
+                        filteredStartTimeOptions.findIndex(
+                          (i) => i.value === timeMobile[1]
+                        ),
+                      ]
+                      : [
+                        filteredStartTimeOptions.findIndex(
+                          (i) => i.value === localStartTime[0]
+                        ),
+                        filteredStartTimeOptions.findIndex(
+                          (i) => i.value === localStartTime[1]
+                        ),
+                      ]
+                  }
+                  onValueChange={(values) => {
+                    if (Array.isArray(values) && values.length === 2) {
+                      const startIndex = values[0];
+                      const endIndex = values[1];
 
-                              if (
-                                typeof startIndex === "number" &&
-                                typeof endIndex === "number" &&
-                                startIndex >= 0 &&
-                                endIndex >= 0 &&
-                                startIndex < filteredStartTimeOptions.length &&
-                                endIndex < filteredStartTimeOptions.length
-                              ) {
-                                const startOption =
-                                  filteredStartTimeOptions[startIndex];
-                                const endOption =
-                                  filteredStartTimeOptions[endIndex];
+                      if (
+                        typeof startIndex === "number" &&
+                        typeof endIndex === "number" &&
+                        startIndex >= 0 &&
+                        endIndex >= 0 &&
+                        startIndex < filteredStartTimeOptions.length &&
+                        endIndex < filteredStartTimeOptions.length
+                      ) {
+                        const startOption =
+                          filteredStartTimeOptions[startIndex];
+                        const endOption = filteredStartTimeOptions[endIndex];
 
-                                if (startOption && endOption) {
-                                  setLocalStartTime([
-                                    startOption.value,
-                                    endOption.value,
-                                  ]);
+                        if (startOption && endOption) {
+                          setLocalStartTime([
+                            startOption.value,
+                            endOption.value,
+                          ]);
 
-                                  setFilter("time", [
-                                    startOption.value,
-                                    endOption.value,
-                                  ]);
-                                }
-                              }
-                            }
-                          }}
-                          onPointerUp={handleSetStartTime}
-                          aria-label="Select start and end times"
-                          data-testid="slider-time-range"
-                        />
-                      </section>
-                      <div>
-                        <span
-                          className={`text-[12px] text-red ${
-                            errorMessage ? "" : "hidden"
-                          }`}
-                        >
-                          {errorMessage}
-                        </span>
-                        <FilledButton
-                          className="w-full mt-2 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px]"
-                          onClick={handleDoneSetTimeRange}
-                        >
-                          Done
-                        </FilledButton>
-                      </div>
-                    </div>
-                  </LocalizationProvider>
-                </>
-              )}
+                          setFilter("time", [
+                            startOption.value,
+                            endOption.value,
+                          ]);
+                        }
+                      }
+                    }
+                  }}
+                  onPointerUp={handleSetStartTime}
+                  aria-label="Select start and end times"
+                  data-testid="slider-time-range"
+                />
+              </section>
             </div>
             <div className="" id="notify-number-of-players">
               <label className="text-[14px] text-primary-gray">
@@ -572,6 +442,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 teeTimeId={"-"}
                 playersOptions={["1", "2", "3", "4"]}
                 numberOfPlayers={["1", "2", "3", "4"]}
+                supportsGroupBooking={course?.supportsGroupBooking}
               />
             </div>
           </div>
@@ -584,7 +455,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
             <Bell width="15px" />
             Get Alerted
           </FilledButton>
-          <div className="flex justify-center items-center mt-2 italic text-primary-gray text-[12px] md:text-[16px] px-4 py-2 md:px-8 md:py-6">
+          <div className="flex justify-center items-center text-justify mt-2 italic text-primary-gray text-[12px] md:text-[16px] px-4 py-2 md:px-8 md:py-6">
             <p>
               Bookings are paid in advance and non-refundable. If plans change
               simply list your time for sale, and easily cash out.

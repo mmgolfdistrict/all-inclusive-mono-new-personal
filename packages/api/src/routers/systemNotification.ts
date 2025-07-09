@@ -18,18 +18,23 @@ export const systemNotificationRouter = createTRPCRouter({
         .getCourseGlobalNotification(input.courseId);
     }),
 
-    getWalkthroughSetting: publicProcedure.input(z.object({}))
-    .query(async ({ ctx }) => {
+  getWalkthroughSetting: publicProcedure.input(z.object({})).query(async ({ ctx }) => {
+    return await ctx.serviceFactory.getSystemNotificationService().getWalkthroughSetting();
+  }),
+
+  getGuidMeSetting: publicProcedure.input(z.object({})).query(async ({ ctx }) => {
+    return await ctx.serviceFactory.getSystemNotificationService().getGuidMeSetting();
+  }),
+
+  getEntityGlobalNotification: publicProcedure
+    .input(
+      z.object({
+        entityId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getSystemNotificationService()
-        .getWalkthroughSetting();
-    }), 
-
-    getGuidMeSetting: publicProcedure.input(z.object({}))
-        .query(async ({ ctx }) => {
-          return await ctx.serviceFactory
-            .getSystemNotificationService()
-            .getGuidMeSetting();
-        }),
-
+        .getEntityGlobalNotification(input.entityId);
+    }),
 });

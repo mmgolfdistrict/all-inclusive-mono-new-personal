@@ -125,6 +125,13 @@ export const GreenFeeTaxPercentSchema = BaseProductSchema.extend({
     }),
   }),
 });
+export const MerchandiseTaxPercentSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("merchandiseTaxPercent"),
+    }),
+  }),
+})
 
 // Firsthand group schema
 export const FirstHandGroupProductSchema = BaseProductSchema.extend({
@@ -137,6 +144,49 @@ export const FirstHandGroupProductSchema = BaseProductSchema.extend({
     }),
   }),
 });
+
+// Merchandise Product schema
+export const MerchandiseProductSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("merchandise"),
+      merchandiseItems: z.array(z.object({
+        id: z.string(),
+        qty: z.number(),
+        pricePerItem: z.number(),
+        taxAmountPerItem: z.number(),
+      })),
+    }),
+  }),
+});
+
+// Merchandise Product schema with Tax Overrides
+export const MerchandiseWithTaxOverrideProductSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("merchandiseWithTaxOverride"),
+      priceWithoutTax: z.number(),
+      taxAmount: z.number(),
+      merchandiseItems: z.array(z.object({
+        id: z.string(),
+        qty: z.number(),
+        merchandiseTaxPercent: z.number(),
+        pricePerItem: z.number(),
+        taxAmountPerItem: z.number(),
+      })),
+    }),
+  }),
+});
+
+// Advanced booking fees schema
+export const AdvancedBookingFeeSchema = BaseProductSchema.extend({
+  product_data: z.object({
+    metadata: z.object({
+      type: z.literal("advanced_booking_fees_per_player"),
+    }),
+  }),
+})
+
 
 // ProductData schema
 export const ProductDataSchema = z.union([
@@ -153,7 +203,11 @@ export const ProductDataSchema = z.union([
   GreenFeeTaxPercentSchema,
   WeatherGuaranteeTaxPercentSchema,
   MarkupTaxPercentSchema,
-  FirstHandGroupProductSchema
+  FirstHandGroupProductSchema,
+  MerchandiseProductSchema,
+  MerchandiseTaxPercentSchema,
+  MerchandiseWithTaxOverrideProductSchema,
+  AdvancedBookingFeeSchema
 ]);
 
 // CustomerCart schema
@@ -172,4 +226,8 @@ export const CustomerCartSchema = z.object({
   teeTimeId: z.string().optional(),
   courseName: z.string().optional(),
   playDateTime: z.string().optional(),
+  playerCount: z.string().optional(),
+  teeTimeType: z.string().optional(),
+  listingId: z.string().optional(),
+  purpose: z.string().optional(),
 });

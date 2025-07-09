@@ -4,6 +4,7 @@ import { systemNotification } from "@golf-district/database/schema/systemNotific
 import { currentUtcTimestamp } from "@golf-district/shared";
 import { walkthrough } from "@golf-district/database/schema/walkthrough";
 import { walkthroughSection } from "@golf-district/database/schema/walkthroughSection";
+import { entityGlobalNotification } from "@golf-district/database/schema/entityGlobalNotification";
 
 export class SystemNotificationService {
   constructor(private readonly database: Db) {}
@@ -57,31 +58,56 @@ export class SystemNotificationService {
     return courseNotifications;
   }
 
-  getWalkthroughSetting = async () =>{
+  getWalkthroughSetting = async () => {
     const walkthroughSetting = await this.database
-    .select({
-      id: walkthrough.id,
-      internalName: walkthrough.internalName,
-      name: walkthrough.name,     
-    })
-    .from(walkthrough)
+      .select({
+        id: walkthrough.id,
+        internalName: walkthrough.internalName,
+        name: walkthrough.name,
+      })
+      .from(walkthrough);
 
-    return walkthroughSetting
-  }
+    return walkthroughSetting;
+  };
 
-  getGuidMeSetting = async () =>{
+  getGuidMeSetting = async () => {
     const guideMeSetting = await this.database
-    .select({
-      id: walkthroughSection.id,
-      walkthroughId: walkthroughSection.walkthroughId,
-      sectionId: walkthroughSection.sectionId,
-      message: walkthroughSection.message,
-      displayOrder: walkthroughSection.displayOrder,
-    })
-    .from(walkthroughSection)
-    .orderBy(walkthroughSection.displayOrder)
+      .select({
+        id: walkthroughSection.id,
+        walkthroughId: walkthroughSection.walkthroughId,
+        sectionId: walkthroughSection.sectionId,
+        message: walkthroughSection.message,
+        displayOrder: walkthroughSection.displayOrder,
+      })
+      .from(walkthroughSection)
+      .orderBy(walkthroughSection.displayOrder);
 
-    return guideMeSetting
+    return guideMeSetting;
+  };
+
+  async getEntityGlobalNotification(entityId: string) {
+    const entityNotifications = await this.database
+      .select({
+        id: entityGlobalNotification.id,
+        shortMessage: entityGlobalNotification.shortMessage,
+        longMessage: entityGlobalNotification.longMessage,
+        bgColor: entityGlobalNotification.bgColor,
+        color: entityGlobalNotification.color,
+      })
+      .from(entityGlobalNotification)
+      .where(
+        and(
+          eq(entityGlobalNotification.entityId, entityId),
+          and(
+            lte(entityGlobalNotification.startDateTime, currentUtcTimestamp()),
+            gte(entityGlobalNotification.endDateTime, currentUtcTimestamp())
+          )
+        )
+      )
+      .execute()
+      .catch((e) => {
+        console.log("Error in getting system notification");
+      });
+    return entityNotifications;
   }
-
 }

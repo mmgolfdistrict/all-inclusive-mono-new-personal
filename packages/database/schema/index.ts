@@ -66,6 +66,11 @@ import * as walkthrough from "./walkthrough";
 import * as walkthroughSection from "./walkthroughSection";
 import * as withdrawals from "./withdrawals";
 import * as bookingRefund from './bookingRefund';
+import * as entityGlobalNotification from "./entityGlobalNotification";
+import * as failedBookings from "./failedBookings";
+import * as courseMerchandise from "./courseMerchandise";
+import * as bookingMerchandise from "./bookingMerchandise";
+import * as courseAdvancedBookingFee from "./courseAdvancedBookingFee";
 
 export const schema = {
   ...accounts,
@@ -135,5 +140,10 @@ export const schema = {
   ...groupBookings,
   ...walkthrough,
   ...walkthroughSection,
-  ...bookingRefund
+  ...bookingRefund,
+  ...entityGlobalNotification,
+  ...failedBookings,
+  ...courseMerchandise,
+  ...bookingMerchandise,
+  ...courseAdvancedBookingFee
 };

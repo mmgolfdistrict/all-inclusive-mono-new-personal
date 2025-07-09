@@ -28,6 +28,10 @@ export interface CustomerCart {
   cartId?: string;
   courseName?: string;
   playDateTime?: string;
+  playerCount?: string;
+  teeTimeType?: string;
+  listingId?: string;
+  purpose?: string;
 }
 
 export interface UpdatePayment {
@@ -65,7 +69,11 @@ export type ProductData =
   | GreenFeeTaxPercentProduct
   | MarkupTaxPercentProduct
   | WeatherGuaranteeTaxPercentProduct
-  | FirstHandGroupProduct;
+  | FirstHandGroupProduct
+  | MerchandiseProduct
+  | MerchandiseTaxPercentProduct
+  | MerchandiseWithTaxOverride
+  | AdvancedBookingFeesProduct;
 
 export interface BaseProduct {
   name: string; // teeTime-course-time
@@ -199,6 +207,53 @@ export interface FirstHandGroupProduct extends BaseProduct {
       tee_time_ids: string[];
       number_of_bookings: number;
       min_players_per_booking: number;
+    };
+  };
+}
+
+interface MerchandiseItem {
+  id: string;
+  qty: number;
+  pricePerItem: number;
+  taxAmountPerItem: number;
+}
+
+interface MerchandiseItemWithTax extends MerchandiseItem {
+  merchandiseTaxPercent: number;
+}
+
+export interface MerchandiseProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "merchandise";
+      merchandiseItems: MerchandiseItem[];
+    };
+  };
+}
+
+export interface MerchandiseTaxPercentProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "merchandiseTaxPercent";
+    };
+  };
+}
+
+export interface MerchandiseWithTaxOverride extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "merchandiseWithTaxOverride";
+      merchandiseItems: MerchandiseItemWithTax[];
+      priceWithoutTax: number;
+      taxAmount: number;
+    };
+  };
+}
+
+export interface AdvancedBookingFeesProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "advanced_booking_fees_per_player";
     };
   };
 }
