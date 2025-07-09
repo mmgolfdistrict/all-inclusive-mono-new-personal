@@ -486,7 +486,7 @@ export const TeeTime = ({
             {soldById === user?.id && session ? (
               <FilledButton
                 onClick={openManage}
-                className="whitespace-nowrap"
+                className="whitespace-nowrap w-full"
                 data-testid="sell-button-id"
                 data-test={teeTimeId}
                 data-qa="Buy"
