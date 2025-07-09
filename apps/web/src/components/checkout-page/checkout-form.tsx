@@ -1000,6 +1000,7 @@ export const CheckoutForm = ({
       merchandiseTaxAmount) /
     100;
   taxCharge += additionalTaxes;
+  taxCharge = Math.ceil(taxCharge * 100) / 100;
   const Total =
     primaryGreenFeeCharge +
     taxCharge +
