@@ -5366,13 +5366,14 @@ export class BookingService {
       const merchandiseTaxTotal =
         (merchandiseCharge / 100) * ((firstTeeTime?.merchandiseTaxPercent ?? 0) / 100);
 
-      const additionalTaxes =
+      let additionalTaxes =
         greenFeeTaxTotal +
         markupTaxTotal +
         weatherGuaranteeTaxTotal +
         cartFeeTaxPercentTotal +
         merchandiseTaxTotal +
         merchandiseOverriddenTaxAmount;
+      additionalTaxes = Math.ceil(additionalTaxes * 100) / 100;
       const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge;
 
       if (!firstTeeTime) {
