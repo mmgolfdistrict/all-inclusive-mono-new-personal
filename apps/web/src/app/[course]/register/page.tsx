@@ -771,7 +771,8 @@ export default function RegisterPage() {
                 e.preventDefault();
                 setShowPassword(!showPassword);
               }}
-              className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+              className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors.password?.message ? "pb-10" : ""
+                }`}
               data-testid="register-show-password-id"
             >
               {showPassword ? (
@@ -817,7 +818,8 @@ export default function RegisterPage() {
                 e.preventDefault();
                 setShowConfirmPassword(!showConfirmPassword);
               }}
-              className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+              className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors.confirmPassword?.message ? "pb-10" : ""
+                }`}
               data-testid="register-show-confirm-password-id"
             >
               {showConfirmPassword ? (
