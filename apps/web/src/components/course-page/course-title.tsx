@@ -34,14 +34,13 @@ export const CourseTitle = ({
           <DropdownMenu.Root>
             <DropdownMenu.Trigger className="outline-none">
               <h1
-                className={`flex ${
-                  hasMoreThanOneCourse ? "cursor-pointer" : "cursor-default"
-                } gap-2 text-[24px] text-secondary-black  md:text-[32px]`}
+                className={`flex ${hasMoreThanOneCourse ? "cursor-pointer" : "cursor-default"
+                  } gap-2 text-[1.5rem] text-secondary-black  md:text-[2rem]`}
               >
                 {courseName}
                 {hasMoreThanOneCourse ? (
                   <LeftChevron
-                    className="w-[14px] -rotate-90 md:w-[21px]"
+                    className="w-[0.875rem] -rotate-90 md:w-[1.3125rem]"
                     data-testid="course-chevron-id"
                   />
                 ) : null}
@@ -49,7 +48,7 @@ export const CourseTitle = ({
             </DropdownMenu.Trigger>
             {hasMoreThanOneCourse ? (
               <DropdownMenu.Portal>
-                <DropdownMenu.Content className=" ml-6 hidden max-h-[300px] min-w-[375px] overflow-y-auto rounded-xl border border-stroke bg-white shadow-md md:block">
+                <DropdownMenu.Content className=" ml-6 hidden max-h-[18.75rem] min-w-[23.4375rem] overflow-y-auto rounded-xl border border-stroke bg-white shadow-md md:block">
                   {courses?.map((course, idx) => (
                     <MenuItem
                       key={idx}
@@ -64,17 +63,16 @@ export const CourseTitle = ({
         </div>
         <button className="md:hidden" onClick={toggleLeaflet}>
           <h1
-            className={`flex ${
-              hasMoreThanOneCourse ? "cursor-pointer" : "cursor-default"
-            } gap-2 text-[24px] text-secondary-black  md:text-[32px]`}
+            className={`flex ${hasMoreThanOneCourse ? "cursor-pointer" : "cursor-default"
+              } gap-2 text-[1.5rem] text-secondary-black  md:text-[2rem]`}
           >
             {courseName}
             {hasMoreThanOneCourse ? (
-              <LeftChevron className="w-[14px] -rotate-90 md:w-[21px]" />
+              <LeftChevron className="w-[0.875rem] -rotate-90 md:w-[1.3125rem]" />
             ) : null}
           </h1>
         </button>
-        <p className=" text-[14px] text-primary-gray md:text-[20px]">
+        <p className=" text-[0.875rem] text-primary-gray md:text-[1.25rem]">
           {description}
         </p>
       </div>
@@ -111,7 +109,7 @@ const MenuItemLeaflet = ({
       onClick={onClick}
     >
       <div>{title}</div>
-      {isActive && <Check className="w-[14px]" />}
+      {isActive && <Check className="w-[0.875rem]" />}
     </div>
   );
 };
@@ -130,7 +128,7 @@ const MenuItem = ({
       className="flex cursor-pointer items-center justify-between px-4 py-2 outline-none hover:bg-secondary-white"
     >
       <div>{title}</div>
-      {isActive && <Check className="w-[14px]" />}
+      {isActive && <Check className="w-[0.875rem]" />}
     </DropdownMenu.Item>
   );
 };

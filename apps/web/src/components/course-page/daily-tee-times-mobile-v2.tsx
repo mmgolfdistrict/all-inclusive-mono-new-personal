@@ -5,7 +5,8 @@ import {
 } from "@golf-district/shared";
 import { WeatherIcons } from "~/constants/weather-icons";
 import { useCourseContext } from "~/contexts/CourseContext";
-import { DateType, useFiltersContext } from "~/contexts/FiltersContext";
+import type { DateType } from "~/contexts/FiltersContext";
+import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
 import { useEffect, useMemo, useRef } from "react";
@@ -207,7 +208,7 @@ export const DailyTeeTimesMobileV2 = ({
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
       <div className="flex flex-wrap justify-between gap-2 unmask-time">
         {isLoadingTeeTimeDate || isLoading || isFetchingNextPage ? (
-          <div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
+          <div className="h-8 min-w-[9.375rem] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
         ) : (
           <div className="w-full flex items-center gap-3 flex-col">
             <div
@@ -222,7 +223,7 @@ export const DailyTeeTimesMobileV2 = ({
               }
               <div
                 id="tee-time-box"
-                className="text-[16px] md:text-[20px] unmask-time"
+                className="text-base md:text-xl unmask-time"
                 data-testid="date-group-id"
                 data-qa={dayMonthDate(date)}
               >
@@ -252,7 +253,7 @@ export const DailyTeeTimesMobileV2 = ({
                 <div className="flex items-center gap-1">
                   <div>{WeatherIcons[weather?.iconCode ?? ""]}</div>
                   <div
-                    className="text-[12px] md:text-[16px] unmask-temperature"
+                    className="text-xs md:text-base unmask-temperature"
                     data-testid="weather-degrees-id"
                     data-qa={weather?.temperature}
                   >
@@ -280,7 +281,7 @@ export const DailyTeeTimesMobileV2 = ({
                     backgroundColor: courseException.bgColor,
                     color: courseException.color,
                   }}
-                  className="inline text-left text-[13px] md:text-lg"
+                  className="inline text-left text-[0.8125rem] md:text-lg"
                 >
                   {courseException.shortMessage}
                 </p>
@@ -311,7 +312,7 @@ export const DailyTeeTimesMobileV2 = ({
         >
           {allTeeTimes.length === 0 ? isLoadingTeeTimeDate || isLoading || isFetchingNextPage ? Array(TAKE)
             .fill(null)
-            .map((_, idx) => <TeeTimeSkeletonV2 key={idx} />) : <div className="flex justify-center items-center h-[400px]">
+            .map((_, idx) => <TeeTimeSkeletonV2 key={idx} />) : <div className="flex justify-center items-center h-[25rem]">
             <div className="text-center">
               No Tee Times Available.
             </div>
@@ -353,7 +354,7 @@ export const DailyTeeTimesMobileV2 = ({
           })}
           <div
             ref={nextPageRef}
-            className="h-[1px] w-[1px] text-[1px] text-white"
+            className="h-[0.0625rem] w-[0.0625rem] text-[0.0625rem] text-white"
           >
             Loading
           </div>

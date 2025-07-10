@@ -77,8 +77,8 @@ export const SaleTypeSelector: React.FC<SaleTypeSelectorProps> = ({
                                 disabled={disabled}
                             >
                                 <Tooltip
-                                    trigger={<Info className={`h-[14px] w-[14px] ${disabled ? "cursor-not-allowed" : ""}`} />}
-                                    content={<div className="max-w-[220px] text-sm break-words">{option.tooltip}</div>}
+                                    trigger={<Info className={`h-[0.875rem] w-[0.875rem] ${disabled ? "cursor-not-allowed" : ""}`} />}
+                                    content={<div className="max-w-[13.75rem] text-sm break-words">{option.tooltip}</div>}
                                     isDisabled={disabled}
                                 />
                             </button>
