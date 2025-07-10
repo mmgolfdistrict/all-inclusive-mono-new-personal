@@ -23,6 +23,7 @@ import { Spinner } from "../loading/spinner";
 import { SensibleWidget } from "../sensible/sensible-widget";
 import { Tooltip } from "../tooltip";
 import MerchandiseCarousel from "../checkout-page/merchandise-carousel";
+import { Info } from "../icons/info";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -245,64 +246,165 @@ export const CheckoutItem = ({
   };
 
   return (
-    <div className="relative flex w-full flex-col gap-2 bg-secondary-white  pt-4 lg:rounded-lg">
-      <div
-        className={`flex pb-4 lg:items-start ${isMobile ? "gap-1 px-1" : " gap-2 px-4 items-center"
-          }`}
-      >
-        <BlurImage
-          src={coursePreviewImage ?? ""}
-          width={placeholderImage.width}
-          height={placeholderImage.height}
-          alt="placeholder"
-          className="h-[60px] w-[60px] rounded-lg object-cover lg:h-[100px] lg:w-[100px]"
-        />
-        {isMobile ? (
-          <div className="flex w-full justify-between">
-            <div className="flex-col">
-              <div className="flex-row font-semibold unmask-time">
-                {isLoading ? (
-                  <div className="h-6 w-[50%] bg-gray-200 rounded-md animate-pulse" />
-                ) : (
-                  <span className="text-[16px]" id="date-time-checkout">
-                    {formatTime(
-                      teeTime?.date ?? "",
-                      true,
-                      course?.timezoneCorrection
-                    )}
-                  </span>
-                )}
-                <div>{course?.name}</div>
+    <div className="relative flex w-full flex-col gap-2 bg-secondary-white lg:rounded-lg">
+
+      {/* 1st box */}
+      <div className="rounded-md border border-grey-100">
+        <div className="rounded-md bg-gray-300 p-2 text-black mb-5 ml-2 mr-2 mt-2">
+          <h2 className="text-lg">
+            Plans change. No worries! Resell your time.{" "}
+            <Tooltip
+              className="!text-black"
+              trigger={<Info color="#000000" className="h-[14px] w-[14px]" />}
+              content="Easily resell your tee time through our Golf District platforms. Tee times bought and resold through Golf District—an approved technology partner—are verified and supported because they sync directly with the golf course’s official tee sheet. Reselling through unaffiliated platforms may not be compatible with course systems and could result in an invalid booking."
+            />
+          </h2>
+        </div>
+        <div
+          className={`flex pb-4 lg:items-start ${isMobile ? "gap-1 px-1" : " gap-2 px-4 items-center"
+            }`}
+        >
+          <BlurImage
+            src={coursePreviewImage ?? ""}
+            width={placeholderImage.width}
+            height={placeholderImage.height}
+            alt="placeholder"
+            className="h-[60px] w-[60px] rounded-lg object-cover lg:h-[100px] lg:w-[100px]"
+          />
+          {isMobile ? (
+            <div className="flex w-full justify-between">
+              <div className="flex-col">
+                <div className="flex-row font-semibold unmask-time">
+                  {isLoading ? (
+                    <div className="h-6 w-[50%] bg-gray-200 rounded-md animate-pulse" />
+                  ) : (
+                    <span className="text-[16px]" id="date-time-checkout">
+                      {formatTime(
+                        teeTime?.date ?? "",
+                        true,
+                        course?.timezoneCorrection
+                      )}
+                    </span>
+                  )}
+                  <div>{course?.name}</div>
+                </div>
+                <div className="flex-row">
+                  <Data
+                    className="flex"
+                    canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
+                    players={
+                      isGroupBooking
+                        ? amountOfPlayers
+                        : 4 - (teeTime?.availableSlots ?? 0)
+                    }
+                    selectedPlayers={amountOfPlayers.toString()}
+                    choosePlayers={choosePlayers}
+                    pricePerGolfer={teeTime?.pricePerGolfer}
+                    isLoading={
+                      isLoading || teeTime === undefined || teeTime === null
+                    }
+                    availableSlots={teeTime?.availableSlots}
+                    isSecondHand={
+                      teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
+                    }
+                    teeTimeId={teeTime?.teeTimeId}
+                    numberOfPlayers={numberOfPlayers}
+                    selectStatus={allowedPlayers?.selectStatus}
+                    canShowPlayers={!isGroupBooking}
+                    allowSplit={teeTime?.allowSplit || false}
+                    groupBookingParams={groupBookingParams}
+                  />
+                </div>
               </div>
-              <div className="flex-row">
-                <Data
-                  className="flex"
-                  canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
-                  players={
-                    isGroupBooking
-                      ? amountOfPlayers
-                      : 4 - (teeTime?.availableSlots ?? 0)
-                  }
-                  selectedPlayers={amountOfPlayers.toString()}
-                  choosePlayers={choosePlayers}
-                  pricePerGolfer={teeTime?.pricePerGolfer}
-                  isLoading={
-                    isLoading || teeTime === undefined || teeTime === null
-                  }
-                  availableSlots={teeTime?.availableSlots}
-                  isSecondHand={
-                    teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
-                  }
-                  teeTimeId={teeTime?.teeTimeId}
-                  numberOfPlayers={numberOfPlayers}
-                  selectStatus={allowedPlayers?.selectStatus}
-                  canShowPlayers={!isGroupBooking}
-                  allowSplit={teeTime?.allowSplit || false}
-                  groupBookingParams={groupBookingParams}
-                />
+              <div className="flex-col">
+                <div className="flex w-full gap-1 flex-col  lg:items-start items-start">
+                  <Tooltip
+                    trigger={
+                      teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND" ? (
+                        <Spinner className="w-[40px] h-[40px]" />
+                      ) : (
+                        <Avatar
+                          src={teeTime?.soldByImage}
+                          className="h-[40px] w-[80px] md:h-[40px] md:w-[80px] lg:h-[40px] lg:w-[80px]"
+                          isRounded={false}
+                        />
+                      )
+                    }
+                    content={
+                      "Sold by " +
+                      (teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
+                        ? "another Golf District golfer."
+                        : teeTime?.soldByName)
+                    }
+                  />
+                  <p
+                    className={`text-${getTextColor(
+                      getCourseException(teeTime?.date ?? "")?.displayType
+                    )} font-semibold`}
+                  >
+                    {getCourseException(teeTime?.date ?? "")?.shortMessage}
+                  </p>
+                  <p
+                    className={`text-${getTextColor(
+                      getCourseException(teeTime?.date ?? "")?.displayType
+                    )} font-semibold`}
+                  >
+                    {getCourseException(teeTime?.date ?? "")?.longMessage ||
+                      getCourseException(teeTime?.date ?? "")?.longMessage}
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="flex-col">
+          ) : (
+            <div className="flex w-full flex-col gap-2">
+              <div className="flex w-full flex-row justify-between">
+                <div className="font-semibold unmask-time">
+                  {isLoading ? (
+                    <div className="h-6 w-[50%] bg-gray-200 rounded-md animate-pulse" />
+                  ) : (
+                    <span
+                      className="md:text-[20px] text-[18px]"
+                      id="date-time-checkout"
+                    >
+                      {formatTime(
+                        teeTime?.date ?? "",
+                        true,
+                        course?.timezoneCorrection
+                      )}
+                    </span>
+                  )}
+                  <div>{course?.name}</div>
+                </div>
+
+                <div className="flex">
+                  <Data
+                    className="flex"
+                    canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
+                    players={
+                      isGroupBooking
+                        ? amountOfPlayers
+                        : 4 - (teeTime?.availableSlots ?? 0)
+                    }
+                    selectedPlayers={amountOfPlayers.toString()}
+                    choosePlayers={choosePlayers}
+                    pricePerGolfer={teeTime?.pricePerGolfer}
+                    isLoading={
+                      isLoading || teeTime === undefined || teeTime === null
+                    }
+                    availableSlots={teeTime?.availableSlots}
+                    isSecondHand={
+                      teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
+                    }
+                    teeTimeId={teeTime?.teeTimeId}
+                    numberOfPlayers={numberOfPlayers}
+                    selectStatus={allowedPlayers?.selectStatus}
+                    canShowPlayers={!isGroupBooking}
+                    allowSplit={teeTime?.allowSplit || false}
+                    groupBookingParams={groupBookingParams}
+                    shouldShowGroupBookingButton={shouldShowGroupBookingButton}
+                  />
+                </div>
+              </div>
               <div className="flex w-full gap-1 flex-col  lg:items-start items-start">
                 <Tooltip
                   trigger={
@@ -311,7 +413,7 @@ export const CheckoutItem = ({
                     ) : (
                       <Avatar
                         src={teeTime?.soldByImage}
-                        className="h-[40px] w-[80px] md:h-[40px] md:w-[80px] lg:h-[40px] lg:w-[80px]"
+                        className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
                         isRounded={false}
                       />
                     )
@@ -340,95 +442,8 @@ export const CheckoutItem = ({
                 </p>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex w-full flex-col gap-2">
-            <div className="flex w-full flex-row justify-between">
-              <div className="font-semibold unmask-time">
-                {isLoading ? (
-                  <div className="h-6 w-[50%] bg-gray-200 rounded-md animate-pulse" />
-                ) : (
-                  <span
-                    className="md:text-[20px] text-[18px]"
-                    id="date-time-checkout"
-                  >
-                    {formatTime(
-                      teeTime?.date ?? "",
-                      true,
-                      course?.timezoneCorrection
-                    )}
-                  </span>
-                )}
-                <div>{course?.name}</div>
-              </div>
-
-              <div className="flex">
-                <Data
-                  className="flex"
-                  canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
-                  players={
-                    isGroupBooking
-                      ? amountOfPlayers
-                      : 4 - (teeTime?.availableSlots ?? 0)
-                  }
-                  selectedPlayers={amountOfPlayers.toString()}
-                  choosePlayers={choosePlayers}
-                  pricePerGolfer={teeTime?.pricePerGolfer}
-                  isLoading={
-                    isLoading || teeTime === undefined || teeTime === null
-                  }
-                  availableSlots={teeTime?.availableSlots}
-                  isSecondHand={
-                    teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
-                  }
-                  teeTimeId={teeTime?.teeTimeId}
-                  numberOfPlayers={numberOfPlayers}
-                  selectStatus={allowedPlayers?.selectStatus}
-                  canShowPlayers={!isGroupBooking}
-                  allowSplit={teeTime?.allowSplit || false}
-                  groupBookingParams={groupBookingParams}
-                  shouldShowGroupBookingButton={shouldShowGroupBookingButton}
-                />
-              </div>
-            </div>
-            <div className="flex w-full gap-1 flex-col  lg:items-start items-start">
-              <Tooltip
-                trigger={
-                  teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND" ? (
-                    <Spinner className="w-[40px] h-[40px]" />
-                  ) : (
-                    <Avatar
-                      src={teeTime?.soldByImage}
-                      className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
-                      isRounded={false}
-                    />
-                  )
-                }
-                content={
-                  "Sold by " +
-                  (teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
-                    ? "another Golf District golfer."
-                    : teeTime?.soldByName)
-                }
-              />
-              <p
-                className={`text-${getTextColor(
-                  getCourseException(teeTime?.date ?? "")?.displayType
-                )} font-semibold`}
-              >
-                {getCourseException(teeTime?.date ?? "")?.shortMessage}
-              </p>
-              <p
-                className={`text-${getTextColor(
-                  getCourseException(teeTime?.date ?? "")?.displayType
-                )} font-semibold`}
-              >
-                {getCourseException(teeTime?.date ?? "")?.longMessage ||
-                  getCourseException(teeTime?.date ?? "")?.longMessage}
-              </p>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {isSupportMemberShip?.supportsProviderMembership === 1 &&
@@ -518,18 +533,30 @@ export const CheckoutItem = ({
       ) : null}
       {(isLoading || (courseMerchandise?.length === 0) || !course?.supportsSellingMerchandise || teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND") ?
         null :
-        <section className="hidden md:block p-0 md:px-4">
-          <div className="bg-white md:rounded-xl p-4">
-            <MerchandiseCarousel
-              items={courseMerchandise}
-              onItemQuantityChange={handleMerchandiseUpdate}
-              maxPlayers={Number(amountOfPlayers)}
+        <div>
+          {!isMobile && <div className='flex gap-1 items-center mb-2'>
+            <h2>Priority Add-Ons</h2>
+            <Tooltip
+              trigger={<Info className="h-[15px] w-[15px] text-primary-gray" />}
+              content="Prepaying for add-ons guarantees your availability for your rentals and may be cheaper than paying at the course."
             />
-          </div>
-        </section>}
+          </div>}
+          <section className="hidden md:block p-0 md:px-4 rounded-md border border-grey-100">
+            <div className="bg-white md:rounded-xl p-4">
+              <MerchandiseCarousel
+                items={courseMerchandise}
+                onItemQuantityChange={handleMerchandiseUpdate}
+                maxPlayers={Number(amountOfPlayers)}
+              />
+            </div>
+          </section>
+        </div>}
       {isSensibleInvalid || isLoading ? null : (
-        <div id="weather-guarantee">
-          <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
+        <div>
+          <h2 className="mb-2">Weather Guarantee</h2>
+          <div id="weather-guarantee" className="rounded-md border border-grey-100 p-1">
+            <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
+          </div>
         </div>
       )}
     </div>

@@ -125,14 +125,14 @@ const MerchandiseCarousel: React.FC<MerchandiseCarouselProps> = ({
 
     return (
         <div className="relative" ref={componentContainerRef} >
-            {title && <div className='flex gap-1 items-center mb-3'>
+            {/* {title && <div className='flex gap-1 items-center mb-3'>
                 <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
                 <Tooltip
                     trigger={<Info className="h-[20px] w-[20px] text-primary-gray" />}
                     content="Prepaying for add-ons guarantees your availability for your rentals and may be cheaper than paying at the course."
                 />
             </div>
-            }
+            } */}
             <div
                 className="flex overflow-x-auto gap-4 pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
                 ref={scrollableContainerRef}
