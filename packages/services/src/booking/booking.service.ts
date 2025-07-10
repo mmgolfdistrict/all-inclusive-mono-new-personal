@@ -3654,7 +3654,7 @@ export class BookingService {
       "merchandiseTaxPercent",
       "advanced_booking_fees_per_player"
     ];
-    const total = customerCartData?.cart?.cart
+    let total = customerCartData?.cart?.cart
       .filter(({ product_data }: ProductData) => {
         return !skipItemsForTotal.includes(product_data.metadata.type);
       })
@@ -3662,6 +3662,7 @@ export class BookingService {
         return acc + i.price;
       }, 0);
 
+    total = total - (merchandiseOverriddenTaxAmount * 100);
     return {
       ...primaryData,
       cart: customerCartData.cart as CustomerCart,
@@ -3971,12 +3972,14 @@ export class BookingService {
         (((cartFeeCharge / 100) * ((teeTime?.cartFeeTaxPercent ?? 0) / 100)) / 100) * playerCount;
       const merchandiseTaxTotal = (merchandiseCharge / 100) * ((teeTime?.merchandiseTaxPercent ?? 0) / 100);
 
-      const additionalTaxes =
+      let additionalTaxes =
         greenFeeTaxTotal +
         markupTaxTotal +
         weatherGuaranteeTaxTotal +
         cartFeeTaxPercentTotal +
-        merchandiseTaxTotal;
+        merchandiseTaxTotal +
+        merchandiseOverriddenTaxAmount;
+      additionalTaxes = Math.ceil(additionalTaxes * 100) / 100;
       const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge;
 
       if (!teeTime) {
@@ -5363,12 +5366,14 @@ export class BookingService {
       const merchandiseTaxTotal =
         (merchandiseCharge / 100) * ((firstTeeTime?.merchandiseTaxPercent ?? 0) / 100);
 
-      const additionalTaxes =
+      let additionalTaxes =
         greenFeeTaxTotal +
         markupTaxTotal +
         weatherGuaranteeTaxTotal +
         cartFeeTaxPercentTotal +
-        merchandiseTaxTotal;
+        merchandiseTaxTotal +
+        merchandiseOverriddenTaxAmount;
+      additionalTaxes = Math.ceil(additionalTaxes * 100) / 100;
       const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge;
 
       if (!firstTeeTime) {
