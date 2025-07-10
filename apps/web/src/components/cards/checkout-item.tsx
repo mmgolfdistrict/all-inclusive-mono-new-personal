@@ -533,14 +533,14 @@ export const CheckoutItem = ({
       ) : null}
       {(isLoading || (courseMerchandise?.length === 0) || !course?.supportsSellingMerchandise || teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND") ?
         null :
-        <div>
-          {!isMobile && <div className='flex gap-1 items-center mb-2'>
+        !isMobile && <div className="mt-4">
+          <div className='flex gap-1 items-center mb-2'>
             <h2>Priority Add-Ons</h2>
             <Tooltip
               trigger={<Info className="h-[15px] w-[15px] text-primary-gray" />}
               content="Prepaying for add-ons guarantees your availability for your rentals and may be cheaper than paying at the course."
             />
-          </div>}
+          </div>
           <section className="hidden md:block p-0 md:px-4 rounded-md border border-grey-100">
             <div className="bg-white md:rounded-xl p-4">
               <MerchandiseCarousel
@@ -552,7 +552,7 @@ export const CheckoutItem = ({
           </section>
         </div>}
       {isSensibleInvalid || isLoading ? null : (
-        <div>
+        <div className="mt-4">
           <h2 className="mb-2">Weather Guarantee</h2>
           <div id="weather-guarantee" className="rounded-md border border-grey-100 p-1">
             <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />

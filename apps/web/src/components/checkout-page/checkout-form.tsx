@@ -38,7 +38,6 @@ import { PhoneNumberUtil } from "google-libphonenumber";
 import { NAME_VALIDATION_REGEX } from "@golf-district/shared";
 import MerchandiseCarousel from "./merchandise-carousel";
 import Link from "next/link";
-import { useAppContext } from "~/contexts/AppContext";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -96,7 +95,6 @@ export const CheckoutForm = ({
 }) => {
   const MAX_CHARITY_AMOUNT = 1000;
   const { course } = useCourseContext();
-  const { entity } = useAppContext();
   const ALLOW_SPECIAL_REQUEST = course?.isAllowSpecialRequest;
 
   const ALLOW_CLUB_RENTAL = course?.isAllowClubRental;
@@ -1193,7 +1191,7 @@ export const CheckoutForm = ({
         {/* Section 4 */}
 
         <div>
-          <h2 className="mb-2">Payment Details</h2>
+          <h2 className="mb-4">Payment Details</h2>
           <div className="rounded-md border border-grey-100 pb-2 pr-2 pl-2" id="card-detail-form-checkout">
             <UnifiedCheckout
               id="unified-checkout"
@@ -1205,7 +1203,7 @@ export const CheckoutForm = ({
         {/* Section 5 */}
 
         {roundUpCharityId && (
-          <div>
+          <div className="mt-4">
             <h2
               className="mt-2 flex items-center"
               id="charity-name-checkout"
@@ -1356,7 +1354,7 @@ export const CheckoutForm = ({
         )}
 
         {/* Section 6 */}
-        <div>
+        <div className="mt-4">
           <h2 className="mb-2">Order Totals</h2>
           <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 rounded-md border border-grey-100">
             {!isLoadingUser && PHONE_NUMBER_MANDATORY_AT_CHECKOUT === "true" && <div className="flex flex-col gap-1" ref={phoneNumberRef}>
@@ -1771,7 +1769,7 @@ export const CheckoutForm = ({
         {(isLoadingMerchandise || (courseMerchandise?.length === 0) || !course?.supportsSellingMerchandise || !(isFirstHand.length || isFirstHandGroup.length)) ?
           null :
           <div className="mb-2">
-            {isMobile && <div className='flex gap-1 items-center mb-2'>
+            {isMobile && <div className='flex gap-1 items-center mb-2 mt-4'>
               <h2>Priority Add-Ons</h2>
               <Tooltip
                 trigger={<Info className="h-[15px] w-[15px] text-primary-gray" />}
@@ -1791,9 +1789,9 @@ export const CheckoutForm = ({
         }
         <label
           htmlFor="terms-of-service-checkbox"
-          className={`mb-2 flex items-start rounded-md p-2 border 
+          className={`mb-2 flex items-start rounded-md p-2 border mt-4
           bg-gray-100 transition-all duration-300`}
-          style={{ borderColor: isChecked ? entity?.color1 : "red" }}
+          style={{ borderColor: isChecked ? "transparent" : "red" }}
         >
           <input
             id="terms-of-service-checkbox"
