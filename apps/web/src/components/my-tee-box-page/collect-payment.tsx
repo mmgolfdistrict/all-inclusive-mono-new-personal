@@ -32,7 +32,8 @@ import { EmailOpen } from "../icons/mailOpen";
 import { Pending } from "../icons/pending";
 import { LinkExpired } from "../icons/link-expired";
 import { OutlineButton } from "../buttons/outline-button";
-import { SaleTypeOption, SaleTypeSelector } from "../input/sale-type-select";
+import type { SaleTypeOption } from "../input/sale-type-select";
+import { SaleTypeSelector } from "../input/sale-type-select";
 import { isValidEmail } from "@golf-district/shared";
 type CollectInputs = {
   index?: number;
@@ -55,20 +56,7 @@ type SideBarProps = {
   needsRedirect?: boolean;
   setIsSideBarClose: Dispatch<SetStateAction<boolean>>;
 };
-const SPLIT_TYPE_OPTIONS: SaleTypeOption[] = [
-  {
-    value: "equalSplit",
-    caption: "Equally distributed among players (Recommended) ",
-    description: "The amount is evenly split among 3 out of 4 players, with a 4.5% processing charge automatically added.",
-    tooltip: "Equal Split",
-  },
-  {
-    value: "customSplit",
-    caption: "Custom amount for each player",
-    description: "The amount requested from other players in a custom split includes a 4.5% processing charge, and the amount you receive will be after this charge is deducted from their contribution.",
-    tooltip: "Custom Split",
-  },
-];
+
 export const CollectPayment = ({
   isCollectPaymentOpen,
   setIsCollectPaymentOpen,
@@ -77,6 +65,22 @@ export const CollectPayment = ({
   needsRedirect,
   setIsSideBarClose
 }: SideBarProps) => {
+  console.log("selectedTeeTime", selectedTeeTime);
+
+  const SPLIT_TYPE_OPTIONS: SaleTypeOption[] = [
+    {
+      value: "equalSplit",
+      caption: "Equally Distributed to All (Recommended) ",
+      description: "The amount is evenly split among 3 out of 4 players.",
+      tooltip: `The amount you paid is equally distributed to all the players including you. You will be able to collect money from the remaining ${(selectedTeeTime?.golfers?.length ?? 0) - 1} ${(selectedTeeTime?.golfers?.length ?? 0) > 1 ? "players" : "player"}.`,
+    },
+    {
+      value: "customSplit",
+      caption: "Custom Amount",
+      description: "You decide the amount you want to collect from other players. This gives you the flexibility on who and how much you want to collect from.",
+      tooltip: "You will be able to collect a different amount from each player not exceeding the total amount. This gives you the flexibility to pay of your friends event like their birthdays.",
+    },
+  ];
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const { data: paymentProcessingCharge } = api.checkout.collectPaymentProcessorPercent.useQuery({})
@@ -246,7 +250,7 @@ export const CollectPayment = ({
     }
   };
   const isAdditionalMessageExceedingLimit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const maxLength = 70;
+    const maxLength = 127;
     const value = e.target.value;
     setAddtionalMessage(value);
     if (value.length > maxLength) {
@@ -526,14 +530,14 @@ export const CollectPayment = ({
             </div>
 
             <div className="flex flex-col justify-between w-full px-3 mt-[25px]">
-              <div>
+              {/* <div>
                 <p className="text-red text-[12px] pt-4 pb-4">
                   *Payment processor charges of {Number(paymentProcessingCharge || 0) / 100}% will be applicable.
                 </p>
-              </div>
+              </div> */}
               <div className="flex justify-between">
                 <h4 className="text-primary-gray" >
-                  Send Payment Link
+                  Enter Recipient Information
                 </h4>
                 <Refresh
                   onClick={() => setSendTrigger((prev) => prev + 1)}
@@ -676,7 +680,10 @@ export const CollectPayment = ({
             </div>
             <div className="w-full">
               <label htmlFor="message" className="block text-primary-gray font-medium mb-1">
-                Additional Message
+                <div>
+                  <span>Additional Message</span>
+                  <span className="ml-4 text-sm text-blue-500" >{validationMsg}</span>
+                </div>
               </label>
               <textarea
                 id="message"
@@ -684,16 +691,16 @@ export const CollectPayment = ({
                 className="w-full h-25 p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
                 onChange={(e) => isAdditionalMessageExceedingLimit(e)}
                 value={additionalMessage}
+                maxLength={127}
               ></textarea>
-              <p className="text-sm text-primary-gray" >{validationMsg}</p>
             </div>
             <div className="flex flex-col w-full gap-3">
               <div className="w-full flex justify-between px-3 pt-5">
                 <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
-                  <h4 className="text-primary-gray">Total Amount Paid</h4>
+                  <h4 className="text-primary-gray">Total Amount Received</h4>
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="The total for the number of people who have paid"
+                    content={<div className="max-w-[220px] text-sm break-words">The total amount that you have received so far. This amount should be available for you to withdraw. Go to Account Settings to withdraw this amount if you haven’t withdrawn.</div>}
                   />
                 </div>
                 <div>
@@ -702,10 +709,10 @@ export const CollectPayment = ({
               </div>
               <div className="w-full flex justify-between px-3 pt-5">
                 <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
-                  <h4 className="text-primary-gray">Total Amount</h4>
+                  <h4 className="text-primary-gray">Total Amount Requested</h4>
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content={<div className="max-w-[220px] text-sm break-words">This is total amount Including payment processing charges</div>}
+                    content={<div className="max-w-[220px] text-sm break-words">The total amount you will be requesting when you click the Send button.</div>}
                   />
                 </div>
                 <div>
@@ -717,20 +724,20 @@ export const CollectPayment = ({
               </div>
               <div className="w-full flex justify-between px-3 pt-3" >
                 <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
-                  <h4 className="text-primary-gray" >Payment Processor Charges</h4>
+                  <h4 className="text-primary-gray" >Payment Processor Fees</h4>
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="Payment processing fee"
+                    content={<div className="max-w-[220px] text-sm break-words">This is the approximate amount our payment processor collects to facilitate this transaction.</div>}
                   />
                 </div>
                 <div>
                   <p className="text-primary-gray">
-                    ${(
+                    {`($${(
                       (Number(paymentProcessingCharge) / 100) * (Number(availableSlots) - 1)
                     ).toLocaleString("en-US", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
-                    })}
+                    })})`}
                   </p>
                 </div>
               </div>
@@ -739,7 +746,7 @@ export const CollectPayment = ({
                   <h4 className="text-primary-gray" >Your Payout</h4>
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content={<div className="max-w-[220px] text-sm break-words">This Amount you will received in Cashout</div>}
+                    content={<div className="max-w-[220px] text-sm break-words">The amount you will receive from your players after fees.</div>}
                   />
                 </div>
                 <div>
@@ -815,13 +822,13 @@ const TeeTimeItem = ({
             You purchased for{" "}
             <span className="font-semibold">${purchasedFor}</span>
           </p>
-          <p className="font-light">
+          {/* <p className="font-light">
             {" "}
             Weather guarantee purchased At{" "}
             <span className="font-semibold">
               ${(weatherGuaranteeAmount ?? 0) / 100}
             </span>{" "}
-          </p>
+          </p> */}
         </div>
       </div>
     </div>
