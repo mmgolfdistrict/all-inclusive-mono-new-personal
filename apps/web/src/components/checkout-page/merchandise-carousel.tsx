@@ -184,7 +184,7 @@ const MerchandiseInfoPopup: React.FC<MerchandiseInfoPopupProps> = ({
     return (
         <div
             ref={popupRef}
-            className="absolute z-10 bg-white border border-primary rounded-lg p-4 shadow-lg flex flex-col gap-2 w-full max-w-[460px]"
+            className="absolute z-10 bg-white border border-primary rounded-lg p-4 shadow-lg flex flex-col gap-2 w-full max-w-[28.75rem]"
             style={{
                 top: `${position.top}px`,
                 left: `${position.left}px`,
@@ -220,7 +220,7 @@ const MerchandiseInfoPopup: React.FC<MerchandiseInfoPopupProps> = ({
                     className="text-gray-500 hover:text-gray-700"
                     aria-label="Close merchandise details"
                 >
-                    <Close className="h-[25px] w-[25px]" />
+                    <Close className="h-[1.5625rem] w-[1.5625rem]" />
                 </button>
             </div>
 

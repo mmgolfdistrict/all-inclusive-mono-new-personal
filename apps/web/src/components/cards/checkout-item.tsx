@@ -255,7 +255,7 @@ export const CheckoutItem = ({
             Plans change. No worries! Resell your time.{" "}
             <Tooltip
               className="!text-black"
-              trigger={<Info color="#000000" className="h-[14px] w-[14px]" />}
+              trigger={<Info color="#000000" className="h-[0.875rem] w-[0.875rem]" />}
               content="Easily resell your tee time through our Golf District platforms. Tee times bought and resold through Golf District—an approved technology partner—are verified and supported because they sync directly with the golf course’s official tee sheet. Reselling through unaffiliated platforms may not be compatible with course systems and could result in an invalid booking."
             />
           </h2>
@@ -269,7 +269,7 @@ export const CheckoutItem = ({
             width={placeholderImage.width}
             height={placeholderImage.height}
             alt="placeholder"
-            className="h-[60px] w-[60px] rounded-lg object-cover lg:h-[100px] lg:w-[100px]"
+            className="h-[3.75rem] w-[3.75rem] rounded-lg object-cover lg:h-[6.25rem] lg:w-[6.25rem]"
           />
           {isMobile ? (
             <div className="flex w-full justify-between">
@@ -278,7 +278,7 @@ export const CheckoutItem = ({
                   {isLoading ? (
                     <div className="h-6 w-[50%] bg-gray-200 rounded-md animate-pulse" />
                   ) : (
-                    <span className="text-[16px]" id="date-time-checkout">
+                    <span className="text-[1rem]" id="date-time-checkout">
                       {formatTime(
                         teeTime?.date ?? "",
                         true,
@@ -321,11 +321,11 @@ export const CheckoutItem = ({
                   <Tooltip
                     trigger={
                       teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND" ? (
-                        <Spinner className="w-[40px] h-[40px]" />
+                        <Spinner className="w-[2.5rem] h-[2.5rem]" />
                       ) : (
                         <Avatar
                           src={teeTime?.soldByImage}
-                          className="h-[40px] w-[80px] md:h-[40px] md:w-[80px] lg:h-[40px] lg:w-[80px]"
+                          className="h-[2.5rem] w-[5rem] md:h-[2.5rem] md:w-[5rem] lg:h-[2.5rem] lg:w-[5rem]"
                           isRounded={false}
                         />
                       )
@@ -363,7 +363,7 @@ export const CheckoutItem = ({
                     <div className="h-6 w-[50%] bg-gray-200 rounded-md animate-pulse" />
                   ) : (
                     <span
-                      className="md:text-[20px] text-[18px]"
+                      className="md:text-[1.25rem] text-[1.125rem]"
                       id="date-time-checkout"
                     >
                       {formatTime(
@@ -409,11 +409,11 @@ export const CheckoutItem = ({
                 <Tooltip
                   trigger={
                     teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND" ? (
-                      <Spinner className="w-[40px] h-[40px]" />
+                      <Spinner className="w-[2.5rem] h-[2.5rem]" />
                     ) : (
                       <Avatar
                         src={teeTime?.soldByImage}
-                        className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
+                        className="!min-h-[2.5rem] !min-w-[5rem] max-h-[2.5rem] max-w-[5rem] h-[2.5rem] w-[5rem] md:min-h-[2.5rem] md:min-w-[5rem] md:max-h-[2.5rem] md:max-w-[5rem] md:h-[2.5rem] md:w-[5rem] lg:w-[5rem] lg:h-[2.5rem]"
                         isRounded={false}
                       />
                     )
@@ -512,7 +512,7 @@ export const CheckoutItem = ({
                                 )
                               }
                               disabled={isCustomerValidated === index}
-                              className="bg-primary px-3 py-1 rounded-[20px] text-white text-sm min-w-[100px] flex items-center justify-center "
+                              className="bg-primary px-3 py-1 rounded-[1.25rem] text-white text-sm min-w-[6.25rem] flex items-center justify-center "
                             >
                               {isCustomerValidated === index ? (
                                 <LoaderIcon className="w-3 h-3" />
@@ -537,7 +537,7 @@ export const CheckoutItem = ({
           <div className='flex gap-1 items-center mb-2'>
             <h2>Priority Add-Ons</h2>
             <Tooltip
-              trigger={<Info className="h-[15px] w-[15px] text-primary-gray" />}
+              trigger={<Info className="h-[0.9375rem] w-[0.9375rem] text-primary-gray" />}
               content="Prepaying for add-ons guarantees your availability for your rentals and may be cheaper than paying at the course."
             />
           </div>
@@ -624,7 +624,7 @@ const Data = ({
     <div className={` w-full gap-2 text-sm  ${className}`}>
       <div className="flex flex-col gap-2 lg:items-end">
         {canShowPlayers ? (
-          <div className="flex min-h-[31px] items-center gap-2">
+          <div className="flex min-h-[1.9375rem] items-center gap-2">
             {!isMobile && <OutlineClub />}
             {canChoosePlayer ? (
               <ChoosePlayers
@@ -655,10 +655,10 @@ const Data = ({
           )
         )}
         <div className="flex" id="price-per-golfer-checkout">
-          <div className="md:text-[18px] text-[16px] font-semibold text-secondary-black">
+          <div className="md:text-[1.125rem] text-[1rem] font-semibold text-secondary-black">
             {formatMoney(pricePerGolfer ?? 1 ?? 0)}
           </div>
-          <div className="md:text-[16px] text-[14px] text-primary-gray">
+          <div className="md:text-[1rem] text-[0.875rem] text-primary-gray">
             /golfer
           </div>
         </div>

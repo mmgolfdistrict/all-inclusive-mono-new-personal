@@ -310,11 +310,11 @@ export const InviteFriends = ({
               : "Invite friends to your tee time"}
           </div>
         </div>
-        <div className="flex max-w-full flex-col gap-2 overflow-auto px-4 pb-2 text-[14px] md:px-6 md:pb-3">
+        <div className="flex max-w-full flex-col gap-2 overflow-auto px-4 pb-2 text-[0.875rem] md:px-6 md:pb-3">
           <div className={`flex flex-col gap-2 pb-6 text-center items-center`}>
             <label
               htmlFor="friends"
-              className="text-[16px] text-primary-gray md:text-[18px]"
+              className="text-[1rem] text-primary-gray md:text-[1.125rem]"
             >
               Add/edit invited friends
             </label>
@@ -323,17 +323,17 @@ export const InviteFriends = ({
                 return (
                   <div
                     key={friend.slotId}
-                    className="w-full max-w-[400px] rounded-lg"
+                    className="w-full max-w-[25rem] rounded-lg"
                   >
                     {!friend.currentlyEditing ? (
-                      <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none">
+                      <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[1rem] font-semibold outline-none">
                         <div style={{
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                         }}>{index === 0 ? "You" : friend.name}</div>
                         {index !== 0 && course?.supportsPlayerNameChange ? (
                           <button onClick={() => removeFriend(friend.slotId)}>
-                            <Edit className="w-[20px]" />
+                            <Edit className="w-[1.25rem]" />
                           </button>
                         ) : null}
                       </div>
@@ -346,12 +346,12 @@ export const InviteFriends = ({
                           onChange={(e) => handleNewFriend(e, friend)}
                           onSelect={addFriend}
                           placeholder="Username or email"
-                          className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
+                          className="mx-auto w-full max-w-[25rem] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[0.875rem] font-semibold outline-none"
                           data-testid="search-friend-id"
                         />
                         {friend.slotId === newFriend.slotId &&
                           friendList?.length ? (
-                          <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none">
+                          <div className="mx-auto w-full max-w-[25rem] rounded-lg py-2 flex justify-between text-[0.875rem] font-semibold outline-none">
                             <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
                               {friendList?.map((frnd, idx) => (
                                 <li key={idx}>
@@ -379,7 +379,7 @@ export const InviteFriends = ({
                           debouncedValue.name.length > 0 &&
                           !isLoading &&
                           !friendList.length && (
-                            <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
+                            <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[25rem]">
                               {(!inviteSuccess[friend.slotId] ||
                                 isInviteVisible) && (
                                   <>
@@ -410,7 +410,7 @@ export const InviteFriends = ({
               : null}
           </div>
 
-          <div className="flex flex-col gap-2 w-full mx-auto max-w-[400px]">
+          <div className="flex flex-col gap-2 w-full mx-auto max-w-[25rem]">
             <FilledButton
               onClick={() => void save()}
               data-testid="save-button-id"
