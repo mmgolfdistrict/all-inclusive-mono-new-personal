@@ -107,9 +107,8 @@ export const DropMedia = ({
 
   return (
     <div
-      className={`flex cursor-pointer flex-col gap-1 w-full ${
-        isUploading ? "animate-pulse" : ""
-      }`}
+      className={`flex cursor-pointer flex-col gap-1 w-full ${isUploading ? "animate-pulse" : ""
+        }`}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragEnter}
       onDragLeave={handleDragLeave}
@@ -119,22 +118,20 @@ export const DropMedia = ({
     >
       <div>
         <label
-          className="text-[14px] cursor-pointer text-primary-gray"
+          className="text-[0.875rem] cursor-pointer text-primary-gray"
           htmlFor={id}
         >
           {label}
         </label>
-        <div className="text-[12px] cursor-pointer font-thin">{subtext}</div>
+        <div className="text-[0.75rem] cursor-pointer font-thin">{subtext}</div>
       </div>
       <div
-        className={`flex items-center justify-between gap-2 rounded-lg transition-colors ${
-          dragging ? " bg-secondary-white" : ""
-        }`}
+        className={`flex items-center justify-between gap-2 rounded-lg transition-colors ${dragging ? " bg-secondary-white" : ""
+          }`}
       >
         <div
-          className={`flex h-44 w-full flex-col items-center justify-center rounded-lg border border-dashed border-primary ${
-            !imageSrc ? "block" : "hidden"
-          }
+          className={`flex h-44 w-full flex-col items-center justify-center rounded-lg border border-dashed border-primary ${!imageSrc ? "block" : "hidden"
+            }
           `}
         >
           <input
@@ -145,7 +142,7 @@ export const DropMedia = ({
             // @ts-ignore
             {...register(name)}
           />
-          <Upload className="w-[20px]" />
+          <Upload className="w-[1.25rem]" />
           <div className="text-sm text-primary-gray">
             Drag & drop or <span className="text-primary">browse</span>
           </div>
@@ -157,11 +154,10 @@ export const DropMedia = ({
             width={isBackgroundImage ? 500 : 176}
             height={176}
             unoptimized
-            className={` ${
-              isBackgroundImage
+            className={` ${isBackgroundImage
                 ? "h-44 w-full rounded-lg object-cover"
                 : "min-w-44 h-44 w-44 rounded-full border-4 border-stroke object-cover"
-            } `}
+              } `}
           />
         )}
       </div>

@@ -25,9 +25,9 @@ export const AddCreditCard = () => {
       id="payment-method"
       className="flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4"
     >
-      <h1 className="pb-6 text-[18px] md:text-[24px]">Add New Credit Card</h1>
+      <h1 className="pb-6 text-[1.125rem] md:text-[1.5rem]">Add New Credit Card</h1>
 
-      <div className="w-full md:min-w-[370px] px-2 md:px-0">
+      <div className="w-full md:min-w-[23.125rem] px-2 md:px-0">
         <AddCard refetchCards={refetch} />
       </div>
     </section>
@@ -65,7 +65,7 @@ export const AddCreditCard = () => {
 //           onClick={() => setConfirmStatus(true)}
 //           className="border border-alert-red px-3 rounded-md"
 //         >
-//           <Trashcan fill="#EE2020" className="w-[20px] h-[20px]" />
+//           <Trashcan fill="#EE2020" className="w-[1.25rem] h-[1.25rem]" />
 //         </button>
 //       </div>
 //       {/* <div id="backdrop" className="fixed inset-0 bg-black opacity-50 z-10 backdrop"></div> */}
