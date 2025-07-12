@@ -24,13 +24,13 @@ export const FilterSort = ({
   } = useFiltersContext();
 
   return (
-    <div className="flex text-[12px] text-secondary-black transition-colors">
+    <div className="flex text-[0.75rem] text-secondary-black transition-colors">
       <button
         onClick={toggleFilters}
         className="flex items-center gap-1 rounded-full border border-strok border-primary text-primary bg-white px-3.5 py-2 active:bg-stroke-secondary"
         data-testid="toggle-filter-id"
       >
-        <FiltersIcon className="h-[14px] w-[14px]" primaryColor={entity?.color1} /> Filters
+        <FiltersIcon className="h-[0.875rem] w-[0.875rem]" primaryColor={entity?.color1} /> Filters
         {(dateType !== "All" as DateType || golfers !== "Any" || course?.courseOpenTime !== startTime[0] || course?.courseCloseTime !== startTime[1]) && (
           <CancelIcon
             width={16}
@@ -49,7 +49,7 @@ export const FilterSort = ({
         className="flex items-center gap-1 rounded-r-full border-b border-r border-t border-stroke bg-white px-3.5 py-2 active:bg-stroke-secondary"
         data-testid="toggle-sort-id"
       >
-        <SortIcon className="h-[14px] w-[14px]" /> Sort
+        <SortIcon className="h-[0.875rem] w-[0.875rem]" /> Sort
       </button> */}
     </div>
   );

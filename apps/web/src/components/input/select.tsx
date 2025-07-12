@@ -24,13 +24,13 @@ export const Select = ({
     <RadixSelect.Root value={value} onValueChange={setValue}>
       <RadixSelect.Trigger
         data-testid="sort-by-id"
-        className={`flex h-[35px] items-center justify-between gap-2 whitespace-nowrap rounded-full border border-stroke bg-white px-4 py-2 text-[14px] outline-none data-[placeholder]:text-primary-gray ${className}`}
+        className={`flex h-[2.1875rem] items-center justify-between gap-2 whitespace-nowrap rounded-full border border-stroke bg-white px-4 py-2 text-[0.875rem] outline-none data-[placeholder]:text-primary-gray ${className}`}
       >
         <RadixSelect.Value placeholder="Sort by price" aria-label={value}>
           {value}
         </RadixSelect.Value>
         <RadixSelect.Icon className="text-primary-gray">
-          <DownChevron className="h-[14px] w-[14px]" />
+          <DownChevron className="h-[0.875rem] w-[0.875rem]" />
         </RadixSelect.Icon>
       </RadixSelect.Trigger>
 
@@ -39,10 +39,10 @@ export const Select = ({
           position="popper"
           className="rounded-lg bg-white shadow-lg z-20"
         >
-          <RadixSelect.ScrollUpButton className="flex h-[25px] cursor-default items-center justify-center bg-white text-primary-gray">
-            <DownChevron className="h-[14px] w-[14px] rotate-180" />
+          <RadixSelect.ScrollUpButton className="flex h-[1.5625rem] cursor-default items-center justify-center bg-white text-primary-gray">
+            <DownChevron className="h-[0.875rem] w-[0.875rem] rotate-180" />
           </RadixSelect.ScrollUpButton>
-          <RadixSelect.Viewport className="max-h-[280px] overflow-y-auto">
+          <RadixSelect.Viewport className="max-h-[17.5rem] overflow-y-auto">
             {values.map((item, idx) => (
               <SelectItem
                 value={item}
@@ -57,8 +57,8 @@ export const Select = ({
 
             <RadixSelect.Separator />
           </RadixSelect.Viewport>
-          <RadixSelect.ScrollDownButton className="flex h-[25px] cursor-default items-center justify-center bg-white text-primary-gray">
-            <DownChevron className="h-[14px] w-[14px]" />
+          <RadixSelect.ScrollDownButton className="flex h-[1.5625rem] cursor-default items-center justify-center bg-white text-primary-gray">
+            <DownChevron className="h-[0.875rem] w-[0.875rem]" />
           </RadixSelect.ScrollDownButton>
         </RadixSelect.Content>
       </RadixSelect.Portal>
@@ -83,15 +83,15 @@ const SelectItem = forwardRef(
   ) => {
     return (
       <RadixSelect.Item
-        className={`relative w-[295px] flex h-[30px] select-none items-center rounded-lg pl-[25px] pr-[35px] text-[13px] leading-none text-primary-gray data-[disabled]:pointer-events-none data-[highlighted]:bg-stroke-secondary data-[disabled]:text-stroke data-[highlighted]:text-black data-[highlighted]:outline-none
+        className={`relative w-[18.4375rem] flex h-[1.875rem] select-none items-center rounded-lg pl-[1.5625rem] pr-[2.1875rem] text-[0.8125rem] leading-none text-primary-gray data-[disabled]:pointer-events-none data-[highlighted]:bg-stroke-secondary data-[disabled]:text-stroke data-[highlighted]:text-black data-[highlighted]:outline-none
         ${className ?? ""}`}
         value={value}
         {...props}
         ref={forwardedRef as RefObject<HTMLDivElement>}
       >
         <RadixSelect.ItemText>{children}</RadixSelect.ItemText>
-        <RadixSelect.ItemIndicator className="absolute left-0 inline-flex w-[25px] items-center justify-center ">
-          <Check className="h-[15px] w-[15px]" />
+        <RadixSelect.ItemIndicator className="absolute left-0 inline-flex w-[1.5625rem] items-center justify-center ">
+          <Check className="h-[0.9375rem] w-[0.9375rem]" />
         </RadixSelect.ItemIndicator>
       </RadixSelect.Item>
     );

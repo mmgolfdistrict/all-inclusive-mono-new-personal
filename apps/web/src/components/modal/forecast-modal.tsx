@@ -22,7 +22,7 @@ const dayMonthDate = (date: string): string => {
 export const ForecastModal = ({
   closeForecastModal,
   startDate: propStartDate,
-  endDate: propEndDate, 
+  endDate: propEndDate,
 }: Props) => {
   const { course } = useCourseContext();
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -41,7 +41,7 @@ export const ForecastModal = ({
     startDate,
     endDate,
   });
-  
+
   const formatDate = (date: Date | string): string => {
     return dayjs(date).format('YYYY-MM-DD');
   };
@@ -66,7 +66,7 @@ export const ForecastModal = ({
     }
   };
 
-  const handleTabClick = (tab : string) => {
+  const handleTabClick = (tab: string) => {
     setActiveTab(tab);
   };
 
@@ -81,7 +81,7 @@ export const ForecastModal = ({
         <div className="flex items-center pb-3 relative">
           <h3 className="text-lg font-semibold mx-auto">Price Forecasting</h3>
           <button onClick={closeForecastModal} className="text-xl">
-            <Close className="h-[25px] w-[25px]" />
+            <Close className="h-[1.5625rem] w-[1.5625rem]" />
           </button>
         </div>
         <div className="flex gap-3 border-b mb-1 items-center">
@@ -101,24 +101,24 @@ export const ForecastModal = ({
           </button>
         </div>
         <div>
-        <div className="flex justify-between items-center">
-              <div className="flex justify-between items-center mb-2 w-[170px]">
-                <button
-                  className="text-sm font-medium hover:underline"
-                  onClick={handlePrevious}
-                  disabled={dateIndex === 0}
-                >
-                  &lt; Previous
-                </button>
-                <button
-                  className="text-sm font-medium hover:underline"
-                  onClick={handleNext}
-                  disabled={dateIndex + numDatesToShow >= totalDates}
-                >
-                  Next &gt;
-                </button>
-              </div>
+          <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-2 w-[10.625rem]">
+              <button
+                className="text-sm font-medium hover:underline"
+                onClick={handlePrevious}
+                disabled={dateIndex === 0}
+              >
+                &lt; Previous
+              </button>
+              <button
+                className="text-sm font-medium hover:underline"
+                onClick={handleNext}
+                disabled={dateIndex + numDatesToShow >= totalDates}
+              >
+                Next &gt;
+              </button>
             </div>
+          </div>
           {activeTab === "dates" ?
             <div id="forecasting-table" className="mt-4 overflow-x-auto">
               <table className="w-full border-collapse text-sm">
@@ -240,11 +240,11 @@ export const ForecastModal = ({
               </table>
             </div>
             :
-            <div className={ `${isMobile ? `h-[${forecastingTableHeight}]` : 'h-[323px]'}`}>
+            <div className={`${isMobile ? `h-[${forecastingTableHeight}]` : 'h-[20.1875rem]'}`}>
               {isLoading ? (
                 <div className="text-center">Loading...</div>
               ) : data && data.length > 0 ? (
-                <HeatmapChart data={paginatedData} fullData={data}/>
+                <HeatmapChart data={paginatedData} fullData={data} />
               ) : (
                 <div className="text-center">No data available for the selected dates.</div>
               )}

@@ -52,7 +52,7 @@ export const Modal: FC<ModalProps> = ({ title, isOpen, onClose, children, classN
                         className={`
                             bg-white md:rounded-lg shadow-lg w-full
                             max-w-2xl transform border border-stroke text-left
-                            align-middle ${isSmallHeightMobile ? 'mt-[96px]' : 'mt-[88px]'}
+                            align-middle ${isSmallHeightMobile ? 'mt-[6rem]' : 'mt-[5.5rem]'}
                         `}
                         style={{ willChange: "opacity, transform" }}
                         variants={modalVariants}
@@ -70,7 +70,7 @@ export const Modal: FC<ModalProps> = ({ title, isOpen, onClose, children, classN
                                     onClick={onClose}
                                     data-testid="close-button-id"
                                 >
-                                    <Close className="w-[20px] h-[20px]" />
+                                    <Close className="w-[1.25rem] h-[1.25rem]" />
                                 </button>
                             </div>
                             <div

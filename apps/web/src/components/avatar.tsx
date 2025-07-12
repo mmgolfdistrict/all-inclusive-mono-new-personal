@@ -13,21 +13,19 @@ export const Avatar = ({
 }) => {
   return (
     <RadixAvatar.Root
-      className={`inline-flex min-h-[40px] min-w-[40px] max-h-[40px] max-w-[40px] h-[40px] w-[40px] select-none items-center justify-center overflow-hidden ${
-        isRounded ? "rounded-full" : "rounded-none"
-      } bg-stroke align-middle duration-700 ease-in-out ${className ?? ""}`}
+      className={`inline-flex min-h-[2.5rem] min-w-[2.5rem] max-h-[2.5rem] max-w-[2.5rem] h-[2.5rem] w-[2.5rem] select-none items-center justify-center overflow-hidden ${isRounded ? "rounded-full" : "rounded-none"
+        } bg-stroke align-middle duration-700 ease-in-out ${className ?? ""}`}
     >
       <RadixAvatar.Image
-        className={`h-full w-full ${
-          isRounded ? "rounded-full" : "rounded-none"
-        } ${isRounded ? "object-cover" : "object-contain bg-white"}`}
+        className={`h-full w-full ${isRounded ? "rounded-full" : "rounded-none"
+          } ${isRounded ? "object-cover" : "object-contain bg-white"}`}
         src={src ?? "/defaults/default-profile.webp"}
         alt="user"
         draggable={false}
       />
 
       <RadixAvatar.Fallback
-        className="leading-1 flex h-full w-full items-center justify-center bg-primary text-[15px] font-medium text-white"
+        className="leading-1 flex h-full w-full items-center justify-center bg-primary text-[0.9375rem] font-medium text-white"
         delayMs={600}
       >
         {name?.slice(0, 1)}

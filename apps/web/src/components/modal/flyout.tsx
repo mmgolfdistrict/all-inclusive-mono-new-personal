@@ -30,7 +30,7 @@ const Flyout = ({ isOpen, title, setIsOpen, children, className }: FlyoutProps) 
                     !duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh]
                     w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border
                     border-stroke bg-white shadow-lg transition-all
-                    ease-linear sm:w-[500px] md:h-[100dvh] ${className}
+                    ease-linear sm:w-[31.25rem] md:h-[100dvh] ${className}
                     ${isOpen ? "translate-x-0" : "translate-x-full"}
                 `}
             >
@@ -45,7 +45,7 @@ const Flyout = ({ isOpen, title, setIsOpen, children, className }: FlyoutProps) 
                             aria-label="sidebarToggle"
                             data-testid="close-button-id"
                         >
-                            <Close className="h-[25px] w-[25px]" />
+                            <Close className="h-[1.5625rem] w-[1.5625rem]" />
                         </button>
                     </div>
                     <div className="flex h-full flex-col justify-between overflow-y-auto">{children}</div>

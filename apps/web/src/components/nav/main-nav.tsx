@@ -63,7 +63,7 @@ export const MainNav = () => {
             {elm.longMessage && (
               <Tooltip
                 trigger={
-                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                  <Info longMessage className="ml-2 h-5 w-5" />
                 }
                 content={<div>{formatMessage(elm.longMessage)}</div>}
               />
@@ -83,7 +83,7 @@ export const MainNav = () => {
             {elm.longMessage && (
               <Tooltip
                 trigger={
-                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                  <Info longMessage className="ml-2 h-5 w-5" />
                 }
                 content={<div>{formatMessage(elm.longMessage)}</div>}
               />
@@ -104,7 +104,7 @@ export const MainNav = () => {
             {elm.longMessage && (
               <Tooltip
                 trigger={
-                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                  <Info longMessage className="ml-2 h-5 w-5" />
                 }
                 content={<div>{formatMessage(elm.longMessage)}</div>}
               />
@@ -112,7 +112,7 @@ export const MainNav = () => {
           </div>
         ))}
 
-        <div className="relative z-10 min-h-[75px] md:min-h-[95px] flex w-full items-center justify-end border-b border-stroke-secondary bg-white p-4 md:p-6">
+        <div className="relative z-10 min-h-[4.6875rem] md:min-h-[5.9375rem] flex w-full items-center justify-end border-b border-stroke-secondary bg-white p-4 md:p-6">
           <div
             className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform`}
           >
@@ -123,7 +123,7 @@ export const MainNav = () => {
                   alt={entity?.name ?? "resort logo"}
                   width={60}
                   height={100}
-                  className="w-[75px] object-fit"
+                  className="w-[4.6875rem] object-fit"
                 />
               ) : (
                 <BlurImage
@@ -131,7 +131,7 @@ export const MainNav = () => {
                   alt={entity?.name ?? "resort logo"}
                   width={90}
                   height={150}
-                  className="w-[75px] object-fit"
+                  className="w-[4.6875rem] object-fit"
                 />
               )}
             </Link>

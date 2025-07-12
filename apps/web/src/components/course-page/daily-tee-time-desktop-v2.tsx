@@ -233,7 +233,7 @@ export const DailyTeeTimesDesktopV2 = ({
                         aria-label="Scroll Left"
                     // disabled={isAtStart}
                     >
-                        <LeftChevron fill="#40942A" className="w-[16px]" />
+                        <LeftChevron fill="#40942A" className="w-[1rem]" />
                     </button>
                 </div>
                 <div
@@ -263,7 +263,7 @@ export const DailyTeeTimesDesktopV2 = ({
                             ? Array.from({ length: 16 }).map((_, idx) => (
                                 <li
                                     key={idx}
-                                    className="p-4 min-w-[160px] border rounded-lg text-center bg-gray-200 animate-pulse"
+                                    className="p-4 min-w-[10rem] border rounded-lg text-center bg-gray-200 animate-pulse"
                                 >
                                     <div className="h-6 w-[50%] bg-gray-300 rounded-md mx-auto animate-pulse"></div>
                                 </li>
@@ -274,7 +274,7 @@ export const DailyTeeTimesDesktopV2 = ({
                                 return (
                                     <button
                                         key={idx}
-                                        className={`p-4 min-w-[160px] border rounded-lg text-center cursor-pointer ${isSelected ? "bg-primary text-white" : ""
+                                        className={`p-4 min-w-[10rem] border rounded-lg text-center cursor-pointer ${isSelected ? "bg-primary text-white" : ""
                                             }`}
                                         onClick={() => setDate(elm)}
                                     >
@@ -293,17 +293,17 @@ export const DailyTeeTimesDesktopV2 = ({
                         data-testid="tee-time-right-chevron-id"
                         aria-label="Scroll Right"
                     >
-                        <LeftChevron fill="#40942A" className="w-[16px] rotate-180" />
+                        <LeftChevron fill="#40942A" className="w-[1rem] rotate-180" />
                     </button>
                 </div>
             </div>
             <div className="flex flex-wrap justify-between gap-2 unmask-time">
                 {isLoading ? (
-                    <div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
+                    <div className="h-8 min-w-[9.375rem] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
                 ) : (
                     <div
                         id="tee-time-box"
-                        className="text-[16px] md:text-[20px] unmask-time"
+                        className="text-base md:text-xl unmask-time"
                         data-testid="date-group-id"
                         data-qa={dayMonthDate(date)}
                     >
@@ -318,7 +318,7 @@ export const DailyTeeTimesDesktopV2 = ({
                                 backgroundColor: courseExceptions.bgColor,
                                 color: courseExceptions.color,
                             }}
-                            className="inline text-left text-[13px] md:text-lg"
+                            className="inline text-left text-[0.8125rem] md:text-lg"
                         >
                             {courseExceptions.shortMessage}
                         </p>
@@ -343,7 +343,7 @@ export const DailyTeeTimesDesktopV2 = ({
                     <div className="flex items-center gap-1">
                         <div>{WeatherIcons[weather?.iconCode ?? ""]}</div>
                         <div
-                            className="text-[12px] md:text-[16px] unmask-temperature"
+                            className="text-xs md:text-base unmask-temperature"
                             data-testid="weather-degrees-id"
                             data-qa={weather?.temperature}
                         >
