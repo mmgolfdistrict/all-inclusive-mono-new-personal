@@ -52,10 +52,10 @@ export default function ManangeProfile({
 
   return (
     <main className={`bg-secondary-white py-4 md:py-6`}>
-      <div className="mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6">
+      <div className="mx-auto flex items-center justify-between px-4 md:max-w-[85rem] md:px-6">
         <GoBack href={`/${courseId}`} text={`Back to tee times`} />
       </div>
-      <section className="mx-auto flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
+      <section className="mx-auto flex w-full flex-col gap-4 pt-4 md:max-w-[85rem] md:px-6">
         <ProfileDetails isThirdPartyProfile={false} />
         <div className="flex h-full flex-col gap-4 md:flex-row w-full">
           <div className="w-full md:w-[50%]  md:rounded-xl overflow-hidden">

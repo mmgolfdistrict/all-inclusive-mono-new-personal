@@ -104,7 +104,7 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
   return (
     <>
       {showError ? (
-        <div style={{ color: "red", margin: "10px 0px" }}>
+        <div style={{ color: "red", margin: "0.625rem 0rem" }}>
           We do not support Business Checking and Business Savings”.
         </div>
       ) : null}

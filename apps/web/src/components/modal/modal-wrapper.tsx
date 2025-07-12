@@ -55,16 +55,15 @@ export const ModalWrapper: FC<ModalProps> = ({
             transition={{ duration: 0.2 }}
           >
             <div
-              className={`overflow-y-auto max-h-[100dvh] pt-12 pb-6 relative ${
-                className ?? ""
-              }`}
+              className={`overflow-y-auto max-h-[100dvh] pt-12 pb-6 relative ${className ?? ""
+                }`}
             >
               <button
                 className="absolute top-2 right-0 p-2"
                 onClick={onClose}
                 data-testid="close-button-id"
               >
-                <Close className="w-[20px] h-[20px]" />
+                <Close className="w-5 h-5" />
               </button>
               <div className="px-4">{children}</div>
             </div>

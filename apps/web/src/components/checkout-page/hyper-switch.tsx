@@ -221,15 +221,15 @@ export const HyperSwitch = ({
 
   if (error) {
     return (
-      <div className="w-full md:min-w-[370px] px-2 md:px-0">
-        <div className="flex justify-center items-center h-full min-h-[200px] text-center">
+      <div className="w-full md:min-w-[23.125rem] px-2 md:px-0">
+        <div className="flex justify-center items-center h-full min-h-[12.5rem] text-center">
           {error}
         </div>
       </div>
     );
   }
   return (
-    <div className="w-full md:min-w-[370px] px-2 md:px-0">
+    <div className="w-full md:min-w-[23.125rem] px-2 md:px-0">
       {showCheckout && options !== undefined && hyperPromise !== undefined ? (
         <HyperElements options={options} hyper={hyperPromise}>
           <CheckoutForm
@@ -258,8 +258,8 @@ export const HyperSwitch = ({
         //   nextAction={nextaction}
         //   callingRef={callingRef.current}
         // />
-        <div className="flex justify-center items-center h-full min-h-[200px]">
-          <Spinner className="w-[50px] h-[50px]" />
+        <div className="flex justify-center items-center h-full min-h-[12.5rem]">
+          <Spinner className="w-[3.125rem] h-[3.125rem]" />
         </div>
       )}
     </div>

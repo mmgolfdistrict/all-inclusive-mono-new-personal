@@ -70,7 +70,7 @@ export const Modal: FC<ModalProps> = ({ title, isOpen, onClose, children, classN
                                     onClick={onClose}
                                     data-testid="close-button-id"
                                 >
-                                    <Close className="w-[1.25rem] h-[1.25rem]" />
+                                    <Close className="w-5 h-5" />
                                 </button>
                             </div>
                             <div

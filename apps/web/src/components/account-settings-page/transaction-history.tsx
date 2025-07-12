@@ -13,7 +13,7 @@ export const TransactionHistory = () => {
   };
 
   return (
-    <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-[14px] md:pb-3">
+    <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-[0.875rem] md:pb-3">
       <table className="w-full table-auto">
         <thead className="top-0 table-header-group">
           <tr className="text-left">
@@ -24,7 +24,7 @@ export const TransactionHistory = () => {
             <TableHeader text="Amount" className="text-right" />
           </tr>
         </thead>
-        <tbody className="table-row-group max-h-[300px] w-full flex-col overflow-scroll">
+        <tbody className="table-row-group max-h-[18.75rem] w-full flex-col overflow-scroll">
           {Array(amount)
             .fill(null)
             .map((_, i) => (
