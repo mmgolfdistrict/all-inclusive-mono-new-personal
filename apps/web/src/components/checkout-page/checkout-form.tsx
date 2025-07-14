@@ -567,6 +567,12 @@ export const CheckoutForm = ({
     });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    if (!isChecked) {
+      e.preventDefault();
+      setTermsError("You must agree to the Terms of Service before paying.");
+      return;
+    }
+    setTermsError(null);
     if (checkIsBookingDisabled?.isBookingDisabled == 1) {
       e.preventDefault();
       toast.error(
@@ -1185,6 +1191,8 @@ export const CheckoutForm = ({
     }
   }, [TotalAmt, playerCount, amountOfPlayers, cartData, donateValue]);
 
+  const [termsError, setTermsError] = useState<string | null>(null);
+
   return (
     <section className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4">
       <form onSubmit={handleSubmit} className="">
@@ -1194,10 +1202,18 @@ export const CheckoutForm = ({
         <div>
           <h2 className="mb-4">Payment Details</h2>
           <div className="rounded-md border border-grey-100 pb-2 pr-2 pl-2" id="card-detail-form-checkout">
-            <UnifiedCheckout
-              id="unified-checkout"
-              options={unifiedCheckoutOptions}
-            />
+            <div className="relative">
+              <UnifiedCheckout
+                id="unified-checkout"
+                options={unifiedCheckoutOptions}
+              />
+              {!isChecked && (
+                <div
+                  className="absolute inset-0 bg-white bg-opacity-60 z-10 cursor-not-allowed"
+                  style={{ pointerEvents: 'all' }}
+                />
+              )}
+            </div>
           </div>
         </div>
 
@@ -1815,7 +1831,9 @@ export const CheckoutForm = ({
             </Link>.
           </div>
         </label>
-
+        {termsError && (
+          <div className="text-red text-sm mb-2">{termsError}</div>
+        )}
         {!maxReservation?.success && (
           <div className="md:hidden bg-alert-red text-white p-1 pl-2 my-2  w-full rounded">
             {maxReservation?.message}
