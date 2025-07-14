@@ -129,10 +129,15 @@ export const Confirmation = ({
                     <div className="w-full md:w-fit md:min-w-[250px] ">
                       <FilledButton
                         onClick={handleNavigationForCollectPayment}
-                        className="w-full">Collect Payment</FilledButton>
+                        className="w-full">Request Payment</FilledButton>
                     </div>
                   </div>
                 ) : null}
+                <div>
+                  <span className="text-grey-600 font-semibold text-center">
+                    Collect the payment from your players in your tee time.
+                  </span>
+                </div>
                 {isEmailSend ? (
                   <Fragment>
                     <div>

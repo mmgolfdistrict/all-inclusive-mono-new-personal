@@ -465,7 +465,32 @@ export const CollectPayment = ({
       setTotalPaidAmount(totalPaidAmount || 0);
       setTotalAmount(totalAmount);
     }
-  }, [collectPaymentInputs, sendTrigger])
+  }, [collectPaymentInputs, sendTrigger]);
+
+  useEffect(() => {
+    if (
+      selectedOption === "equalSplit" &&
+      collectPaymentInputs.length > 0
+    ) {
+      const totalBookingPrice = Number(selectedTeeTime?.purchasedFor);
+      const totalPlayers = Number(selectedTeeTime?.golfers.length);
+      if (totalPlayers > 0) {
+        const processingChargeFees = (Number(paymentProcessingCharge) / 100);
+        console.log("processing fee charge", processingChargeFees)
+        const splitAmount = parseFloat(
+          (totalBookingPrice / totalPlayers).toFixed(2)
+        ) + processingChargeFees;
+
+        const updatedInputs = collectPaymentInputs.map((input) => ({
+          ...input,
+          amount: splitAmount.toString(),
+        }));
+
+        setCollectPaymentInput(updatedInputs);
+      }
+    }
+  }, [selectedOption]);
+
   return (
     <>
       {isCollectPaymentOpen && (
@@ -487,7 +512,7 @@ export const CollectPayment = ({
         <div className="relative flex h-full flex-col overflow-y-auto ">
           <div className="flex flex-col items-start justify-between p-4">
             <div className="flex justify-between w-full" >
-              <div className="text-lg">Collect Payment</div>
+              <div className="text-lg">Request Payment</div>
               <button
                 // ref={trigger}
                 onClick={toggleSidebar}
@@ -529,12 +554,28 @@ export const CollectPayment = ({
               </div>
             </div>
 
-            <div className="flex flex-col justify-between w-full px-3 mt-[25px]">
+            <div className="flex flex-col justify-between w-full px-1 mt-[25px]">
               {/* <div>
                 <p className="text-red text-[12px] pt-4 pb-4">
                   *Payment processor charges of {Number(paymentProcessingCharge || 0) / 100}% will be applicable.
                 </p>
               </div> */}
+              <div className="w-full mb-2">
+                <label htmlFor="message" className="block text-primary-gray font-medium mb-1">
+                  <div>
+                    <span>Additional Message</span>
+                    <span className="ml-4 text-sm text-blue-500" >{validationMsg}</span>
+                  </div>
+                </label>
+                <textarea
+                  id="message"
+                  placeholder="Addtional message"
+                  className="w-full h-25 p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                  onChange={(e) => isAdditionalMessageExceedingLimit(e)}
+                  value={additionalMessage}
+                  maxLength={127}
+                ></textarea>
+              </div>
               <div className="flex justify-between">
                 <h4 className="text-primary-gray" >
                   Enter Recipient Information
@@ -551,7 +592,7 @@ export const CollectPayment = ({
 
               {collectPaymentInputs.map((player, index) => (
                 <div key={index} className="flex w-full gap-x-3 justify-center items-center">
-                  <div className="w-full flex gap-3">
+                  <div className="w-full flex gap-2">
                     {(player.isPaid === 1) ? (
                       <p
                         className="max-w-[320px] truncate cursor-default w-full"
@@ -577,7 +618,7 @@ export const CollectPayment = ({
                       </p>
                     ) : (
                       <div className="flex items-center">
-                        $
+                        <span className="px-1 text-sm text-black">$</span>
                         <input
                           className=" bg-secondary-white outline-none focus:outline-white px-2 py-1 rounded-md w-20 text-center "
                           type="text"
@@ -601,7 +642,7 @@ export const CollectPayment = ({
                     )}
                     {player.isPaid === 1 ? (
                       <Fragment>
-                        <div className="flex gap-12 px-8 py-1.5 justify-between items-center">
+                        <div className="flex ml-4 justify-between items-center">
                           <p>Paid</p>
                           <CheckedIcon color="green" />
                         </div>
@@ -678,22 +719,7 @@ export const CollectPayment = ({
                 </div>
               ))}
             </div>
-            <div className="w-full">
-              <label htmlFor="message" className="block text-primary-gray font-medium mb-1">
-                <div>
-                  <span>Additional Message</span>
-                  <span className="ml-4 text-sm text-blue-500" >{validationMsg}</span>
-                </div>
-              </label>
-              <textarea
-                id="message"
-                placeholder="Addtional message"
-                className="w-full h-25 p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
-                onChange={(e) => isAdditionalMessageExceedingLimit(e)}
-                value={additionalMessage}
-                maxLength={127}
-              ></textarea>
-            </div>
+
             <div className="flex flex-col w-full gap-3">
               <div className="w-full flex justify-between px-3 pt-5">
                 <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
