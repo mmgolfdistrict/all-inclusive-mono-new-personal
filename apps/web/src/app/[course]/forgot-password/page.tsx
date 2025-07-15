@@ -61,7 +61,7 @@ export default function ForgotPassword() {
       await recaptchaRef.current?.executeAsync();
       toast.error(
         (error as Error)?.message ??
-          "An error occurred submitting your request."
+        "An error occurred submitting your request."
       );
     }
   };
@@ -77,19 +77,19 @@ export default function ForgotPassword() {
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
-      <h1 className="pb-4 text-center text-[24px] md:pb-6 md:pt-8 md:text-[32px]">
+      <h1 className="pb-4 text-center text-[1.5rem] md:pb-6 md:pt-8 md:text-[2rem]">
         Forgot Password
       </h1>
-      <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
+      <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[31.25rem] sm:rounded-xl sm:p-6">
         {forgotFn.isSuccess && !forgotFn.data.error ? (
-          <div className="text-[16px] text-center fade-in text-primary-gray">
+          <div className="text-[1rem] text-center fade-in text-primary-gray">
             If your email exists in a Golf District account with the email
             provided then you should receive a password reset link. Please open
             the email and click the reset button.
           </div>
         ) : (
           <>
-            <div className="pt-4 text-[16px] text-primary-gray">
+            <div className="pt-4 text-[1rem] text-primary-gray">
               Enter the email address that you used to create your account.
             </div>
             <form
@@ -121,14 +121,13 @@ export default function ForgotPassword() {
               )}
               {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY &&
                 errors?.ReCAPTCHA?.message && (
-                  <div className="text-[12px] text-red">
+                  <div className="text-[0.75rem] text-red">
                     {errors.ReCAPTCHA?.message}
                   </div>
                 )}
               <FilledButton
-                className={`w-full rounded-full ${
-                  forgotFn.isLoading ? "animate-pulse cursor-not-allopwed" : ""
-                }`}
+                className={`w-full rounded-full ${forgotFn.isLoading ? "animate-pulse cursor-not-allopwed" : ""
+                  }`}
                 data-testid="forgot-password-submit-id"
               >
                 {forgotFn.isLoading ? "Submitting..." : "Submit"}
@@ -138,7 +137,7 @@ export default function ForgotPassword() {
         )}
       </section>
       <div className="flex max-w-fit mx-auto items-center gap-4 justify-center flex-col md:flex-row">
-        <div className="pt-4 text-center text-[14px] text-primary-gray">
+        <div className="pt-4 text-center text-[0.875rem] text-primary-gray">
           Don&apos;t have an account?{" "}
           <Link
             className="text-primary"
@@ -149,9 +148,9 @@ export default function ForgotPassword() {
           </Link>{" "}
           instead
         </div>
-        <div className="md:h-[20px] md:self-end w-full h-[2px] md:w-[2px] bg-stroke" />
+        <div className="md:h-5 md:self-end w-full h-0.5 md:w-0.5 bg-stroke" />
         <Link
-          className="text-primary  md:self-end text-[14px]"
+          className="text-primary  md:self-end text-[0.875rem]"
           href={`/${course?.id}/login`}
           data-testid="login-button-id"
         >

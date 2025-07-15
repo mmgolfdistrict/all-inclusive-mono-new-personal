@@ -166,7 +166,7 @@ export const Loader = ({ size = 32, color = "fill-green-600", speed = "animate-s
     <div role="status">
       <svg
         aria-hidden="true"
-        className={`w-[${size}px] h-[${size}px] text-gray-200 ${speed} dark:text-gray-600 ${color}`}
+        className={`w-[${size / 16}rem] h-[${size / 16}rem] text-gray-200 ${speed} dark:text-gray-600 ${color}`}
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

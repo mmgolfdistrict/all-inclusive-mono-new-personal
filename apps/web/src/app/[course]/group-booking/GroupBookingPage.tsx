@@ -138,12 +138,12 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
         <div></div>
       </LoadingContainer>
       <div id="your-selection" className="relative flex flex-col gap-2 sm:flex-row items-start sm:items-center justify-between md:mb-2">
-        <h1 className="text-[20px] capitalize text-secondary-black md:text-[32px] flex items-center gap-6">
+        <h1 className="text-[1.25rem] capitalize text-secondary-black md:text-[2rem] flex items-center gap-6">
           Earliest Available Time
         </h1>
         {otherTeeTimeGroups && otherTeeTimeGroups.length > 0 ?
           <div className="self-end">
-            <div className="flex flex-col item-start gap-2 lg:flex-row lg:items-center lg:gap-4 text-primary-gray text-[12px] md:text-[16px] ">
+            <div className="flex flex-col item-start gap-2 lg:flex-row lg:items-center lg:gap-4 text-primary-gray text-[0.75rem] md:text-[1rem] ">
               <span>
                 Other options for your group available.<br />
                 <i>Please adjust the start time.</i>
@@ -167,7 +167,7 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
       </div>
       {
         ((!teeTimesData || Object.keys(teeTimesData).length === 0) ?
-          <div className="flex justify-center items-center h-[200px]">
+          <div className="flex justify-center items-center h-[12.5rem]">
             <div className="text-center">
               {"No Tee Times Group Available."}
             </div>
@@ -177,51 +177,51 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
             (<div key={date} className="overflow-y-auto flex flex-col gap-2 md:gap-4">
               {/* Header Row */}
               <div className="flex flex-row items-center gap-2 md:px-4 md:mt-2">
-                <h2 className="text-[13px] md:text-lg capitalize text-secondary-black unmask-time">
+                <h2 className="text-[0.8125rem] md:text-lg capitalize text-secondary-black unmask-time">
                   {dayMonthDate(date)}
                 </h2>
               </div>
 
               {/* Group booking Items */}
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(17.5rem,1fr))] gap-4">
                 {teeTimesData[date]?.slice(0, 4).map((teeTimeGroup: TeeTimeGroup) => (
-                  <div key={teeTimeGroup.teeTimeIds.toString()} className="bg-white p-3 rounded-xl min-w-[280px] md:max-w-[360px] flex flex-col text-[12px] md:text-[16px] text-secondary-black cursor-pointer">
-                      {/* First Row */}
-                      <div className="flex flex-row justify-between items-center unmask-time">
-                        <div className="font-semibold text-[16px] md:text-[20px] unmask-time">
-                          {getTime(teeTimeGroup.date, timezoneCorrection)}
-                        </div>
-                      </div>
-
-                      {/* Second Row */}
-                      <div className="flex flex-row items-center gap-1 mt-2">
-                        <div className="text-[12px] md:text-[14px] text-primary-gray">
-                          Avg. Price
-                        </div>
-                        <div className="text-[14px] md:text-[16px] font-semibold text-secondary-black" >
-                          {formatMoney(teeTimeGroup.pricePerGolfer)}
-                        </div>
-                      </div >
-
-                      {/* Third Row */}
-                      <div>
-                        <div className="text-[14px] md:text-[16px] font-semibold text-secondary-black" >
-                          {playerCount} Players
-                        </div>
-                      </div >
-
-                      {/* Fourth Row */}
-                      <div className="mt-2 w-full mb-4">
-                        <FilledButton
-                          className="whitespace-nowrap !min-w-[82px] md:min-w-[110px] !py-[.28rem] md:py-1.5 w-full"
-                          data-testid="buy-tee-time-id"
-                          data-qa="Buy"
-                          onClick={() => buyTeeTimeGroup(teeTimeGroup)}
-                        >
-                          Buy
-                        </FilledButton>
+                  <div key={teeTimeGroup.teeTimeIds.toString()} className="bg-white p-3 rounded-xl min-w-[17.5rem] md:max-w-[22.5rem] flex flex-col text-[0.75rem] md:text-[1rem] text-secondary-black cursor-pointer">
+                    {/* First Row */}
+                    <div className="flex flex-row justify-between items-center unmask-time">
+                      <div className="font-semibold text-[1rem] md:text-[1.25rem] unmask-time">
+                        {getTime(teeTimeGroup.date, timezoneCorrection)}
                       </div>
                     </div>
+
+                    {/* Second Row */}
+                    <div className="flex flex-row items-center gap-1 mt-2">
+                      <div className="text-[0.75rem] md:text-[0.875rem] text-primary-gray">
+                        Avg. Price
+                      </div>
+                      <div className="text-[0.875rem] md:text-[1rem] font-semibold text-secondary-black" >
+                        {formatMoney(teeTimeGroup.pricePerGolfer)}
+                      </div>
+                    </div >
+
+                    {/* Third Row */}
+                    <div>
+                      <div className="text-[0.875rem] md:text-[1rem] font-semibold text-secondary-black" >
+                        {playerCount} Players
+                      </div>
+                    </div >
+
+                    {/* Fourth Row */}
+                    <div className="mt-2 w-full mb-4">
+                      <FilledButton
+                        className="whitespace-nowrap !min-w-[5.125rem] md:min-w-[6.875rem] !py-[.28rem] md:py-1.5 w-full"
+                        data-testid="buy-tee-time-id"
+                        data-qa="Buy"
+                        onClick={() => buyTeeTimeGroup(teeTimeGroup)}
+                      >
+                        Buy
+                      </FilledButton>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

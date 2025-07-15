@@ -107,7 +107,7 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
           bg-secondary-white text-gray-500 flex items-center px-2 py-3 
           rounded-lg w-full justify-between"
       >
-        <div className="flex items-center space-x-2 min-w-[122px]">
+        <div className="flex items-center space-x-2 min-w-[7.625rem]">
           {selectedCountry && (
             <>
               <Image src={selectedCountry.flag} alt={selectedCountry.iso2} className="w-8 h-6" width={20} height={20} />
@@ -120,7 +120,7 @@ const CountryDropdown = ({ defaultCountry, items, onSelect }: CountryDropdownPro
         </div>
       </button>
       {isOpen && (
-        <div className="absolute mt-2 w-[324px] bg-white border border-gray-300 rounded-lg shadow-lg z-50">
+        <div className="absolute mt-2 w-[20.25rem] bg-white border border-gray-300 rounded-lg shadow-lg z-50">
           <div className="p-2">
             <input
               type="text"

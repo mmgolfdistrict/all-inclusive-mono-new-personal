@@ -48,7 +48,7 @@ export default function Verify() {
       setError((error as Error)?.message ?? "An unexpected error occurred.");
       toast.error(
         (error as Error)?.message ??
-          "An error occurred verifying your email address."
+        "An error occurred verifying your email address."
       );
     }
   };
@@ -70,20 +70,20 @@ export default function Verify() {
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
-      <section className="mx-auto mt-6 flex w-full text-center flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
-        <h1 className="text-[24px] md:text-[32px]">
+      <section className="mx-auto mt-6 flex w-full text-center flex-col gap-2 bg-white p-5 sm:max-w-[31.25rem] sm:rounded-xl sm:p-6">
+        <h1 className="text-[1.5rem] md:text-[2rem]">
           {verifyEmail.isLoading && !isSuccess && !error
             ? "Verifying Email..."
             : isSuccess
-            ? "Verified Email!"
-            : error
-            ? "Something went wrong."
-            : "Verify Your Email Address"}
+              ? "Verified Email!"
+              : error
+                ? "Something went wrong."
+                : "Verify Your Email Address"}
         </h1>
         <div className="text-primary-gray">
           {verifyEmail.isLoading && !error && !isSuccess ? (
-            <div className="w-[100px] mx-auto">
-              <Spinner className="h-[50px]" />
+            <div className="w-[6.25rem] mx-auto">
+              <Spinner className="h-[3.125rem]" />
             </div>
           ) : isSuccess ? (
             <div className="flex flex-col gap-2 items-center">
@@ -109,7 +109,7 @@ export default function Verify() {
         </div>
       </section>
       <div className="flex max-w-fit mx-auto items-center gap-4 justify-center flex-col md:flex-row">
-        <div className="pt-4 text-center text-[14px] text-primary-gray">
+        <div className="pt-4 text-center text-[0.875rem] text-primary-gray">
           Don&apos;t have an account?{" "}
           <Link
             className="text-primary"
@@ -120,9 +120,9 @@ export default function Verify() {
           </Link>{" "}
           instead
         </div>
-        <div className="md:h-[20px] md:self-end w-full h-[2px] md:w-[2px] bg-stroke" />
+        <div className="md:h-[1.25rem] md:self-end w-full h-[0.125rem] md:w-[0.125rem] bg-stroke" />
         <Link
-          className="text-primary  md:self-end text-[14px]"
+          className="text-primary  md:self-end text-[0.875rem]"
           href={`/${course?.id}/login`}
           data-testid="back-to-login-button-id"
         >

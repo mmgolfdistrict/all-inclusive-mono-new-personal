@@ -128,7 +128,7 @@ const MerchandiseCarousel: React.FC<MerchandiseCarouselProps> = ({
             {/* {title && <div className='flex gap-1 items-center mb-3'>
                 <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
                 <Tooltip
-                    trigger={<Info className="h-[20px] w-[20px] text-primary-gray" />}
+                    trigger={<Info className="h-[1.25rem] w-[1.25rem] text-primary-gray" />}
                     content="Prepaying for add-ons guarantees your availability for your rentals and may be cheaper than paying at the course."
                 />
             </div>
