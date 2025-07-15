@@ -307,6 +307,13 @@ export const CollectPayment = ({
       });
       if (result?.error) {
         toast.error(result?.message);
+        setCollectPaymentInput((prevInputs) =>
+          prevInputs.map((input) =>
+            input.index === index
+              ? { ...input, email: "" }
+              : input
+          )
+        );
         setLoadingStates((prev) => {
           const newLoadingStates = [...prev];
           newLoadingStates[index] = false;
@@ -361,6 +368,13 @@ export const CollectPayment = ({
       });
       if (result?.error) {
         toast.error(result?.message);
+        setCollectPaymentInput((prevInputs) =>
+          prevInputs.map((input) =>
+            input.index === index
+              ? { ...input, email: "" }
+              : input
+          )
+        );
         setLoadingStates((prev) => {
           const newLoadingStates = [...prev];
           newLoadingStates[index] = false;

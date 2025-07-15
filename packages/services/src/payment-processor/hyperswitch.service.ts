@@ -777,12 +777,12 @@ export class HyperSwitchService {
         };
       }
 
-      // if (email === userEmail) {
-      //   return {
-      //     error: true,
-      //     message: "Email cannot be same as user email"
-      //   }
-      // }
+      if (email === userEmail) {
+        return {
+          error: true,
+          message: "Email cannot be same as user email",
+        };
+      }
 
       const [bookingResult] = await this.database
         .select({
@@ -931,6 +931,7 @@ export class HyperSwitchService {
                 TRACKING_URL: `${origin}/api/trackemail/?id=${referencePaymentId}`,
                 SUBJECT_LINE: `Payment Requested for Your Golf Tee Time by ${username}`,
                 LOGO_URL: courseLogo,
+                HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
                 ADDITIONAL_MESSAGE: additonalMessge,
               },
               []
@@ -1044,6 +1045,7 @@ Thank you for choosing us.`;
                 //TRACKING_URL: `https://webhook.site/tracking-email?id=${hyperswitchUUID}`
                 SUBJECT_LINE: `Payment Requested for Your Golf Tee Time by ${username}`,
                 LOGO_URL: courseLogo,
+                HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
                 ADDITIONAL_MESSAGE: additonalMessge,
               },
               []
