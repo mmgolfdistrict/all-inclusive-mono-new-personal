@@ -3979,9 +3979,7 @@ export class BookingService {
         cartFeeTaxPercentTotal +
         merchandiseTaxTotal +
         merchandiseOverriddenTaxAmount;
-      console.log("ADDITOINAL_TAXES", additionalTaxes);
       additionalTaxes = Math.ceil(Number((additionalTaxes * 100).toFixed(2))) / 100;
-      console.log("ADDITOINAL_TAXES 2", additionalTaxes);
       const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge;
 
       if (!teeTime) {
@@ -5375,9 +5373,7 @@ export class BookingService {
         cartFeeTaxPercentTotal +
         merchandiseTaxTotal +
         merchandiseOverriddenTaxAmount;
-      console.log("ADDITOINAL_TAXES", additionalTaxes);
       additionalTaxes = Math.ceil(Number((additionalTaxes * 100).toFixed(2))) / 100;
-      console.log("ADDITOINAL_TAXES 2", additionalTaxes);
       const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge;
 
       if (!firstTeeTime) {
