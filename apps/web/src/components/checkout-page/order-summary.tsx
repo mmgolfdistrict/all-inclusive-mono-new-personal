@@ -25,8 +25,10 @@ export const OrderSummary = ({
   isGroupBooking?: boolean;
 }) => {
   return (
-    <section className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4">
-      <h1 className="text-center text-start">Order Summary</h1>
+    <section
+    // className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4"
+    >
+      <h1 className="text-center text-start mb-3">Order Summary</h1>
 
       <div className="flex flex-col gap-4">
         <CheckoutItem

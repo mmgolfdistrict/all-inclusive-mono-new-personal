@@ -1186,14 +1186,16 @@ export const CheckoutForm = ({
   }, [TotalAmt, playerCount, amountOfPlayers, cartData, donateValue]);
 
   return (
-    <section className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4">
+    <section
+    // className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4"
+    >
       <form onSubmit={handleSubmit} className="">
 
         {/* Section 4 */}
 
         <div>
-          <h2 className="mb-4">Payment Details</h2>
-          <div className="rounded-md border border-grey-100 pb-2 pr-2 pl-2" id="card-detail-form-checkout">
+          <h2 className="mb-3">Payment Details</h2>
+          <div className="rounded-xl bg-white border border-grey-100 pb-2 pr-2 pl-2" id="card-detail-form-checkout">
             <UnifiedCheckout
               id="unified-checkout"
               options={unifiedCheckoutOptions}
@@ -1215,7 +1217,7 @@ export const CheckoutForm = ({
                 content="Course operator pays a card processing fee and the remaining goes to the course."
               />
             </h2>
-            <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 rounded-md border border-grey-100">
+            <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-xl my-2 border border-grey-100">
               <div className="flex items-top">
                 {charityData?.charityLogo && (
                   // eslint-disable-next-line  @next/next/no-img-element
@@ -1357,7 +1359,7 @@ export const CheckoutForm = ({
         {/* Section 6 */}
         <div className="mt-4">
           <h2 className="mb-2">Order Totals</h2>
-          <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 rounded-md border border-grey-100">
+          <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-xl my-2 border border-grey-100">
             {!isLoadingUser && PHONE_NUMBER_MANDATORY_AT_CHECKOUT === "true" && <div className="flex flex-col gap-1" ref={phoneNumberRef}>
               <div className="flex gap-1">
                 <label htmlFor="phoneNumber" className="text-[0.875rem] text-primary-gray">
@@ -1777,7 +1779,7 @@ export const CheckoutForm = ({
                 content="Prepaying for add-ons guarantees your availability for your rentals and may be cheaper than paying at the course."
               />
             </div>}
-            <section className="md:hidden p-0 md:p-4 rounded-md border border-grey-100 p-1">
+            <section className="md:hidden p-0 md:p-4 bg-white rounded-xl border border-grey-100 p-1">
               <div className="bg-white md:rounded-xl p-4">
                 <MerchandiseCarousel
                   items={courseMerchandise}
@@ -1790,7 +1792,7 @@ export const CheckoutForm = ({
         }
         <label
           htmlFor="terms-of-service-checkbox"
-          className={`mb-2 flex items-start rounded-md p-2 border mt-4
+          className={`mb-2 flex items-start rounded-xl p-2 border mt-4 bg-white
           bg-gray-100 transition-all duration-300`}
           style={{ borderColor: isChecked ? "transparent" : "red" }}
         >
