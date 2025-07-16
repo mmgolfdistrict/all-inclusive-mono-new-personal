@@ -35,6 +35,7 @@ import { OutlineButton } from "../buttons/outline-button";
 import type { SaleTypeOption } from "../input/sale-type-select";
 import { SaleTypeSelector } from "../input/sale-type-select";
 import { isValidEmail } from "@golf-district/shared";
+import { useMediaQuery } from "usehooks-ts";
 type CollectInputs = {
   index?: number;
   email?: string;
@@ -81,7 +82,7 @@ export const CollectPayment = ({
       tooltip: "You will be able to collect a different amount from each player not exceeding the total amount. This gives you the flexibility to pay of your friends event like their birthdays.",
     },
   ];
-
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const { data: paymentProcessingCharge } = api.checkout.collectPaymentProcessorPercent.useQuery({})
   const paymentLinkResult =
@@ -605,26 +606,33 @@ export const CollectPayment = ({
             <div className="flex flex-col w-full gap-3 ">
 
               {collectPaymentInputs.map((player, index) => (
-                <div key={index} className="flex w-full gap-x-3 justify-center items-center">
-                  <div className="w-full flex gap-2">
+                <div
+                  key={index}
+                  className={`flex w-full ${isMobile ? "flex-col gap-y-2 items-start" : "gap-x-3 justify-center items-center"}`}
+                >
+                  {/* Row 1: Email + Amount */}
+                  <div className={`w-full flex ${isMobile ? "flex-row gap-2 items-center" : "flex-row gap-2 items-center"}`}>
                     {(player.isPaid === 1) ? (
-                      <p
-                        className="max-w-[320px] truncate cursor-default w-full"
+                      <input
+                        className="outline-none bg-secondary-white px-3 py-1 rounded-md cursor-default text-black w-[17rem]"
+                        type="text"
+                        value={player.email}
+                        readOnly
+                        disabled // optional if you want to gray it out
                         title={player.email}
-                      >
-                        {player.email}
-                      </p>
+                      />
                     ) : (
                       <input
-                        className="outline-none bg-secondary-white focus:outline-white px-3 py-1 rounded-md w-full "
+                        className="outline-none bg-secondary-white focus:outline-white px-3 py-1 rounded-md w-[17rem]"
                         type="text"
                         placeholder="Enter the email"
                         onChange={(e) => handleEmailChange(index, e.target.value)}
                         value={player.email}
                       />
                     )}
+
                     {(selectedOption === "equalSplit" || player.isPaid === 1) ? (
-                      <p className="px-4">
+                      <p className="px-2 min-w-[80px] text-center">
                         ${(Number(player.amount) || 0).toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
@@ -634,57 +642,44 @@ export const CollectPayment = ({
                       <div className="flex items-center">
                         <span className="px-1 text-sm text-black">$</span>
                         <input
-                          className=" bg-secondary-white outline-none focus:outline-white px-2 py-1 rounded-md w-20 text-center "
+                          className="bg-secondary-white outline-none focus:outline-white px-2 py-1 rounded-md w-20 text-center"
                           type="text"
                           placeholder="Enter the Amount"
                           value={player.amount}
                           onChange={(e) => {
-                            //+paymentProcessingCharge
-                            const addedValue = e.target.value
+                            const addedValue = e.target.value;
                             handleAmountChange(index, addedValue);
-                          }
-                          }
-                        // value={sendEmailedUsers?.[index]?.isPaid === 1
-                        //   ? sendEmailedUsers?.[index]?.amount
-                        //   : amount[index] ?? sendEmailedUsers?.[index]?.amount}
-                        // value={amount[index]}
-                        // disabled={selectedOption === "equalSplit"}
-                        // disabled={sendEmailedUsers?.[index]?.isPaid === 1}
-                        //style={{ paddingRight: "87px" }}
+                          }}
                         />
                       </div>
                     )}
-                    {player.isPaid === 1 ? (
-                      <Fragment>
-                        <div className="flex ml-4 justify-between items-center">
-                          <p>Paid</p>
-                          <CheckedIcon color="green" />
-                        </div>
-                      </Fragment>
-                    ) : player.isPaid === 0 &&
-                      player.isActive === 1 ? (
-                      <div className="flex justify-center items-center">
-                        <FilledButton
-                          onClick={() =>
-                            resendHyperSwitchPaymentLinkOnEmail(index)
-                          }
-                          className={`text-sm flex justify-center items-center ${!player.isLinkExpired ? " text-white/50 cursor-not-allowed" : "text-white"}`}
-                          disabled={loadingStates[index] || !player.isLinkExpired}
-                        >
-                          {loadingStates[index] ? (
-                            <Loader size={20} color="fill-white-600" />
-                          ) : (
-                            "Resend"
-                          )}
-                        </FilledButton>
+                  </div>
 
+                  {/* Row 2: Button + Paid/Icons */}
+                  <div className={`w-full flex ${isMobile ? "flex-row justify-between items-center" : "items-center"} gap-2 mt-1`}>
+                    {player.isPaid === 1 ? (
+                      <div className="flex items-center gap-2" style={{
+                        marginLeft: isMobile ? "35px" : "35px"
+                      }}>
+                        <p>Paid</p>
+                        <CheckedIcon color="green" />
                       </div>
+                    ) : player.isPaid === 0 && player.isActive === 1 ? (
+                      <FilledButton
+                        onClick={() => resendHyperSwitchPaymentLinkOnEmail(index)}
+                        className={`text-sm flex justify-center items-center ${!player.isLinkExpired ? "text-white/50 cursor-not-allowed" : "text-white"}`}
+                        disabled={loadingStates[index] || !player.isLinkExpired}
+                      >
+                        {loadingStates[index] ? (
+                          <Loader size={20} color="fill-white-600" />
+                        ) : (
+                          "Resend"
+                        )}
+                      </FilledButton>
                     ) : (
                       <FilledButton
-                        onClick={() =>
-                          handleEmailSendOnHyperSwitchPaymentLink(index)
-                        }
-                        className={`text-sm flex justify-center items-center text-black ${!isValidEmail(player.email ?? "") ? "text-white/50 cursor-not-allowed" : "text-white"} mr-16 `}
+                        onClick={() => handleEmailSendOnHyperSwitchPaymentLink(index)}
+                        className={`text-sm flex justify-center items-center ${!isValidEmail(player.email ?? "") ? "text-white/50 cursor-not-allowed" : "text-white"} ${isMobile ? "" : "mr-16"}`}
                         disabled={loadingStates[index] || !isValidEmail(player.email ?? "")}
                       >
                         {loadingStates[index] ? (
@@ -694,59 +689,39 @@ export const CollectPayment = ({
                         )}
                       </FilledButton>
                     )}
-                    <div className="flex gap-1">
+
+                    {/* Payment Status Icons */}
+                    <div className="flex gap-2 items-center w-full justify-end">
                       {player && player.isActive === 1 && player.isPaid === 0 && !player.isLinkExpired ? (
-                        <div className="flex justify-center items-start gap-1">
-                          <Tooltip
-                            trigger={<Pending width={30} height={30} />}
-                            content="Payment is pending"
-                          />
-                        </div>
-                      ) : (player?.isLinkExpired && player?.isPaid === 0) ? (
-                        <div>
-                          <Tooltip
-                            trigger={<LinkExpired width={30} height={30} color="#D22B2B" />}
-                            content="Payment link is expired"
-                          />
-                        </div>
+                        <Tooltip
+                          trigger={<Pending width={30} height={30} />}
+                          content="Payment is pending"
+                        />
+                      ) : player?.isLinkExpired && player?.isPaid === 0 ? (
+                        <Tooltip
+                          trigger={<LinkExpired width={30} height={30} color="#D22B2B" />}
+                          content="Payment link is expired"
+                        />
                       ) : null}
-                      <div>
-                        {player?.emailOpened === 1 ? (
-                          <div className="flex justify-center items-start gap-1" >
-                            <Tooltip
-                              trigger={<EmailOpen width={30} height={30} color="green" />}
-                              content="Email opened and read"
-                            />
-                          </div>
-                        ) : (player?.emailOpened === 0 && player?.isActive === 1 && player.isPaid === 0) ? (
-                          <div className="flex justify-center items-start gap-1">
-                            <Tooltip
-                              trigger={<Email width={30} height={30} />}
-                              content="Email has not been read"
-                            />
-                          </div>
-                        ) : null}
-                      </div>
+
+                      {player?.emailOpened === 1 ? (
+                        <Tooltip
+                          trigger={<EmailOpen width={30} height={30} color="green" />}
+                          content="Email opened and read"
+                        />
+                      ) : player?.emailOpened === 0 && player?.isActive === 1 && player.isPaid === 0 ? (
+                        <Tooltip
+                          trigger={<Email width={30} height={30} />}
+                          content="Email has not been read"
+                        />
+                      ) : null}
                     </div>
-                    {/* etc... */}
                   </div>
                 </div>
               ))}
             </div>
 
             <div className="flex flex-col w-full gap-3">
-              <div className="w-full flex justify-between px-3 pt-5">
-                <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
-                  <h4 className="text-primary-gray">Total Amount Received</h4>
-                  <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content={<div className="max-w-[220px] text-sm break-words">The total amount that you have received so far. This amount should be available for you to withdraw. Go to Account Settings to withdraw this amount if you haven’t withdrawn.</div>}
-                  />
-                </div>
-                <div>
-                  <p className="text-[16px] font-[500] text-primary-gray">${paidAmount}</p>
-                </div>
-              </div>
               <div className="w-full flex justify-between px-3 pt-5">
                 <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
                   <h4 className="text-primary-gray">Total Amount Requested</h4>
@@ -781,6 +756,20 @@ export const CollectPayment = ({
                   </p>
                 </div>
               </div>
+
+              <div className="w-full flex justify-between px-3 pt-3">
+                <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
+                  <h4 className="text-primary-gray">Total Amount Received</h4>
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content={<div className="max-w-[220px] text-sm break-words">The total amount that you have received so far. This amount should be available for you to withdraw. Go to Account Settings to withdraw this amount if you haven’t withdrawn.</div>}
+                  />
+                </div>
+                <div>
+                  <p className="text-[16px] font-[500] text-primary-gray">${paidAmount}</p>
+                </div>
+              </div>
+
               <div className="w-full flex justify-between px-3 pt-3">
                 <div className=" text-[16px] flex justify-start gap-2 font-[500]">
                   <h4 className="text-primary-gray" >Your Payout</h4>

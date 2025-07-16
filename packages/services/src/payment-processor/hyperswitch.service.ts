@@ -1135,7 +1135,7 @@ Thank you for choosing us.`;
     }
   };
 
-  updateSplitPaymentStatus = async (paymentId: string, referencePaymentId: string) => {
+  updateSplitPaymentStatus = async (paymentId: string, referencePaymentId: string, courseLogo: string) => {
     try {
       if (paymentId) {
         const [isUserAlreadyPaid] = await this.database
@@ -1180,17 +1180,42 @@ Thank you for choosing us.`;
             amount: bookingSplitPayment.payoutAmount,
             paymentId: bookingSplitPayment.paymentId,
             collectedAmount: bookingSplitPayment.collectedAmount,
+            bookingDateTime: teeTimes.providerDate,
+            courseName: courses.name,
+            courseTimeZone: courses.timezoneCorrection,
+            userName: users.name,
           })
           .from(bookingSplitPayment)
-          .where(eq(bookingSplitPayment.paymentId, paymentId));
+          .where(eq(bookingSplitPayment.paymentId, paymentId))
+          .leftJoin(bookings, eq(bookingSplitPayment.bookingId, bookings.id))
+          .leftJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
+          .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+          .leftJoin(users, eq(bookings.ownerId, users.id));
         // email send the payment completed user
-        const message = `Your payment of $${
-          Number(result?.collectedAmount) / 100
-        } has been successfully processed. Thank you for your payment.`;
-        const emailSend = await this.notificationService.sendEmail(
+        // const message = `Your payment of $${
+        //   Number(result?.collectedAmount) / 100
+        // } has been successfully processed. Thank you for your payment.`;
+        // const emailSend = await this.notificationService.sendEmail(
+        //   result?.email ?? "",
+        //   "Payment Successful",
+        //   message
+        // );
+
+        const emailSend = await this.notificationService.sendEmailByTemplate(
           result?.email ?? "",
           "Payment Successful",
-          message
+          process.env.SENDGRID_PAYMENT_SUCCESSFUL_TEMPLATE_ID!,
+          {
+            AMOUNT: (Number(result?.collectedAmount) / 100).toString(),
+            USERNAME: `${result?.userName}`,
+            CourseName: result?.courseName ?? "",
+            PlayDateTime: formatTime(result?.bookingDateTime ?? "", false, result?.courseTimeZone ?? 0),
+            CourseReservationID: `${result?.bookingId}`,
+            SUBJECT_LINE: `Payment Successfully processed`,
+            LOGO_URL: courseLogo,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+          },
+          []
         );
         // email send the admins after payment completed of the user
 
@@ -1298,18 +1323,44 @@ Thank you for choosing us.`;
             amount: bookingSplitPayment.payoutAmount,
             paymentId: bookingSplitPayment.paymentId,
             collectedAmount: bookingSplitPayment.collectedAmount,
+            bookingDateTime: teeTimes.providerDate,
+            courseName: courses.name,
+            courseTimeZone: courses.timezoneCorrection,
+            userName: users.name,
           })
           .from(bookingSplitPayment)
-          .where(eq(bookingSplitPayment.id, referencePaymentId));
+          .where(eq(bookingSplitPayment.id, referencePaymentId))
+          .leftJoin(bookings, eq(bookingSplitPayment.bookingId, bookings.id))
+          .leftJoin(teeTimes, eq(bookings.teeTimeId, teeTimes.id))
+          .leftJoin(courses, eq(teeTimes.courseId, courses.id))
+          .leftJoin(users, eq(bookings.ownerId, users.id));
         // email send the payment completed user
 
-        const message = `Your payment of$${
-          Number(result?.collectedAmount) / 100
-        } has been successfully processed. Thank you for your payment.`;
-        const emailSend = await this.notificationService.sendEmail(
+        // const message = `Your payment of$${
+        //   Number(result?.collectedAmount) / 100
+        // } has been successfully processed. Thank you for your payment.`;
+        // const emailSend = await this.notificationService.sendEmail(
+        //   result?.email ?? "",
+        //   "Payment Successful",
+        //   message
+        // );
+        console.log("result", result);
+
+        const emailSend = await this.notificationService.sendEmailByTemplate(
           result?.email ?? "",
           "Payment Successful",
-          message
+          process.env.SENDGRID_PAYMENT_SUCCESSFUL_TEMPLATE_ID!,
+          {
+            AMOUNT: (Number(result?.collectedAmount) / 100).toString(),
+            USERNAME: `${result?.userName}`,
+            CourseName: result?.courseName ?? "",
+            PlayDateTime: formatTime(result?.bookingDateTime ?? "", false, result?.courseTimeZone ?? 0),
+            CourseReservationID: `${result?.bookingId}`,
+            SUBJECT_LINE: `Payment Successfully processed`,
+            LOGO_URL: courseLogo,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+          },
+          []
         );
         // email send the admins after payment completed of the user
 

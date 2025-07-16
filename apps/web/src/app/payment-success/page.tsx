@@ -5,8 +5,10 @@ import { api } from "~/utils/api";
 import { useSearchParams } from "next/navigation";
 import React, { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useCourseContext } from "~/contexts/CourseContext";
 const SplitPaymentSuccessPage = () => {
   const router = useRouter();
+  const { course } = useCourseContext();
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("payment_id") || "";
   const referencePaymentId = searchParams.get("finixReferencePaymentId") || "";
@@ -14,7 +16,7 @@ const SplitPaymentSuccessPage = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const isSuccess = paymentStatus === "succeeded";
   const { data: result, isLoading: isLoading } =
-    api.checkout.updateSplitPaymentStatus.useQuery({ paymentId: paymentId, referencePaymentId: referencePaymentId });
+    api.checkout.updateSplitPaymentStatus.useQuery({ paymentId: paymentId, referencePaymentId: referencePaymentId, courseLogo: course?.logo || "" });
   const saveCashOutResult =
     api.checkout.saveSplitPaymentAmountIntoCashOut.useMutation();
   const saveCashOut = async () => {
