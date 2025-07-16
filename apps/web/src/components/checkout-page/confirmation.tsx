@@ -73,7 +73,7 @@ export const Confirmation = ({
       <div className="container mx-auto p-4">
         <div className="flex flex-wrap">
           <div className="w-full md:w-1/2 p-4">
-            <h1 className="text-[24px] md:text-[32px]">
+            <h1 className="text-[1.5rem] md:text-[2rem]">
               Your Reservation Details
             </h1>
             {isLoadingBookingData ? (
@@ -126,7 +126,7 @@ export const Confirmation = ({
                     >
                       <FilledButton className="w-full">Collect Payment</FilledButton>
                     </Link> */}
-                    <div className="w-full md:w-fit md:min-w-[250px] ">
+                    <div className="w-full md:w-fit md:min-w-[15.625rem] ">
                       <FilledButton
                         onClick={handleNavigationForCollectPayment}
                         className="w-full">Request Payment</FilledButton>
@@ -155,7 +155,7 @@ export const Confirmation = ({
             )}
           </div>
           <div className="w-full md:w-1/2 p-4">
-            <h1 className="text-[24px] md:text-[32px]">
+            <h1 className="text-[1.5rem] md:text-[2rem]">
               Thanks for your purchase
             </h1>
             <div className="flex justify-center items-center w-full my-3">
@@ -191,7 +191,7 @@ export const Confirmation = ({
           <br />
           <br />
         </div>
-        <div className="flex w-full flex-col items-center justify-center mb-4 text-[14px] md:text-[16px]">
+        <div className="flex w-full flex-col items-center justify-center mb-4 text-[0.875rem] md:text-[1rem]">
           <p className="text-red text-center">
             You should receive a confirmation email. If you don’t see the
             confirmation email within the next 5 mins, please check your Junk
@@ -211,7 +211,7 @@ export const Confirmation = ({
           </div>
         </div>
       </div>
-      <p className="mt-4 text-[14px] text-primary-gray md:text-[16px] font-semibold text-center">
+      <p className="mt-4 text-[0.875rem] text-primary-gray md:text-[1rem] font-semibold text-center">
         Tip: If you know you can’t make your time, the earlier you can list, the
         greater the chance it sells.
       </p>

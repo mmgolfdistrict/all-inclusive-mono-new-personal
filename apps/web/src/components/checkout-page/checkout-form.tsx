@@ -1186,14 +1186,16 @@ export const CheckoutForm = ({
   }, [TotalAmt, playerCount, amountOfPlayers, cartData, donateValue]);
 
   return (
-    <section className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4">
+    <section
+    // className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4"
+    >
       <form onSubmit={handleSubmit} className="">
 
         {/* Section 4 */}
 
         <div>
-          <h2 className="mb-4">Payment Details</h2>
-          <div className="rounded-md border border-grey-100 pb-2 pr-2 pl-2" id="card-detail-form-checkout">
+          <h2 className="mb-3">Payment Details</h2>
+          <div className="rounded-xl bg-white border border-grey-100 pb-2 pr-2 pl-2" id="card-detail-form-checkout">
             <UnifiedCheckout
               id="unified-checkout"
               options={unifiedCheckoutOptions}
@@ -1211,11 +1213,11 @@ export const CheckoutForm = ({
             >
               {charityData?.charityName}
               <Tooltip
-                trigger={<Info className="ml-1 h-[15px] w-[15px]" />}
+                trigger={<Info className="ml-1 h-[0.9375rem] w-[0.9375rem]" />}
                 content="Course operator pays a card processing fee and the remaining goes to the course."
               />
             </h2>
-            <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 rounded-md border border-grey-100">
+            <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-xl my-2 border border-grey-100">
               <div className="flex items-top">
                 {charityData?.charityLogo && (
                   // eslint-disable-next-line  @next/next/no-img-element
@@ -1232,7 +1234,7 @@ export const CheckoutForm = ({
                   >
                     {charityData?.charityName}
                     <Tooltip
-                      trigger={<Info className="ml-1 h-[20px] w-[20px]" />}
+                      trigger={<Info className="ml-1 h-[1.25rem] w-[1.25rem]" />}
                       content="Course operator pays a card processing fee and the remaining goes to the course."
                     />
                   </h2> */}
@@ -1357,18 +1359,18 @@ export const CheckoutForm = ({
         {/* Section 6 */}
         <div className="mt-4">
           <h2 className="mb-2">Order Totals</h2>
-          <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-lg my-2 rounded-md border border-grey-100">
+          <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-xl my-2 border border-grey-100">
             {!isLoadingUser && PHONE_NUMBER_MANDATORY_AT_CHECKOUT === "true" && <div className="flex flex-col gap-1" ref={phoneNumberRef}>
               <div className="flex gap-1">
-                <label htmlFor="phoneNumber" className="text-[14px] text-primary-gray">
+                <label htmlFor="phoneNumber" className="text-[0.875rem] text-primary-gray">
                   Phone Number<span className="text-red"> *</span>
                 </label>
                 <Tooltip
-                  trigger={<Info className="ml-2 h-[20px] w-[20px]" />}
+                  trigger={<Info className="ml-2 h-[1.25rem] w-[1.25rem]" />}
                   content={`${course?.name} is requiring phone numbers to be present. If you enter invalid phone number then your reservation might be cancelled by the course without any refunds.`}
                 />
               </div>
-              <div className="flex h-12 rounded-lg bg-secondary-white px-1 text-[14px] text-gray-500 outline-none text-ellipsis">
+              <div className="flex h-12 rounded-lg bg-secondary-white px-1 text-[0.875rem] text-gray-500 outline-none text-ellipsis">
                 <CountryDropdown defaultCountry={currentCountry} items={countries} onSelect={handleSelectCountry} />
                 <Input
                   className="input-phone-number"
@@ -1383,8 +1385,8 @@ export const CheckoutForm = ({
                   data-testid="profile-phone-number-id"
                 />
               </div>
-              {phoneNumberError && <p className="text-[12px] text-red">{phoneNumberError}</p>}
-              {countryError && <p className="text-[12px] text-red">{countryError}</p>}
+              {phoneNumberError && <p className="text-[0.75rem] text-red">{phoneNumberError}</p>}
+              {countryError && <p className="text-[0.75rem] text-red">{countryError}</p>}
             </div>}
             {course?.supportCharity && !roundUpCharityId ? (
               <div className="flex flex-col gap-1">
@@ -1393,7 +1395,7 @@ export const CheckoutForm = ({
                   {selectedCharity ? (
                     <button
                       onClick={handleRemoveSelectedCharity}
-                      className="text-[12px] self-end p-1 border rounded-md w-fit bg-error-stroke text-white"
+                      className="text-[0.75rem] self-end p-1 border rounded-md w-fit bg-error-stroke text-white"
                     >
                       Remove Charitable Donation
                     </button>
@@ -1406,7 +1408,7 @@ export const CheckoutForm = ({
                 />
                 {selectedCharity ? (
                   <div className="relative">
-                    <div className="text-gray-500 text-[14px] absolute left-[.35rem] top-[2.3rem]">
+                    <div className="text-gray-500 text-[0.875rem] absolute left-[.35rem] top-[2.3rem]">
                       $
                     </div>
                     <Input
@@ -1449,14 +1451,14 @@ export const CheckoutForm = ({
             {isBuyNowAuction ? null : course?.supportsPromocode ? (
               <div className={`flex flex-col gap-1`} id="promo-code-checkout">
                 <label
-                  className="text-[14px] text-primary-gray"
+                  className="text-[0.875rem] text-primary-gray"
                   htmlFor={"promo-code"}
                 >
                   Promo code
                 </label>
                 <input
                   id="promo-code"
-                  className="rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none"
+                  className="rounded-lg bg-secondary-white px-4 py-3 text-[0.875rem] text-gray-500 outline-none"
                   value={promoCode}
                   onChange={(e) => handlePromoCode(e.target.value)}
                   placeholder="Enter promo code"
@@ -1468,11 +1470,11 @@ export const CheckoutForm = ({
               <div className="flex flex-col">
                 <label
                   htmlFor="any-special-request-checkout"
-                  className="flex items-center text-[14px] text-primary-gray"
+                  className="flex items-center text-[0.875rem] text-primary-gray"
                 >
                   Any Special Requests?
                   <Tooltip
-                    trigger={<Info className="ml-2 h-[20px] w-[20px]" />}
+                    trigger={<Info className="ml-2 h-[1.25rem] w-[1.25rem]" />}
                     content="The course will be notified about your requests though the course will reach out to you if they cannot full fill your request. Special requests based on the availability and may incur an additional charge which you might pay at the course."
                   />
                 </label>
@@ -1499,13 +1501,13 @@ export const CheckoutForm = ({
                   id="need-rentals"
                 />
                 <label
-                  className="text-primary-gray text-[14px] cursor-pointer select-none"
+                  className="text-primary-gray text-[0.875rem] cursor-pointer select-none"
                   htmlFor="need-rentals"
                 >
                   Need Rentals?
                 </label>
                 <Tooltip
-                  trigger={<Info className="ml-1 h-[20px] w-[20px]" />}
+                  trigger={<Info className="ml-1 h-[1.25rem] w-[1.25rem]" />}
                   content="Club rentals are strictly based on availability and may incur an additional charge which you might pay at the course."
                 />
               </div>
@@ -1773,11 +1775,11 @@ export const CheckoutForm = ({
             {isMobile && <div className='flex gap-1 items-center mb-2 mt-4'>
               <h2>Priority Add-Ons</h2>
               <Tooltip
-                trigger={<Info className="h-[15px] w-[15px] text-primary-gray" />}
+                trigger={<Info className="h-[0.9375rem] w-[0.9375rem] text-primary-gray" />}
                 content="Prepaying for add-ons guarantees your availability for your rentals and may be cheaper than paying at the course."
               />
             </div>}
-            <section className="md:hidden p-0 md:p-4 rounded-md border border-grey-100 p-1">
+            <section className="md:hidden p-0 md:p-4 bg-white rounded-xl border border-grey-100 p-1">
               <div className="bg-white md:rounded-xl p-4">
                 <MerchandiseCarousel
                   items={courseMerchandise}
@@ -1790,7 +1792,7 @@ export const CheckoutForm = ({
         }
         <label
           htmlFor="terms-of-service-checkbox"
-          className={`mb-2 flex items-start rounded-md p-2 border mt-4
+          className={`mb-2 flex items-start rounded-xl p-2 border mt-4 bg-white
           bg-gray-100 transition-all duration-300`}
           style={{ borderColor: isChecked ? "transparent" : "red" }}
         >
@@ -1803,7 +1805,7 @@ export const CheckoutForm = ({
             checked={isChecked}
             onChange={() => setIsChecked(!isChecked)}
           />
-          <div className="cursor-pointer ml-2 text-[14px] font-bold">
+          <div className="cursor-pointer ml-2 text-[0.875rem] font-bold">
             By checking the box and completing this reservation, I agree to the
             <Link
               href="/terms-of-service"
@@ -1824,7 +1826,7 @@ export const CheckoutForm = ({
         {multipleTransaction &&
           (multipleTransaction.data > 1 ? (
             <Fragment>
-              <div className="w-full flex text-left p-[5px]">
+              <div className="w-full flex text-left p-[0.3125rem]">
                 <span className="text-sm text-yellow-600">
                   We noticed that you have already bought tee times today. Card
                   issuers typically flag multiple transactions as suspicious.
@@ -1880,9 +1882,9 @@ export const CheckoutForm = ({
         {message && (
           <div id="payment-message" className={styles.paymentMessage}>
             {message === "Payment Successful" ? (
-              <span>Payment Successful</span>
+              <span className="text-base">Payment Successful</span>
             ) : (
-              <span className="!text-red">{message}</span>
+              <span className="!text-red text-base">{message}</span>
             )}
           </div>
         )}

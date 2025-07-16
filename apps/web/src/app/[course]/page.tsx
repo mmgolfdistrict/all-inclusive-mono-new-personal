@@ -867,7 +867,7 @@ export default function CourseHomePage() {
       {
         !isMobile &&
         <div className="flex gap-8 items-center px-4 md:px-6 ">
-          <div className="min-w-[310px]">
+          <div className="min-w-[19.375rem]">
             {ALLOW_COURSE_SWITCHING ? <Select
               className="w-full"
               values={
@@ -916,7 +916,7 @@ export default function CourseHomePage() {
           ref={scrollRef}
           className="absolute -top-[7.5rem] md:-top-[9.2rem]"
         />
-        <div className="hidden min-w-[310px] flex-col md:flex">
+        <div className="hidden min-w-[19.375rem] flex-col md:flex">
           <div
             style={{
               top: "calc(9.5rem + 1px)",
@@ -999,7 +999,7 @@ export default function CourseHomePage() {
                           <span className="text-xl font-bold leading-tight">
                             {dateObj.format("D")}
                           </span>
-                          <span className="text-[13px] font-medium">
+                          <span className="text-[0.8125rem] font-medium">
                             {dateObj.format("ddd")}
                           </span>
                         </button>
@@ -1011,11 +1011,11 @@ export default function CourseHomePage() {
           )}
 
           {error ? (
-            <div className="flex justify-center items-center h-[200px]">
+            <div className="flex justify-center items-center h-[12.5rem]">
               <div className="text-center">Error: {error}</div>
             </div>
           ) : datesArr?.length === 0 ? (
-            <div className="flex justify-center items-center h-[200px]">
+            <div className="flex justify-center items-center h-[12.5rem]">
               <div className="text-center">
                 {isLoadingTeeTimeDate
                   ? "Loading..."

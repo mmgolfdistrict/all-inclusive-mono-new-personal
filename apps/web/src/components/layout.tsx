@@ -63,7 +63,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   console.log("pathname", pathname);
 
   return (
-    <div className={`relative flex w-full flex-col ${bgColor} ${pathname === '/' ? 'mb-0' : 'mb-[59px]'} md:mb-0`}>
+    <div className={`relative flex w-full flex-col ${bgColor} ${pathname === '/' ? 'mb-0' : 'mb-[3.6875rem]'} md:mb-0`}>
       {AllowedPathsForMainNav.includes(pathname) ? <MainNav /> : null}
 
       <div className={`min-h-[100dvh] ${bgColor}`}>{children}</div>

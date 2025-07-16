@@ -42,7 +42,7 @@ const OptionDetails = ({
         <h3 className="font mb-2 text-gray-600">Select Your Bank Account to Deposit:</h3>
         {disabledCashOut && (
           <Tooltip
-            trigger={<Info className="h-[20px] w-[20px]" />}
+            trigger={<Info className="h-[1.25rem] w-[1.25rem]" />}
             content="You have a 0 balance. There are no funds to cash out."
           />
         )}
@@ -121,7 +121,7 @@ const OptionDetails = ({
 
         </div>
       )}
-      {selectedOption && <p className=" text-[14px] text-blue-500 md:text-[16px]">
+      {selectedOption && <p className=" text-[0.875rem] text-blue-500 md:text-[1rem]">
         You can cashout once a day up to $3000.
       </p>}
     </div>

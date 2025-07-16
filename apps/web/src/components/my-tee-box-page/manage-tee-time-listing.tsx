@@ -232,8 +232,8 @@ export const ManageTeeTimeListing = ({
       let totalPayoutForAllGolfers =
         (buyerListingPricePerGolfer - buyerFeePerGolfer - sellerFeePerGolfer) *
         parseInt(players) +
-      (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100 +
-      (selectedTeeTime?.totalMerchandiseAmount ?? 0) / 100;
+        (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100 +
+        (selectedTeeTime?.totalMerchandiseAmount ?? 0) / 100;
 
       totalPayoutForAllGolfers =
         totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
@@ -369,7 +369,7 @@ export const ManageTeeTimeListing = ({
               className="flex w-fit items-center gap-1 text-primary"
             >
               <div>View listed tee times</div>
-              <DownChevron fill={"#40942A"} className="w-[14px] -rotate-90" />
+              <DownChevron fill={"#40942A"} className="w-[0.875rem] -rotate-90" />
             </Link>
           </div>
         );
@@ -409,13 +409,13 @@ export const ManageTeeTimeListing = ({
           <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
             <label
               htmlFor="listingPrice"
-              className="text-[16px] text-primary-gray md:text-[18px]"
+              className="text-base text-primary-gray md:text-lg"
             >
               Listing price per golfer
             </label>
             <div className="relative">
               <span
-                className={`absolute left-1 top-1 text-[24px] md:text-[32px] ${selectedTeeTime?.listingId ===
+                className={`absolute left-1 top-1 text-[1.5rem] md:text-[2rem] ${selectedTeeTime?.listingId ===
                   selectedTeeTime?.listingIdFromRedis
                   ? "opacity-50 cursor-not-allowed"
                   : ""
@@ -430,7 +430,7 @@ export const ManageTeeTimeListing = ({
                 onFocus={handleFocus}
                 onChange={handleListingPrice}
                 onBlur={handleBlur}
-                className={`mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6 ${selectedTeeTime?.listingId ===
+                className={`mx-auto max-w-[18.75rem] rounded-lg bg-secondary-white px-4 py-1 text-center text-[1.5rem] font-semibold outline-none md:text-[2rem] pl-6 ${selectedTeeTime?.listingId ===
                   selectedTeeTime?.listingIdFromRedis
                   ? "opacity-50 cursor-not-allowed"
                   : ""
@@ -447,7 +447,7 @@ export const ManageTeeTimeListing = ({
           <div className={`flex  flex-col gap-1 text-center`}>
             <label
               htmlFor="spot"
-              className="text-[16px] text-primary-gray md:text-[18px]"
+              className="text-base text-primary-gray md:text-lg"
             >
               Number of spots listed
             </label>
@@ -509,7 +509,7 @@ export const ManageTeeTimeListing = ({
         </div>
         {selectedTeeTime?.listingId ===
           selectedTeeTime?.listingIdFromRedis && (
-            <div className="text-center text-[20px] text-red">
+            <div className="text-center text-[1.25rem] text-red">
               Users are trying to buy this tee time and hence, editing is not
               allowed.
             </div>
@@ -527,8 +527,8 @@ export const ManageTeeTimeListing = ({
             <div className="font-[300] text-primary-gray">
               Service Fee{" "}
               <Tooltip
-                trigger={<Info className="h-[14px] w-[14px]" />}
-                content={<div className="max-w-[200px] text-sm break-words">This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times</div>}
+                trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
+                content={<div className="max-w-[12.5rem] text-sm break-words">This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times</div>}
               />
             </div>
             <div className="text-secondary-black">
@@ -539,7 +539,7 @@ export const ManageTeeTimeListing = ({
             <div className="font-[300] text-primary-gray">
               Weather Guarantee Refund{" "}
               <Tooltip
-                trigger={<Info className="h-[14px] w-[14px]" />}
+                trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
                 content="Weather guarantee amount to be refunded"
               />
             </div>
@@ -554,7 +554,7 @@ export const ManageTeeTimeListing = ({
               <div className="font-[300] text-primary-gray">
                 Merchandise Purchase Refund{" "}
                 <Tooltip
-                  trigger={<Info className="h-[14px] w-[14px]" />}
+                  trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
                   content="Merchandise Purchase amount to be refunded"
                 />
               </div>
@@ -572,7 +572,7 @@ export const ManageTeeTimeListing = ({
               {formatMoney(totalPayout)}
             </div>
           </div>
-          <div className="text-center text-[14px] font-[300] text-primary-gray">
+          <div className="text-center text-[0.875rem] font-[300] text-primary-gray">
             All sales are final.
           </div>
           <div className="flex flex-col gap-2">
@@ -683,9 +683,9 @@ const TeeTimeItem = ({
           </div>
         </div>
       </div>
-      <div className="flex gap-4 text-[14px]">
-        <div className="w-[40px] ">
-          <Players className="ml-auto w-[30px]" />
+      <div className="flex gap-4 text-[0.875rem]">
+        <div className="w-[2.5rem] ">
+          <Players className="ml-auto w-[1.875rem]" />
         </div>
         {golferCount} {golferCount === 1 ? "golfer" : "golfers"}
       </div>

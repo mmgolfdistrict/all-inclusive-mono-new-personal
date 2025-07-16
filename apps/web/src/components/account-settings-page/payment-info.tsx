@@ -32,15 +32,15 @@ export const PaymentInfoMangeProfile = () => {
       id="payment-method"
       className="flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4"
     >
-      <h1 className="pb-6 text-[18px] md:text-[24px]">Saved Credit Cards</h1>
+      <h1 className="pb-6 text-[1.125rem] md:text-[1.5rem]">Saved Credit Cards</h1>
       <div className="flex flex-col gap-2">
         {cards && cards.length > 0 ? (
           cards.map((card, idx) => (
             <CardDisplay removeMethod={removeMethod} card={card} key={idx} />
           ))
         ) : isLoading ? (
-          <div className="flex justify-center items-center h-full min-h-[200px]">
-            <Spinner className="w-[50px] h-[50px]" />
+          <div className="flex justify-center items-center h-full min-h-[12.5rem]">
+            <Spinner className="w-[3.125rem] h-[3.125rem]" />
           </div>
         ) : (
           <div className="text-center">No cards on file.</div>
@@ -81,7 +81,7 @@ const CardDisplay = ({
           onClick={() => setConfirmStatus(true)}
           className="border border-alert-red px-3 rounded-md"
         >
-          <Trashcan fill="#EE2020" className="w-[20px] h-[20px]" />
+          <Trashcan fill="#EE2020" className="w-[1.25rem] h-[1.25rem]" />
         </button>
       </div>
 
@@ -95,7 +95,7 @@ const CardDisplay = ({
         )}
         <aside
           // ref={sidebar}
-          className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${confirmStatus ? "translate-x-0" : "translate-x-full"
+          className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[31.25rem] md:h-[100dvh] ${confirmStatus ? "translate-x-0" : "translate-x-full"
             }`}
         >
           <div className="relative flex h-full flex-col">
@@ -110,7 +110,7 @@ const CardDisplay = ({
                 className="z-[2]"
                 aria-label="sidebarToggle"
               >
-                <Close className="h-[25px] w-[25px]" />
+                <Close className="h-[1.5625rem] w-[1.5625rem]" />
               </button>
             </div>
             <div className="flex h-full flex-col justify-between overflow-y-auto">

@@ -79,11 +79,16 @@ button {
   background-color: var(--primary-color) !important;
   border-radius: 999px !important;
   font-size: 0 !important;
+  height: unset !important;
+  line-height: 1.5rem !important;
 }
 #form #finix-form-container #finix-submit-button::after {
   content: "Save";
   display: inline-block;
-  font-size: 16px;
+  font-size: 1rem;
+  height: unset !important;
+  padding: 0.375rem 0 0.375rem 0 !important;
+  line-height: 1.75rem !important;
 }
 
 .date-selector .Calendar {

@@ -100,36 +100,33 @@ export default async function RootLayout({
       <GoogleAnalytics />
       <MicrosoftClarity />
       <body
-        className={`${
-          fontMapper[entityData?.font ?? "font-inter"]
-        } bg-gray-100`}
+        className={`${fontMapper[entityData?.font ?? "font-inter"]
+          } bg-gray-100`}
       >
         {!entityData?.id ? (
           <div className="flex items-center flex-col justify-center mt-20">
             <div className="text-center">
               <div className="container mx-auto flex flex-col items-center justify-center ">
                 <div className="bg-white p-4 rounded-md shadow-md text-center border-gray-300 mb-10">
-                  <Club className="w-[16px]" />
+                  <Club className="w-4" />
                 </div>
                 <div className="bg-white p-8 rounded-md shadow-md text-center w-90 ml-4 mr-4">
                   <div className="flex items-center mb-10 justify-center">
                     <GolfDistrict
-                      className="w-[180px]"
+                      className="w-[11.25rem]"
                       id="powered-by-sidebar"
                       color="black"
                     />
                   </div>
                   <h1
-                    className={`text-3xl mb-5 ${
-                      fontMapper[entityData?.font ?? "font-inter"]
-                    }`}
+                    className={`text-3xl mb-5 ${fontMapper[entityData?.font ?? "font-inter"]
+                      }`}
                   >
                     Facility not found
                   </h1>
                   <p
-                    className={`${
-                      fontMapper[entityData?.font ?? "font-inter"]
-                    } text-md text-gray-800`}
+                    className={`${fontMapper[entityData?.font ?? "font-inter"]
+                      } text-md text-gray-800`}
                   >
                     You have reached a golf facility’s page that has
                   </p>

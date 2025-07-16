@@ -53,7 +53,7 @@ export const UpcomingTeeTimes = ({
               onClick={scrollLeft}
               className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
             >
-              <LeftChevron fill="#40942A" className="w-[21px]" />
+              <LeftChevron fill="#40942A" className="w-[1.3125rem]" />
             </button>
           </div>
         )}
@@ -66,11 +66,11 @@ export const UpcomingTeeTimes = ({
               .fill(null)
               .map((_, idx) => <Skeleton key={idx} />)
           ) : isError && error ? (
-            <div className="flex justify-center items-center h-[200px]">
+            <div className="flex justify-center items-center h-[12.5rem]">
               <div className="text-center">Error: {error?.message}</div>
             </div>
           ) : !data || data?.length === 0 ? (
-            <div className="flex flex-col items-center w-full justify-center gap-4 px-4 pb-2 h-[200px] text-[14px] md:px-6 md:pb-3">
+            <div className="flex flex-col items-center w-full justify-center gap-4 px-4 pb-2 h-[12.5rem] text-[0.875rem] md:px-6 md:pb-3">
               <div className="text-center">No tee times found.</div>
             </div>
           ) : (
@@ -111,7 +111,7 @@ export const UpcomingTeeTimes = ({
               className="flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator"
               data-testid="scroll-right-button-id"
             >
-              <LeftChevron fill="#40942A" className="w-[21px] rotate-180" />
+              <LeftChevron fill="#40942A" className="w-[1.3125rem] rotate-180" />
             </button>
           </div>
         )}

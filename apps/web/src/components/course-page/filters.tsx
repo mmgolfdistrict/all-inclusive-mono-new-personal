@@ -484,10 +484,10 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                 dataTestId="filter-switch-not-for-sale-make-an-offer-id"
               />
               <div className="flex items-center gap-1 text-primary-gray">
-                <Hidden className="h-[17px] w-[20px]" />
-                <div className="text-[15px]">Not for Sale, Make an Offer</div>
+                <Hidden className="h-[1.0625rem] w-[1.25rem]" />
+                <div className="text-[0.9375rem]">Not for Sale, Make an Offer</div>
                 <Tooltip
-                  trigger={<Info className="h-[14px] w-[14px]" />}
+                  trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
                   content="Includes unlisted tee times if checked"
                 />
               </div>
@@ -500,10 +500,10 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
             dataTestId="filter-switch-include-cart-id"
           />
           <div className="flex items-center gap-1 text-primary-gray">
-            <GolfCart className="h-[17px] w-[20px]" />
-            <div className="text-[15px]">Includes Cart</div>
+            <GolfCart className="h-[1.0625rem] w-[1.25rem]" />
+            <div className="text-[0.9375rem]">Includes Cart</div>
             <Tooltip
-              trigger={<Info className="h-[14px] w-[14px]" />}
+              trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
               content="The cart fee is included in the greens fee when toggled on. Purchasing without a cart may not be available."
             />
           </div>
@@ -647,7 +647,7 @@ export const Item = ({
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white flex items-center px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white unmask-players ${className ?? ""
+      className={`bg-white flex items-center px-4 py-2 text-left text-[0.875rem] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white unmask-players ${className ?? ""
         }`}
       data-testid={dataTestId}
       data-qa={dataQa}

@@ -65,14 +65,14 @@ export const SensibleModal = ({
           >
             <div>
               <div className="flex flex-col gap-4 p-6 md:rounded-t-lg bg-tertiary-gray">
-                <h1 className="font-semibold text-[22px] md:text-[28px]">
+                <h1 className="font-semibold text-[1.375rem] md:text-[1.75rem]">
                   Protect Your Trip from Weather
                 </h1>
                 <p className="font-bold">
                   Add a Weather Guarantee for{" "}
                   {sensiblePrice ? formatMoney(sensiblePrice) : "-"}
                 </p>
-                <p className="max-w-[500px]">
+                <p className="max-w-[31.25rem]">
                   Sensible Weather will automatically reimburse you when Mother
                   Nature has other plans for your day - No Claims, No Hassle.
                 </p>
@@ -104,7 +104,7 @@ export const SensibleModal = ({
                 </div>
               </div>
               <div className="border-t flex flex-col md:flex-row gap-4 p-6 items-center justify-between">
-                <div className="flex flex-col text-[14px] text-primary">
+                <div className="flex flex-col text-[0.875rem] text-primary">
                   <Link
                     href="https://www.sensibleweather.com/guarantee-terms-and-conditions"
                     target="_blank"
@@ -124,7 +124,7 @@ export const SensibleModal = ({
                     View our Privacy Policy
                   </Link>
                 </div>
-                <Sensible className="h-[24px] w-[138px]" />
+                <Sensible className="h-6 w-[8.625rem]" />
               </div>
             </div>
           </motion.div>

@@ -108,13 +108,13 @@ const MerchandiseCard: React.FC<MerchandiseCardProps> = ({ item, onQuantityChang
             </div>
 
             <div className="mt-auto flex justify-between items-center">
-                <div className="text-[14px] md:text-[16px] font-semibold text-secondary-black">
+                <div className="text-[0.875rem] md:text-[1rem] font-semibold text-secondary-black">
                     {formatMoney(item.price / 100)}
                 </div>
                 {quantity === 0 ? (
                     <OutlineButton
                         onClick={handleAdd}
-                        className='rounded-full max-w-[180px] w-full'
+                        className='rounded-full max-w-[11.25rem] w-full'
                         aria-label={`Add ${item.caption} to cart`}
                         type="button"
                     >
@@ -124,18 +124,18 @@ const MerchandiseCard: React.FC<MerchandiseCardProps> = ({ item, onQuantityChang
                     <div className="flex items-center justify-between">
                         <OutlineButton
                             onClick={handleDecrement}
-                            className="rounded-md min-w-[40px] !px-0"
+                            className="rounded-md min-w-[2.5rem] !px-0"
                             aria-label={`Decrease quantity of ${item.caption}`}
                             type="button"
                         >
                             -
                         </OutlineButton>
-                        <span className="font-semibold text-gray-800 min-w-[48px] bg-secondary-white py-1 text-center" aria-live="polite">
+                        <span className="font-semibold text-gray-800 min-w-[3rem] bg-secondary-white py-1 text-center" aria-live="polite">
                             {quantity}
                         </span>
                         <OutlineButton
                             onClick={handleIncrement}
-                            className="rounded-md min-w-[40px] !px-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="rounded-md min-w-[2.5rem] !px-0 disabled:opacity-50 disabled:cursor-not-allowed"
                             aria-label={`Increase quantity of ${item.caption}`}
                             disabled={isIncrementDisabled}
                             type="button"

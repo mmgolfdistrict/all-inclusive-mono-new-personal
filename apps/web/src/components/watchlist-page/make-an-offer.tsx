@@ -128,9 +128,8 @@ export const MakeAnOffer = ({
       )}
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isMakeAnOfferOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${isMakeAnOfferOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
@@ -145,7 +144,7 @@ export const MakeAnOffer = ({
               aria-label="sidebarToggle"
               data-testid="close-button-id"
             >
-              <Close className="h-[25px] w-[25px]" />
+              <Close className="h-[1.5625rem] w-[1.5625rem]" />
             </button>
           </div>
           <div className="flex h-full flex-col justify-between">
@@ -161,12 +160,12 @@ export const MakeAnOffer = ({
               <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
                 <label
                   htmlFor="listingPrice"
-                  className="text-[16px] text-primary-gray md:text-[18px]"
+                  className="text-base text-primary-gray md:text-lg"
                 >
                   Offer price per golfer
                 </label>
                 <div className="relative">
-                  <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
+                  <span className="absolute left-1 top-1 text-[1.5rem] md:text-[2rem]">
                     $
                   </span>
                   <input
@@ -176,7 +175,7 @@ export const MakeAnOffer = ({
                     onFocus={handleFocus}
                     onChange={handleOfferPrice}
                     onBlur={handleBlur}
-                    className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
+                    className="mx-auto max-w-[18.75rem] rounded-lg bg-secondary-white px-4 py-1 text-center text-[1.5rem] font-semibold outline-none md:text-[2rem] pl-6"
                     data-testid="listing-price-id"
                   />
                 </div>
@@ -184,7 +183,7 @@ export const MakeAnOffer = ({
               <div className={`flex  flex-col gap-1 text-center`}>
                 <label
                   htmlFor="players"
-                  className="text-[16px] text-primary-gray md:text-[18px]"
+                  className="text-base text-primary-gray md:text-lg"
                 >
                   Number of spots desired
                 </label>
@@ -205,17 +204,15 @@ export const MakeAnOffer = ({
                     <Item
                       key={index}
                       value={value}
-                      className={`${
-                        index === 0
+                      className={`${index === 0
                           ? "rounded-l-full border border-stroke"
                           : index === PlayerOptions.length - 1
-                          ? "rounded-r-full border-b border-t border-r border-stroke"
-                          : "border-b border-r border-t border-stroke"
-                      } px-[1.75rem] ${
-                        availableSlots < index + 1
+                            ? "rounded-r-full border-b border-t border-r border-stroke"
+                            : "border-b border-r border-t border-stroke"
+                        } px-[1.75rem] ${availableSlots < index + 1
                           ? "opacity-50 cursor-not-allowed"
                           : ""
-                      }`}
+                        }`}
                       dataTestId="player-item-id"
                       dataQa={value}
                       label={value}
@@ -241,7 +238,7 @@ export const MakeAnOffer = ({
                   {formatMoney(totalOffer)}
                 </div>
               </div>
-              <div className="text-center text-[14px] font-[300] text-primary-gray">
+              <div className="text-center text-[0.875rem] font-[300] text-primary-gray">
                 Once the offer is accepted then all sales are final. You may
                 cancel your offer before it is accepted.
               </div>
@@ -295,9 +292,9 @@ const TeeTimeItem = ({
           </div>
         </div>
       </div>
-      <div className="flex gap-4 text-[14px]">
-        <div className="w-[40px] ">
-          <Players className="ml-auto w-[30px]" />
+      <div className="flex gap-4 text-[0.875rem]">
+        <div className="w-[2.5rem] ">
+          <Players className="ml-auto w-[1.875rem]" />
         </div>
         {golferCount} {golferCount === 1 ? "golfer" : "golfers"}
       </div>

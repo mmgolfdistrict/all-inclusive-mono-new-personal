@@ -71,7 +71,7 @@ export const Leaflet = ({
           {/* group-active:-rotate-12 */}
           <div className="h-1 w-6 rounded-full bg-gray-300 transition-all " />
         </div>
-        <div className={`max-h-[325px] overflow-y-auto ${className ?? ""}`}>
+        <div className={`max-h-[20.3125rem] overflow-y-auto ${className ?? ""}`}>
           {children}
         </div>
       </motion.div>

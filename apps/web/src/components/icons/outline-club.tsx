@@ -2,8 +2,8 @@ import { type SVGProps } from "react";
 
 export const OutlineClub = (props: SVGProps<SVGSVGElement>) => (
   <svg
-    width="21"
-    height="24"
+    width="1.313rem"
+    height="1.5rem"
     viewBox="0 0 21 24"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"

@@ -53,7 +53,7 @@ export const CourseBanner = ({
             width={1440}
             height={270}
             alt={course?.name ?? ""}
-            className="object-cover w-full h-[270px]"
+            className="object-cover w-full h-[16.875rem]"
             unoptimized
           />
         </div>

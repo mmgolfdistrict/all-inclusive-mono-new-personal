@@ -707,11 +707,11 @@ export default function Checkout({
           </div>
           <div className="md:w-2/5">
             {isLoading || !data || data === null ? (
-              <div className="flex justify-center items-center h-[200px] w-full md:min-w-[370px]">
-                <Spinner className="w-[50px] h-[50px]" />
+              <div className="flex justify-center items-center h-[12.5rem] w-full md:min-w-[23.125rem]">
+                <Spinner className="w-[3.125rem] h-[3.125rem]" />
               </div>
             ) : !isLoading && isError && error ? (
-              <div className="text-center h-[200px] flex items-center justify-center rounded-xl bg-white p-6">
+              <div className="text-center h-[12.5rem] flex items-center justify-center rounded-xl bg-white p-6">
                 {error?.message ?? "An error occurred fetching checkout data"}
               </div>
             ) : (

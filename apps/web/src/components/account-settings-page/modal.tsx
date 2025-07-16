@@ -27,7 +27,7 @@ const Modal = ({ isOpen, onClose }) => {
         </div>
       )}
       <aside
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${isOpen ? "translate-x-0" : "translate-x-full"
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[31.25rem] md:h-[100dvh] ${isOpen ? "translate-x-0" : "translate-x-full"
           }`}
       >
         <div className="bg-white p-6 flex flex-col justify-between rounded-md h-full w-full">
@@ -38,7 +38,7 @@ const Modal = ({ isOpen, onClose }) => {
                 className="text-gray-500 hover:text-gray-700"
                 onClick={onClose}
               >
-                <Close className="h-[25px] w-[25px]" />
+                <Close className="h-[1.5625rem] w-[1.5625rem]" />
               </button>
             </div>
             <h5 className="text-justify text-sm font-semibold">
@@ -47,7 +47,7 @@ const Modal = ({ isOpen, onClose }) => {
             </h5>
             {isLoading && (
               <div className="flex justify-center items-center m-auto h-full w-full">
-                <Spinner className="w-[50px] h-[50px]" />
+                <Spinner className="w-[3.125rem] h-[3.125rem]" />
               </div>
             )}
             {isOpen && (
@@ -69,7 +69,7 @@ const Modal = ({ isOpen, onClose }) => {
                   Are you having issues adding your bank?
                 </h5>
                 <Tooltip
-                  trigger={<Info className="h-[20px] w-[20px]" />}
+                  trigger={<Info className="h-[1.25rem] w-[1.25rem]" />}
                   content="Please ensure the address in your account settings matches the associated bank address above. Otherwise, your verification will be delayed, and you will be unable to cash out. If there are issues, please recheck and try again."
                 />
               </div>

@@ -167,7 +167,7 @@ export default function CheckoutProcessing() {
           providerBookingId: "",
           status: "",
           isEmailSend: false,
-          isValidForCollectPayment:false
+          isValidForCollectPayment: false
         };
 
         if (!listingId) {
@@ -245,17 +245,17 @@ export default function CheckoutProcessing() {
         <div className="container mx-auto p-4">
           <div className="flex flex-wrap justify-center">
             <div className="w-full md:w-1/2 p-2">
-              <h1 className="text-[20px] md:text-[28px]">
+              <h1 className="text-[1.25rem] md:text-[1.75rem]">
                 We are processing your payment.
               </h1>
-              <h1 className="text-[20px] md:text-[28px]">
+              <h1 className="text-[1.25rem] md:text-[1.75rem]">
                 {" "}
                 Please do not close or reload your browser as this might take up
                 to 2 mins.
               </h1>
-              <div className="flex justify-center items-center h-full min-h-[200px]">
+              <div className="flex justify-center items-center h-full min-h-[12.5rem]">
                 {!message ? (
-                  <Spinner className="w-[50px] h-[50px]" />
+                  <Spinner className="w-[3.125rem] h-[3.125rem]" />
                 ) : (
                   <div id="payment-message" className={styles.paymentMessage}>
                     {message === "Booking Successful" ? (
@@ -282,7 +282,7 @@ export default function CheckoutProcessing() {
             <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
               <Link
                 href={`/${course?.id}/my-tee-box`}
-                className="w-full md:w-fit md:min-w-[250px]"
+                className="w-full md:w-fit md:min-w-[15.625rem]"
                 data-testid="go-to-my-tee-box-button-id"
               >
                 <FilledButton className="w-full">Go To My Tee Box</FilledButton>
