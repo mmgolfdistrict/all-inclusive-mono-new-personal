@@ -1184,6 +1184,7 @@ Thank you for choosing us.`;
             courseName: courses.name,
             courseTimeZone: courses.timezoneCorrection,
             userName: users.name,
+            websiteURL: courses.websiteURL,
           })
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.paymentId, paymentId))
@@ -1209,6 +1210,7 @@ Thank you for choosing us.`;
             AMOUNT: (Number(result?.collectedAmount) / 100).toString(),
             USERNAME: `${result?.userName}`,
             CourseName: result?.courseName ?? "",
+            CourseURL: result?.websiteURL ?? "",
             PlayDateTime: formatTime(result?.bookingDateTime ?? "", false, result?.courseTimeZone ?? 0),
             CourseReservationID: `${result?.bookingId}`,
             SUBJECT_LINE: `Payment Successfully processed`,
@@ -1327,6 +1329,7 @@ Thank you for choosing us.`;
             courseName: courses.name,
             courseTimeZone: courses.timezoneCorrection,
             userName: users.name,
+            websiteURL: courses.websiteURL,
           })
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.id, referencePaymentId))
@@ -1354,6 +1357,7 @@ Thank you for choosing us.`;
             AMOUNT: (Number(result?.collectedAmount) / 100).toString(),
             USERNAME: `${result?.userName}`,
             CourseName: result?.courseName ?? "",
+            CourseURL: result?.websiteURL ?? "",
             PlayDateTime: formatTime(result?.bookingDateTime ?? "", false, result?.courseTimeZone ?? 0),
             CourseReservationID: `${result?.bookingId}`,
             SUBJECT_LINE: `Payment Successfully processed`,
