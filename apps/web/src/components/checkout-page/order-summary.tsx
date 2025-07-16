@@ -5,6 +5,7 @@ import {
 import { CheckoutItem } from "../cards/checkout-item";
 import { Info } from "../icons/info";
 import { Tooltip } from "../tooltip";
+import { useMediaQuery } from "usehooks-ts";
 
 export const OrderSummary = ({
   teeTime,
@@ -24,8 +25,10 @@ export const OrderSummary = ({
   };
   isGroupBooking?: boolean;
 }) => {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   return (
     <section
+      className={isMobile ? "px-4" : ""}
     // className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4"
     >
       <h1 className="text-center text-start mb-3">Order Summary</h1>
