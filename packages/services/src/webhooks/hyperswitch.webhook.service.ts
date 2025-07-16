@@ -710,7 +710,7 @@ export class HyperSwitchWebhookService {
         .select({
           listedSlotsCount: lists.slots,
           listedPrice: lists.listPrice,
-          allowSplit: lists.allowSplit
+          allowSplit: lists.allowSplit,
         })
         .from(lists)
         .where(eq(lists.id, listingId))
@@ -727,11 +727,11 @@ export class HyperSwitchWebhookService {
             eventId: "ERROR_FETCHING_LISTED_SLOT_DETAILS",
             json: JSON.stringify({
               error: error,
-              listingId
+              listingId,
             }),
           });
           throw new Error("error fetching listed slot details");
-        })
+        });
 
       bookingStage = "Fetching old and new bookingId";
       const [bookingsIds]: any = await this.database
@@ -740,7 +740,7 @@ export class HyperSwitchWebhookService {
           oldBookingId: transfers.fromBookingId,
           transferId: transfers.id,
           cart: customerCarts.cart,
-          newBookingPlayers: bookings.playerCount
+          newBookingPlayers: bookings.playerCount,
         })
         .from(customerCarts)
         .innerJoin(bookings, eq(bookings.cartId, customerCarts.id))
@@ -760,7 +760,7 @@ export class HyperSwitchWebhookService {
             json: JSON.stringify({
               error: error,
               listingId,
-              paymentId
+              paymentId,
             }),
           });
           throw new Error("error fetching old and new bookingId");
@@ -787,7 +787,7 @@ export class HyperSwitchWebhookService {
             json: JSON.stringify({
               error: error,
               listingId,
-              bookingsIds
+              bookingsIds,
             }),
           });
           throw new Error("error fetching additional data for new booking");
@@ -814,7 +814,7 @@ export class HyperSwitchWebhookService {
             json: JSON.stringify({
               error: err,
               listingId,
-              bookingsIds
+              bookingsIds,
             }),
           });
           throw new Error(`Error confirming booking`);
@@ -843,7 +843,7 @@ export class HyperSwitchWebhookService {
             json: JSON.stringify({
               error: err,
               listingId,
-              bookingsIds
+              bookingsIds,
             }),
           });
           throw new Error(`Error cancelling old booking`);
@@ -924,7 +924,7 @@ export class HyperSwitchWebhookService {
           needRentals: bookings.needClubRental,
           timezoneCorrection: courses.timezoneCorrection,
           groupId: bookings.groupId,
-          totalMerchandiseAmount: bookings.totalMerchandiseAmount
+          totalMerchandiseAmount: bookings.totalMerchandiseAmount,
         })
         .from(bookings)
         .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -974,7 +974,11 @@ export class HyperSwitchWebhookService {
         throw new Error(`Error finding bookings for listing id`);
       }
       const firstBooking = listedBooking[0];
-      const listedSlotsCount: number | undefined = listedSlots?.length ? (listedSlots[0]?.allowSplit ? bookingsIds?.newBookingPlayers : listedSlots[0]?.listedSlotsCount) : 0;
+      const listedSlotsCount: number | undefined = listedSlots?.length
+        ? listedSlots[0]?.allowSplit
+          ? bookingsIds?.newBookingPlayers
+          : listedSlots[0]?.listedSlotsCount
+        : 0;
       const listPrice: number | undefined = listedSlots?.length ? listedSlots[0]?.listedPrice : 0;
 
       if (!firstBooking) {
@@ -1155,29 +1159,31 @@ export class HyperSwitchWebhookService {
           });
 
           bookingStage = "Creating booking for buyer customer";
-          newBooking = await provider.createBooking(
-            token,
-            firstBooking.providerCourseId!,
-            firstBooking.providerTeeSheetId!,
-            bookingData,
-            customer_id
-          ).catch((err: any) => {
-            this.logger.error(err);
-            void loggerService.errorLog({
-              userId: customer_id,
-              url: `/HyperSwitchWebhookService/handleSecondHandItem`,
-              userAgent: "",
-              message: "ERROR_CREATING_BOOKING",
-              stackTrace: `${err.stack}`,
-              additionalDetailsJSON: JSON.stringify({
-                item,
-                customer_id,
-                paymentId,
-                bookingData
-              }),
+          newBooking = await provider
+            .createBooking(
+              token,
+              firstBooking.providerCourseId!,
+              firstBooking.providerTeeSheetId!,
+              bookingData,
+              customer_id
+            )
+            .catch((err: any) => {
+              this.logger.error(err);
+              void loggerService.errorLog({
+                userId: customer_id,
+                url: `/HyperSwitchWebhookService/handleSecondHandItem`,
+                userAgent: "",
+                message: "ERROR_CREATING_BOOKING",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  item,
+                  customer_id,
+                  paymentId,
+                  bookingData,
+                }),
+              });
+              throw new Error(err.message);
             });
-            throw new Error(err.message);
-          });
           if (provider.shouldAddSaleData()) {
             try {
               bookingStage = "Adding sales data for buyer customer";
@@ -1228,7 +1234,11 @@ export class HyperSwitchWebhookService {
                 });
                 return [];
               });
-            const [user] = await this.database.select().from(users).where(eq(users.id, customer_id)).execute();
+            const [user] = await this.database
+              .select()
+              .from(users)
+              .where(eq(users.id, customer_id))
+              .execute();
             const emailList = courseContactsList.map((contact) => contact.email);
             if (emailList.length > 0) {
               this.logger.info("Sending email to course contacts");
@@ -1309,7 +1319,7 @@ export class HyperSwitchWebhookService {
               userName: buyerCustomer?.name ?? "",
               userEmail: buyerCustomer?.email ?? "",
               teeTimeDate: existingTeeTime?.providerDate ?? "",
-              errMessage: e.message
+              errMessage: e.message,
             }
           );
           throw "Booking failed on provider";
@@ -1351,29 +1361,31 @@ export class HyperSwitchWebhookService {
             providerCourseId: firstBooking.providerCourseId,
           });
           bookingStage = "Creating booking for seller customer";
-          newBookingSecond = await provider.createBooking(
-            token,
-            firstBooking.providerCourseId!,
-            firstBooking.providerTeeSheetId!,
-            bookingData,
-            firstBooking.ownerId
-          ).catch((err: any) => {
-            this.logger.error(`Error creating booking for seller customer, ${JSON.stringify(err)}`);
-            void loggerService.errorLog({
-              userId: firstBooking.ownerId,
-              url: "/handleSecondHandItem",
-              userAgent: "",
-              message: "TEE TIME BOOKING FAILED ON PROVIDER",
-              stackTrace: `${err.stack}`,
-              additionalDetailsJSON: JSON.stringify({
-                providerCourseId: firstBooking.providerCourseId,
-                providerTeeSheetId: firstBooking.providerTeeSheetId,
-                bookingData,
-                firstBooking
-              }),
-            })
-            throw new Error(`Error creating booking for seller customer, ${JSON.stringify(err)}`);
-          });
+          newBookingSecond = await provider
+            .createBooking(
+              token,
+              firstBooking.providerCourseId!,
+              firstBooking.providerTeeSheetId!,
+              bookingData,
+              firstBooking.ownerId
+            )
+            .catch((err: any) => {
+              this.logger.error(`Error creating booking for seller customer, ${JSON.stringify(err)}`);
+              void loggerService.errorLog({
+                userId: firstBooking.ownerId,
+                url: "/handleSecondHandItem",
+                userAgent: "",
+                message: "TEE TIME BOOKING FAILED ON PROVIDER",
+                stackTrace: `${err.stack}`,
+                additionalDetailsJSON: JSON.stringify({
+                  providerCourseId: firstBooking.providerCourseId,
+                  providerTeeSheetId: firstBooking.providerTeeSheetId,
+                  bookingData,
+                  firstBooking,
+                }),
+              });
+              throw new Error(`Error creating booking for seller customer, ${JSON.stringify(err)}`);
+            });
           // }
           if (provider.shouldAddSaleData()) {
             bookingStage = "Adding sales data for seller customer";
@@ -1720,7 +1732,9 @@ export class HyperSwitchWebhookService {
                   maximumFractionDigits: 2,
                 })}` || "-",
               Payout: formatMoney(
-                (listedPrice - totalTax) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount / 100 + (sellerMerchandiseAmount / 100)
+                (listedPrice - totalTax) * (listedSlotsCount || 1) +
+                  sellerWeatherGuaranteeAmount / 100 +
+                  sellerMerchandiseAmount / 100
               ),
               PurchasedFrom: existingTeeTime?.courseName || "-",
               BuyTeeTImeURL: `${redirectHref}`,
@@ -1754,7 +1768,9 @@ export class HyperSwitchWebhookService {
                 maximumFractionDigits: 2,
               })}` || "-",
             Payout: formatMoney(
-              (listedPrice - totalTax) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount / 100 + (sellerMerchandiseAmount / 100)
+              (listedPrice - totalTax) * (listedSlotsCount || 1) +
+                sellerWeatherGuaranteeAmount / 100 +
+                sellerMerchandiseAmount / 100
             ),
             SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
             PurchasedFrom: existingTeeTime?.courseName || "-",
@@ -1769,16 +1785,26 @@ export class HyperSwitchWebhookService {
             process.env.SENDGRID_TEE_TIMES_SOLD_PARTIAL_TEMPLATE_ID || "d-ef59724fe9f74e80a3768028924ea456",
             templateSeller
           );
-          const remainingSlots = (listedSlots[0]?.listedSlotsCount ?? 0) - (bookingsIds?.newBookingPlayers ?? 0);
+          const remainingSlots =
+            (listedSlots[0]?.listedSlotsCount ?? 0) - (bookingsIds?.newBookingPlayers ?? 0);
           if (remainingSlots > 0) {
-            await this.bookingService.addListingForRemainingSlots(bookingId as string, providerBookingId, listingId, remainingSlots, firstBooking.ownerId);
+            await this.bookingService.addListingForRemainingSlots(
+              bookingId as string,
+              providerBookingId,
+              listingId,
+              remainingSlots,
+              firstBooking.ownerId
+            );
           }
         }
       }
 
       const amount = listPrice ?? 1;
       const serviceCharge = amount * sellerFee;
-      const payable = (amount - serviceCharge) * (listedSlotsCount || 1) + sellerWeatherGuaranteeAmount + sellerMerchandiseAmount;
+      const payable =
+        (amount - serviceCharge) * (listedSlotsCount || 1) +
+        sellerWeatherGuaranteeAmount +
+        sellerMerchandiseAmount;
       const currentDate = new Date();
       const radeemAfterMinutes = await appSettingService.get("CASH_OUT_AFTER_MINUTES");
       const redeemAfterDate = this.addMinutes(currentDate, Number(radeemAfterMinutes));
@@ -1831,8 +1857,12 @@ export class HyperSwitchWebhookService {
                 customerRecievableData,
               }),
             });
-          })
-        await this.bookingService.addListingForRemainingSlotsOnGroupBooking(firstBooking.groupId, listedSlotsCount, firstBooking.ownerId)
+          });
+        await this.bookingService.addListingForRemainingSlotsOnGroupBooking(
+          firstBooking.groupId,
+          listedSlotsCount,
+          firstBooking.ownerId
+        );
       }
     } catch (err: any) {
       this.logger.error(`Error while creating secondhand booking: ${err}`);
@@ -1848,10 +1878,10 @@ export class HyperSwitchWebhookService {
           paymentId,
           golferPrice,
           bookingStage,
-          err
+          err,
         }),
       });
-      throw new Error("Error while creating secondhand booking")
+      throw new Error("Error while creating secondhand booking");
     }
   };
 
@@ -1893,11 +1923,11 @@ export class HyperSwitchWebhookService {
         url: "/auth",
         userAgent: "",
         stackTrace: ``,
-        additionalDetailsJSON: JSON.stringify({ 
-           item:item,
-           amountReceived:amountReceived,
-           customer_id
-         }),
+        additionalDetailsJSON: JSON.stringify({
+          item: item,
+          amountReceived: amountReceived,
+          customer_id,
+        }),
       });
       //throw new Error(`Error finding course charity id`);
     }
@@ -1947,9 +1977,11 @@ export class HyperSwitchWebhookService {
             weatherGuaranteeId: acceptedQuote.id,
             weatherGuaranteeAmount: item.price,
           })
-          .where(eq(bookings.id, acceptedQuote.reservation_id)).execute().catch((e:any)=>{
+          .where(eq(bookings.id, acceptedQuote.reservation_id))
+          .execute()
+          .catch((e: any) => {
             this.logger.error(`ERROR_WHILE_UPDATING_WEATHER_SENSIBLE_QUOTE`);
-           loggerService.errorLog({
+            loggerService.errorLog({
               message: "Error while updating weather sensible quote",
               userId: "",
               url: "/auth",
@@ -1957,12 +1989,12 @@ export class HyperSwitchWebhookService {
               stackTrace: `${e.message}`,
               additionalDetailsJSON: JSON.stringify({
                 item: item,
-                amountReceived:amountReceived,
+                amountReceived: amountReceived,
                 customer_id: customer_id,
-                customerCart: customerCart
-               }),
+                customerCart: customerCart,
+              }),
             });
-          })
+          });
       }
       return acceptedQuote;
     } catch (error: any) {
@@ -1988,17 +2020,17 @@ export class HyperSwitchWebhookService {
       .where(eq(bookings.weatherQuoteId, guaranteeId));
 
     if (!booking) {
-       this.logger.error(`Booking not found`);
-                await loggerService.errorLog({
-                  message: "BOOKING_NOT_FOUND",
-                  userId: "",
-                  url: "/auth",
-                  userAgent: "",
-                  stackTrace: `Booking not found `,
-                  additionalDetailsJSON: JSON.stringify({ 
-                    guaranteeId:guaranteeId
-                   }),
-                });
+      this.logger.error(`Booking not found`);
+      await loggerService.errorLog({
+        message: "BOOKING_NOT_FOUND",
+        userId: "",
+        url: "/auth",
+        userAgent: "",
+        stackTrace: `Booking not found `,
+        additionalDetailsJSON: JSON.stringify({
+          guaranteeId: guaranteeId,
+        }),
+      });
       //throw new Error("Booking details not found");
     }
     return booking;
@@ -2189,8 +2221,8 @@ export class HyperSwitchWebhookService {
           });
         });
       return {
-        message:"customer receviable amount added successfully"
-      }
+        message: "customer receviable amount added successfully",
+      };
     } catch (err: any) {
       await loggerService.errorLog({
         userId: "",
@@ -2217,31 +2249,34 @@ export class HyperSwitchWebhookService {
       this.logger.warn("paymentId is here", paymentId);
       this.logger.warn("payment state is here", paymentState);
       if (entityType === "updated" && entity === "payment_link" && paymentState === "COMPLETED") {
-        const updateStatus = await this.database
-            .update(bookingSplitPayment)
-            .set({ webhookStatus: paymentState })
-            .where(eq(bookingSplitPayment.paymentId, paymentId));
         const [result] = await this.database
           .select({
-            email: bookingSplitPayment.email,
             bookingId: bookingSplitPayment.bookingId,
             amount: bookingSplitPayment.payoutAmount,
-            paymentId: bookingSplitPayment.paymentId,
-            collectedAmount: bookingSplitPayment.collectedAmount,
-            isPaid: bookingSplitPayment.isPaid,
-            webhookStatus: bookingSplitPayment.webhookStatus,
+            isCredited: bookingSplitPayment.isCredited,
           })
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.paymentId, paymentId));
-        if (result?.webhookStatus === "COMPLETED") {
-          const saveToProcessfunds = await this.saveSplitPaymentAmountIntoCashOut(
-            result.bookingId,
-            Number(result?.amount)
-          );
-           this.logger.warn("insert successfully",saveToProcessfunds);
+        if (!result?.isCredited) {
+          if (result?.bookingId) {
+            const saveToProcessfunds = await this.saveSplitPaymentAmountIntoCashOut(
+              result.bookingId,
+              Number(result?.amount)
+            );
+            await this.database
+              .update(bookingSplitPayment)
+              .set({ webhookStatus: paymentState, isCredited: 1 })
+              .where(eq(bookingSplitPayment.paymentId, paymentId));
+            this.logger.warn("insert successfully", saveToProcessfunds);
+          }
+          return {
+            message: "Payment Webhook status updated successfully",
+            error: false,
+          };
         }
+
         return {
-          message: "Payment Webhook status successFully",
+          message: "Amount was already credited",
           error: false,
         };
       }
@@ -2249,32 +2284,32 @@ export class HyperSwitchWebhookService {
       console.log(error);
       return {
         message: "Payment Webhook status failed",
-        error: true
-      }
+        error: true,
+      };
     }
-  }
+  };
   updateTrackStatusOfOpenedEmail = async (id: string) => {
     try {
       this.logger.warn("", "email open successFully");
       const result = await this.database
         .update(bookingSplitPayment)
         .set({
-          isEmailOpened: 1
+          isEmailOpened: 1,
         })
         .where(eq(bookingSplitPayment.id, id))
-        .execute().catch(async (e: any) => {
+        .execute()
+        .catch(async (e: any) => {
           await loggerService.errorLog({
             message: "ERROR_UPDATING_HYPERSWITCH_PAYMENT_STATUS",
             userId: "",
             url: "/auth",
             userAgent: "",
             stackTrace: `${JSON.stringify(e)}`,
-            additionalDetailsJSON: JSON.stringify({
-            }),
+            additionalDetailsJSON: JSON.stringify({}),
           });
         });
       if (result) {
-        return { success: true, message: "Email Opened" }
+        return { success: true, message: "Email Opened" };
       }
     } catch (error: any) {
       console.log(error.message);

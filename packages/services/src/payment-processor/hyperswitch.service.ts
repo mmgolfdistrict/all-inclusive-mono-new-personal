@@ -539,7 +539,8 @@ export class HyperSwitchService {
         await this.notificationService.sendEmail(
           email,
           "A payment has failed ",
-          `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, ${teeTimeId ? `TeeTimeId: ${teeTimeId}` : `ListingId: ${listingId}`
+          `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, ${
+            teeTimeId ? `TeeTimeId: ${teeTimeId}` : `ListingId: ${listingId}`
           }, CourseId: ${courseId}, CartId: ${cartId}`
         );
       } catch (error) {
@@ -585,10 +586,7 @@ export class HyperSwitchService {
           },
         ];
       }
-      await this.database
-        .insert(failedBooking)
-        .values(failedBookingData)
-        .execute();
+      await this.database.insert(failedBooking).values(failedBookingData).execute();
       // this.logger.info(`Failed booking saved on database with id: ${JSON.stringify(failedBookingData.map((booking) => booking.id))}`);
     } catch (error: any) {
       this.logger.error(`Error saving failed booking on database: ${JSON.stringify(error)}`);
@@ -810,7 +808,7 @@ export class HyperSwitchService {
       const originalUserSplitAmount = amount * 100 - collectPaymentProcessorCharge;
       const splitPaymentEmailTemplateId = String(process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID);
       const paymentExpirationTime = await appSettingService.get("PAYMENT_EXPIRATION_TIME_IN_MINS");
-      if (paymentProcessor === "finix") {
+      if (paymentProcessor === "finix" && false) {
         const referencePaymentId = randomUUID();
         const paymentData: PaymentRequest = {
           merchant_id: this.merchantId,
@@ -1184,8 +1182,9 @@ Thank you for choosing us.`;
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.paymentId, paymentId));
         // email send the payment completed user
-        const message = `Your payment of $${Number(result?.collectedAmount) / 100
-          } has been successfully processed. Thank you for your payment.`;
+        const message = `Your payment of $${
+          Number(result?.collectedAmount) / 100
+        } has been successfully processed. Thank you for your payment.`;
         const emailSend = await this.notificationService.sendEmail(
           result?.email ?? "",
           "Payment Successful",
@@ -1193,8 +1192,9 @@ Thank you for choosing us.`;
         );
         // email send the admins after payment completed of the user
 
-        const messageAdmin = `Payment of  $${Number(result?.collectedAmount) / 100
-          } has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin = `Payment of  $${
+          Number(result?.collectedAmount) / 100
+        } has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {
@@ -1230,10 +1230,10 @@ Thank you for choosing us.`;
         };
       } else if (referencePaymentId) {
         const [isUserAlreadyPaid] = await this.database
-          .select({ isPaid: bookingSplitPayment.isPaid,webHookstatus:bookingSplitPayment.webhookStatus })
+          .select({ isPaid: bookingSplitPayment.isPaid, webHookstatus: bookingSplitPayment.webhookStatus })
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.id, referencePaymentId));
-          console.warn("isUserAlreadyPaid",isUserAlreadyPaid)
+        console.warn("isUserAlreadyPaid", isUserAlreadyPaid);
         if (isUserAlreadyPaid?.isPaid === 1 && isUserAlreadyPaid.webHookstatus === "COMPLETED") {
           return {
             message: "This payment is already paid",
@@ -1243,50 +1243,51 @@ Thank you for choosing us.`;
             amount: "",
           };
         }
-        if(isUserAlreadyPaid?.webHookstatus === "COMPLETED" && isUserAlreadyPaid?.isPaid === 0){
+        if (isUserAlreadyPaid?.webHookstatus === "COMPLETED" && isUserAlreadyPaid?.isPaid === 0) {
           await this.database
-          .update(bookingSplitPayment)
-          .set({
-            isPaid: 1,
-          })
-          .where(eq(bookingSplitPayment.id, referencePaymentId))
-          .execute()
-          .catch(async (e: any) => {
-            await loggerService.errorLog({
-              message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
-              userId: "",
-              url: "/auth",
-              userAgent: "",
-              stackTrace: `${JSON.stringify(e)}`,
-              additionalDetailsJSON: JSON.stringify({
-                paymentId: paymentId,
-                referencePaymentId: referencePaymentId,
-                provider: "finix",
-              }),
+            .update(bookingSplitPayment)
+            .set({
+              isPaid: 1,
+            })
+            .where(eq(bookingSplitPayment.id, referencePaymentId))
+            .execute()
+            .catch(async (e: any) => {
+              await loggerService.errorLog({
+                message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
+                userId: "",
+                url: "/auth",
+                userAgent: "",
+                stackTrace: `${JSON.stringify(e)}`,
+                additionalDetailsJSON: JSON.stringify({
+                  paymentId: paymentId,
+                  referencePaymentId: referencePaymentId,
+                  provider: "finix",
+                }),
+              });
             });
-          });
-        }else{
+        } else {
           await this.database
-          .update(bookingSplitPayment)
-          .set({
-            isPaid: 1,
-            // webhookStatus: "COMPLETED"
-          })
-          .where(eq(bookingSplitPayment.id, referencePaymentId))
-          .execute().catch(async (e: any) => {
-            await loggerService.errorLog({
-              message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
-              userId: "",
-              url: "/auth",
-              userAgent: "",
-              stackTrace: `${JSON.stringify(e)}`,
-              additionalDetailsJSON: JSON.stringify({
-                paymentId: paymentId,
-                referencePaymentId: referencePaymentId,
-                provider: "finix"
-              }),
+            .update(bookingSplitPayment)
+            .set({
+              isPaid: 1,
+              // webhookStatus: "COMPLETED"
+            })
+            .where(eq(bookingSplitPayment.id, referencePaymentId))
+            .execute()
+            .catch(async (e: any) => {
+              await loggerService.errorLog({
+                message: "ERROR_UPDATING_FINIX_PAYMENT_STATUS",
+                userId: "",
+                url: "/auth",
+                userAgent: "",
+                stackTrace: `${JSON.stringify(e)}`,
+                additionalDetailsJSON: JSON.stringify({
+                  paymentId: paymentId,
+                  referencePaymentId: referencePaymentId,
+                  provider: "finix",
+                }),
+              });
             });
-          });
         }
         const [result] = await this.database
           .select({
@@ -1300,8 +1301,9 @@ Thank you for choosing us.`;
           .where(eq(bookingSplitPayment.id, referencePaymentId));
         // email send the payment completed user
 
-        const message = `Your payment of$${Number(result?.collectedAmount) / 100
-          } has been successfully processed. Thank you for your payment.`;
+        const message = `Your payment of$${
+          Number(result?.collectedAmount) / 100
+        } has been successfully processed. Thank you for your payment.`;
         const emailSend = await this.notificationService.sendEmail(
           result?.email ?? "",
           "Payment Successful",
@@ -1309,8 +1311,9 @@ Thank you for choosing us.`;
         );
         // email send the admins after payment completed of the user
 
-        const messageAdmin = `Payment of $${Number(result?.collectedAmount) / 100
-          } has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin = `Payment of $${
+          Number(result?.collectedAmount) / 100
+        } has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {
