@@ -146,12 +146,12 @@ export const CancelListing = ({
             <div className="text-lg md:text-2xl">
               {formatMoney(pricePerGolfer ?? 0)}
             </div>
-            <div className="h-[1px] w-full bg-stroke" />
+            <div className="h-px w-full bg-stroke" />
             <div className="font-[300] text-primary-gray">
               Number of spots listed
             </div>
             <div className="text-lg md:text-2xl">{golferCount}</div>
-            <div className="h-[1px] w-full bg-stroke" />
+            <div className="h-px w-full bg-stroke" />
             <div className="font-[300] text-primary-gray">
               List type
             </div>
@@ -241,9 +241,9 @@ const TeeTimeItem = ({
           </div>
         </div>
       </div>
-      <div className="flex gap-4 text-[14px]">
-        <div className="w-[40px] ">
-          <Players className="ml-auto w-[30px]" />
+      <div className="flex gap-4 text-sm">
+        <div className="w-[2.5rem] ">
+          <Players className="ml-auto w-[1.875rem]" />
         </div>
         {golferCount} {golferCount === 1 ? "golfer" : "golfers"}
       </div>

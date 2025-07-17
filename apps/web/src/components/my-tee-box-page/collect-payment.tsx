@@ -32,7 +32,8 @@ import { EmailOpen } from "../icons/mailOpen";
 import { Pending } from "../icons/pending";
 import { LinkExpired } from "../icons/link-expired";
 import { OutlineButton } from "../buttons/outline-button";
-import { SaleTypeOption, SaleTypeSelector } from "../input/sale-type-select";
+import type { SaleTypeOption } from "../input/sale-type-select";
+import { SaleTypeSelector } from "../input/sale-type-select";
 import { isValidEmail } from "@golf-district/shared";
 type CollectInputs = {
   index?: number;
@@ -477,7 +478,7 @@ export const CollectPayment = ({
       <aside
         // ref={sidebar}
         //w-[80vw]
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex w-full  h-[90dvh]  -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[650px] md:h-[100dvh] ${isCollectPaymentOpen ? "translate-x-0" : "translate-x-full"
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex w-full  h-[90vh]  -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:max-w-[40.625rem] md:h-screen ${isCollectPaymentOpen ? "translate-x-0" : "translate-x-full"
           }`}
       >
         <div className="relative flex h-full flex-col overflow-y-auto ">
@@ -493,7 +494,7 @@ export const CollectPayment = ({
                 aria-label="sidebarToggle"
                 data-testid="close-button-id"
               >
-                <Close className="h-[25px] w-[25px]" />
+                <Close className="h-[1.5625rem] w-[1.5625rem]" />
               </button>
             </div>
             <div className="flex flex-col gap-6 px-0 pt w-full mt-2">
@@ -525,9 +526,9 @@ export const CollectPayment = ({
               </div>
             </div>
 
-            <div className="flex flex-col justify-between w-full px-3 mt-[25px]">
+            <div className="flex flex-col justify-between w-full px-3 mt-[1.5625rem]">
               <div>
-                <p className="text-red text-[12px] pt-4 pb-4">
+                <p className="text-red text-xs pt-4 pb-4">
                   *Payment processor charges of {Number(paymentProcessingCharge || 0) / 100}% will be applicable.
                 </p>
               </div>
@@ -550,7 +551,7 @@ export const CollectPayment = ({
                   <div className="w-full flex gap-3">
                     {(player.isPaid === 1) ? (
                       <p
-                        className="max-w-[320px] truncate cursor-default w-full"
+                        className="max-w-[20rem] truncate cursor-default w-full"
                         title={player.email}
                       >
                         {player.email}
@@ -597,7 +598,7 @@ export const CollectPayment = ({
                     )}
                     {player.isPaid === 1 ? (
                       <Fragment>
-                        <div className="flex gap-12 px-8 py-1.5 justify-between items-center">
+                        <div className="flex gap-[3rem] px-[2rem] py-[0.375rem] justify-between items-center">
                           <p>Paid</p>
                           <CheckedIcon color="green" />
                         </div>
@@ -639,14 +640,14 @@ export const CollectPayment = ({
                       {player && player.isActive === 1 && player.isPaid === 0 && !player.isLinkExpired ? (
                         <div className="flex justify-center items-start gap-1">
                           <Tooltip
-                            trigger={<Pending width={30} height={30} />}
+                            trigger={<Pending width={"1.875rem"} height={"1.875rem"} />}
                             content="Payment is pending"
                           />
                         </div>
                       ) : (player?.isLinkExpired && player?.isPaid === 0) ? (
                         <div>
                           <Tooltip
-                            trigger={<LinkExpired width={30} height={30} color="#D22B2B" />}
+                            trigger={<LinkExpired width={"1.875rem"} height={"1.875rem"} color="#D22B2B" />}
                             content="Payment link is expired"
                           />
                         </div>
@@ -655,14 +656,14 @@ export const CollectPayment = ({
                         {player?.emailOpened === 1 ? (
                           <div className="flex justify-center items-start gap-1" >
                             <Tooltip
-                              trigger={<EmailOpen width={30} height={30} color="green" />}
+                              trigger={<EmailOpen width={"1.875rem"} height={"1.875rem"} color="green" />}
                               content="Email opened and read"
                             />
                           </div>
                         ) : (player?.emailOpened === 0 && player?.isActive === 1 && player.isPaid === 0) ? (
                           <div className="flex justify-center items-start gap-1">
                             <Tooltip
-                              trigger={<Email width={30} height={30} />}
+                              trigger={<Email width={"1.875rem"} height={"1.875rem"} />}
                               content="Email has not been read"
                             />
                           </div>
@@ -689,37 +690,37 @@ export const CollectPayment = ({
             </div>
             <div className="flex flex-col w-full gap-3">
               <div className="w-full flex justify-between px-3 pt-5">
-                <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
+                <div className="text-base flex justify-start gap-2 font-[500] text-black">
                   <h4 className="text-primary-gray">Total Amount Paid</h4>
                   <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
                     content="The total for the number of people who have paid"
                   />
                 </div>
                 <div>
-                  <p className="text-[16px] font-[500] text-primary-gray">${paidAmount}</p>
+                  <p className="text-base font-[500] text-primary-gray">${paidAmount}</p>
                 </div>
               </div>
               <div className="w-full flex justify-between px-3 pt-5">
-                <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
+                <div className="text-base flex justify-start gap-2 font-[500] text-black">
                   <h4 className="text-primary-gray">Total Amount</h4>
                   <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content={<div className="max-w-[220px] text-sm break-words">This is total amount Including payment processing charges</div>}
+                    trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
+                    content={<div className="max-w-[18.75rem] text-sm break-words">This is total amount Including payment processing charges</div>}
                   />
                 </div>
                 <div>
-                  <p className="text-[16px] font-[500] text-primary-gray">${Number(totalAmount).toLocaleString("en-US", {
+                  <p className="text-base font-[500] text-primary-gray">${Number(totalAmount).toLocaleString("en-US", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}</p>
                 </div>
               </div>
               <div className="w-full flex justify-between px-3 pt-3" >
-                <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
+                <div className="text-base flex justify-start gap-2 font-[500] text-black">
                   <h4 className="text-primary-gray" >Payment Processor Charges</h4>
                   <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
                     content="Payment processing fee"
                   />
                 </div>
@@ -735,15 +736,15 @@ export const CollectPayment = ({
                 </div>
               </div>
               <div className="w-full flex justify-between px-3 pt-3">
-                <div className=" text-[16px] flex justify-start gap-2 font-[500]">
+                <div className=" text-base flex justify-start gap-2 font-[500]">
                   <h4 className="text-primary-gray" >Your Payout</h4>
                   <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content={<div className="max-w-[220px] text-sm break-words">This Amount you will received in Cashout</div>}
+                    trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
+                    content={<div className="max-w-[18.75rem] text-sm break-words">This Amount you will received in Cashout</div>}
                   />
                 </div>
                 <div>
-                  <p className="text-[16px] font-[500] text-primary-gray">
+                  <p className="text-base font-[500] text-primary-gray">
                     ${(
                       totalAmount - (Number(paymentProcessingCharge) / 100) * (Number(availableSlots) - 1)
                     ).toLocaleString("en-US", {
@@ -802,14 +803,14 @@ const TeeTimeItem = ({
           </div>
         </div>
       </div>
-      <div className="flex gap-4 text-[14px]">
-        <div className="w-[40px] ">
-          <Players className="ml-auto w-[30px]" />
+      <div className="flex gap-4 text-sm">
+        <div className="w-[2.5rem] ">
+          <Players className="ml-auto w-[1.875rem]" />
         </div>
         {golferCount} {golferCount === 1 ? "golfer" : "golfers"}
       </div>
-      <div className="flex gap-4 text-[14px]">
-        <div className="w-[40px]" />
+      <div className="flex gap-4 text-sm">
+        <div className="w-[2.5rem]" />
         <div>
           <p className="font-light">
             You purchased for{" "}

@@ -340,7 +340,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                       *Schedule your notifications for the rest of the year
                     </p>
                     <Calendar
-                      calendarClassName="!m-[0px] !h-[100%] !w-[75%] unmask-time !text-[0.75rem]"
+                      calendarClassName="!m-[0px] !h-[100%] !w-[75%] xs:!min-w-fit unmask-time !text-[0.625rem]"
                       colorPrimary="#40942A"
                       value={selectedDate}
                       onChange={(date: Day) => setSelectedDate(date)}

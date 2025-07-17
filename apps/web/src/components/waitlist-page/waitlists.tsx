@@ -134,52 +134,52 @@ function Waitlists() {
   return (
     <div className="flex flex-col mb-4 justify-center gap-2 md:gap-1  px-4 py-3 rounded-xl md:px-8 md:py-6">
       <div className="relative flex items-center justify-between md:mb-2">
-        <h1 className="text-[20px] capitalize text-secondary-black md:text-[32px] flex items-center gap-6">
+        <h1 className="text-[1.25rem] capitalize text-secondary-black md:text-[2rem] flex items-center gap-6">
           Your Alerts
           <FilledButton
             onClick={() => setIsDeleteModalOpen(true)}
             className="flex items-center gap-1 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50"
             disabled={selectedNotifications.length === 0}
           >
-            <DeleteIcon color="#fff" width="15px" />
+            <DeleteIcon color="#fff" width="0.9375rem" />
             Delete Selected Alerts
           </FilledButton>
         </h1>
       </div>
 
       {!isUserLoading && !user ? (
-        <div className="flex justify-center items-center h-[200px]">
+        <div className="flex justify-center items-center h-[12.5rem]">
           <div className="text-center">Login to View</div>
         </div>
       ) : isLoading ? (
-        <div className="flex justify-center items-center h-[200px] w-full md:min-w-[370px]">
-          <Spinner className="w-[50px] h-[50px]" />
+        <div className="flex justify-center items-center h-[12.5rem] w-full md:min-w-[23.125rem]">
+          <Spinner className="w-[3.125rem] h-[3.125rem]" />
         </div>
       ) : isError ? (
-        <div className="flex justify-center items-center h-[200px]">
+        <div className="flex justify-center items-center h-[12.5rem]">
           <div className="text-center">
             Error: {error?.message ?? "An error occurred"}
           </div>
         </div>
       ) : waitlist.length === 0 ? (
-        <div className="flex justify-center items-center h-[200px]">
+        <div className="flex justify-center items-center h-[12.5rem]">
           <div className="text-center">You have no notifications yet</div>
         </div>
       ) : (
         <div className="max-h-[50vh] overflow-y-auto flex flex-col gap-4">
           {groupedByDate
             ? Object.keys(groupedByDate).map((formattedDate) => (
-                <Waitlist
-                  key={formattedDate}
-                  waitlist={groupedByDate[formattedDate]}
-                  formattedDate={formattedDate}
-                  // refetchWaitlist={refetchWaitlist}
-                  handleSelectNotification={handleNotificationClick}
-                  handleSelectNotifications={handleSelectNotifications}
-                  selectedNotifications={selectedNotifications}
-                  setIsDeleteModalOpen={setIsDeleteModalOpen}
-                />
-              ))
+              <Waitlist
+                key={formattedDate}
+                waitlist={groupedByDate[formattedDate]}
+                formattedDate={formattedDate}
+                // refetchWaitlist={refetchWaitlist}
+                handleSelectNotification={handleNotificationClick}
+                handleSelectNotifications={handleSelectNotifications}
+                selectedNotifications={selectedNotifications}
+                setIsDeleteModalOpen={setIsDeleteModalOpen}
+              />
+            ))
             : null}
         </div>
       )}
@@ -191,31 +191,31 @@ function Waitlists() {
           >
             <div className="h-screen bg-[#00000099]" />
           </div>
-          <div className="date-selector w-[95%] flex flex-col max-w-[500px] p-6 gap-1 mt-14 rounded-xl bg-white fixed top-[50%] left-[50%] -translate-x-[50%] -translate-y-[60%] z-50">
+          <div className="date-selector w-[95%] flex flex-col max-w-[31.25rem] p-6 gap-1 mt-[3.5rem] rounded-xl bg-white fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] z-50">
             <Close
               className="absolute right-4 top-4 cursor-pointer"
               height={24}
               width={24}
               onClick={() => setIsDeleteModalOpen(false)}
             />
-            <h1 className="text-[20px] md:text-2xl">
+            <h1 className="text-[1.25rem] md:text-2xl">
               Delete selected notifications
             </h1>
-            <p className="text-[14px] mb-4 md:text-md">
+            <p className="text-[0.875rem] mb-4 md:text-md">
               You have selected the following dates and times to delete below.
               Are you sure you want to delete?
             </p>
 
-            <div className="flex flex-col gap-2 self-center max-h-[250px] overflow-y-auto">
+            <div className="flex flex-col gap-2 self-center max-h-[15.625rem] overflow-y-auto">
               {selectedNotifications.map((item) => (
                 <div
                   className="flex items-center gap-2 justify-between bg-secondary-white p-2 rounded-md"
                   key={item.id}
                 >
-                  <div className="text-[14px] md:text-md">
+                  <div className="text-[0.875rem] md:text-md">
                     {dayjs(item.date).format("ddd MMM DD, YYYY")}
                   </div>
-                  <div className="text-[14px] md:text-md">
+                  <div className="text-[0.875rem] md:text-md">
                     {item.startTimeFormated} - {item.endTimeFormated}
                   </div>
                 </div>
@@ -223,13 +223,13 @@ function Waitlists() {
             </div>
             <div className="flex gap-2">
               <OutlineButton
-                className="w-full mt-2 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px]"
+                className="w-full mt-2 py-[.28rem] md:py-1.5 text-[0.625rem] md:text-[0.875rem]"
                 onClick={() => setIsDeleteModalOpen(false)}
               >
                 No
               </OutlineButton>
               <FilledButton
-                className="w-full mt-2 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px]"
+                className="w-full mt-2 py-[.28rem] md:py-1.5 text-[0.625rem] md:text-[0.875rem]"
                 onClick={handleDeleteNotifications}
               >
                 Yes

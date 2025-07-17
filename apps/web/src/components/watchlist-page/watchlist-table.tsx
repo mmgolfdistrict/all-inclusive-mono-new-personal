@@ -87,15 +87,15 @@ export const WatchlistTable = () => {
 
   if (status === "loading") {
     return (
-      <div className="flex flex-col items-center justify-center h-[200px] rounded-xl gap-4 bg-white p-6 text-center">
-        <Spinner className="w-[50px] h-[150px] mx-auto" />
+      <div className="flex flex-col items-center justify-center h-[12.5rem] rounded-xl gap-4 bg-white p-6 text-center">
+        <Spinner className="w-[3.125rem] h-[9.375rem] mx-auto" />
       </div>
     );
   }
 
   if ((!user || !session) && status === "unauthenticated") {
     return (
-      <div className="flex flex-col items-center justify-center h-[200px] rounded-xl gap-4 bg-white p-6 text-center">
+      <div className="flex flex-col items-center justify-center h-[12.5rem] rounded-xl gap-4 bg-white p-6 text-center">
         <div className="text-2xl font-semibold">
           Login to view your watchlist
         </div>
@@ -108,7 +108,7 @@ export const WatchlistTable = () => {
 
   if (isError && error) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center rounded-xl bg-white p-6">
+      <div className="text-center h-[12.5rem] flex items-center justify-center rounded-xl bg-white p-6">
         {error?.message ?? "An error occurred fetching watchlist"}
       </div>
     );
@@ -121,7 +121,7 @@ export const WatchlistTable = () => {
     !error
   ) {
     return (
-      <div className="flex flex-col items-center justify-center h-[200px] rounded-xl bg-white p-6 text-center">
+      <div className="flex flex-col items-center justify-center h-[12.5rem] rounded-xl bg-white p-6 text-center">
         <div className="text-2xl font-semibold">Your Watchlist is Empty</div>
         <div className="text-primary-gray">
           You can add items to your watchlist by clicking the heart icon on a
@@ -133,8 +133,8 @@ export const WatchlistTable = () => {
 
   return (
     <>
-      <div className="relative flex max-w-full flex-col gap-4 overflow-auto  rounded-xl bg-white px-6 pb-14 pt-4 text-[14px]">
-        <table className="w-full table-auto  overflow-auto"  id="table-watchlist">
+      <div className="relative flex max-w-full flex-col gap-4 overflow-auto  rounded-xl bg-white px-6 pb-14 pt-4 text-[0.875rem]">
+        <table className="w-full table-auto  overflow-auto" id="table-watchlist">
           <thead className="top-0 table-header-group">
             <tr className="text-left">
               <TableHeader text="Details" />
@@ -144,37 +144,37 @@ export const WatchlistTable = () => {
               <TableHeader text="" className="text-right" />
             </tr>
           </thead>
-          <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
+          <tbody className={`max-h-[18.75rem] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
-                  .fill(null)
-                  .map((_, idx) => <SkeletonRow key={idx} />)
+                .fill(null)
+                .map((_, idx) => <SkeletonRow key={idx} />)
               : cleanedWatchlist.map((i, idx) => (
-                  <TableRow
-                    course={i.ownedBy}
-                    date={i.teeTimeExpiration}
-                    iconSrc={i.image}
-                    key={idx}
-                    listedPrice={i.price}
-                    golfers={i.availableSpots}
-                    status={i.status}
-                    type={i.type}
-                    buyTeeTime={() =>
-                      buyTeeTime(
-                        i.teeTimeId,
-                        i.availableSpots.toString() as "1" | "2" | "3" | "4"
-                      )
-                    }
-                    removeFromWatchlist={removeFromWatchlist}
-                    openMakeAnOffer={() => openMakeAnOffer(i)}
-                    teeTimeId={i.teeTimeId}
+                <TableRow
+                  course={i.ownedBy}
+                  date={i.teeTimeExpiration}
+                  iconSrc={i.image}
+                  key={idx}
+                  listedPrice={i.price}
+                  golfers={i.availableSpots}
+                  status={i.status}
+                  type={i.type}
+                  buyTeeTime={() =>
+                    buyTeeTime(
+                      i.teeTimeId,
+                      i.availableSpots.toString() as "1" | "2" | "3" | "4"
+                    )
+                  }
+                  removeFromWatchlist={removeFromWatchlist}
+                  openMakeAnOffer={() => openMakeAnOffer(i)}
+                  teeTimeId={i.teeTimeId}
                   // ownedByName={i.ownedBy}
-                    courseId={courseId ?? ""}
-                    ownedById={i.ownedById}
-                    listingId={i.listId ?? ""}
-                    timezoneCorrection={course?.timezoneCorrection}
-                  />
-                ))}
+                  courseId={courseId ?? ""}
+                  ownedById={i.ownedById}
+                  listingId={i.listId ?? ""}
+                  timezoneCorrection={course?.timezoneCorrection}
+                />
+              ))}
           </tbody>
         </table>
       </div>
@@ -233,7 +233,7 @@ const TableRow = ({
   status: "LISTED" | "UNLISTED";
   teeTimeId: string;
   type: "FIRST_PARTY" | "SECOND_HAND";
-    // ownedByName: string;
+  // ownedByName: string;
   courseId: string;
   ownedById: string;
   listingId: string;
@@ -269,7 +269,7 @@ const TableRow = ({
       <td className="gap-2 px-4 py-3">
         <div className="flex items-center gap-2">
           {type === "SECOND_HAND" ? (
-            <Spinner className="w-[40px] h-[40px]" />
+            <Spinner className="w-[2.5rem] h-[2.5rem]" />
           ) : (
             <Avatar src={iconSrc} />
           )}
@@ -303,7 +303,7 @@ const TableRow = ({
       <td className="whitespace-nowrap px-4 py-3" >
         <div className="flex  justify-end gap-2" id="buttons-watchlist">
           <Link href={href} data-testid="details-button-id">
-            <OutlineButton className="min-w-[155px]">Details</OutlineButton>
+            <OutlineButton className="min-w-[9.6875rem]">Details</OutlineButton>
           </Link>
           {ownedById === user?.id && session ? (
             <FilledButton
@@ -312,13 +312,13 @@ const TableRow = ({
               data-testid="sell-button-id"
               data-test={teeTimeId}
               data-qa="Buy"
-              // data-cy={time}
+            // data-cy={time}
             >
               {status === "UNLISTED" ? "Sell" : "Manage"}
             </FilledButton>
           ) : status === "LISTED" ? (
             <FilledButton
-              className="min-w-[155px]"
+              className="min-w-[9.6875rem]"
               onClick={buyTeeTime}
               data-testid="buy-button-id"
             >
@@ -326,7 +326,7 @@ const TableRow = ({
             </FilledButton>
           ) : (
             <FilledButton
-              className="min-w-[155px]"
+              className="min-w-[9.6875rem]"
               onClick={openMakeAnOffer}
               data-testid="make-offer-button-id"
             >
@@ -337,7 +337,7 @@ const TableRow = ({
             onClick={() => void removeFromWatchlist(teeTimeId)}
             data-testid="remove-watch-list-button-id"
           >
-            <Trashcan className="w-[25px] max-w-[25px]" />
+            <Trashcan className="w-[1.5625rem] max-w-[1.5625rem]" />
           </button>
         </div>
       </td>

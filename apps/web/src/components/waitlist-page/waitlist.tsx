@@ -45,25 +45,25 @@ function Waitlist({
             onChange={handleSelectAllCheckboxChange}
           />
         )}
-        <h2 className="text-[13px] md:text-lg capitalize text-secondary-black unmask-time">
+        <h2 className="text-[0.8125rem] md:text-lg capitalize text-secondary-black unmask-time">
           {formattedDate}
         </h2>
         <FilledButton
           onClick={() => setIsDeleteModalOpen(true)}
-          className="flex items-center gap-1 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50"
+          className="flex items-center gap-1 py-[.28rem] md:py-1.5 text-[0.625rem] md:text-[0.875rem] disabled:opacity-50"
           disabled={!handleIsChecked()}
         >
-          <DeleteIcon color="#fff" width="15px" />
+          <DeleteIcon color="#fff" width="0.9375rem" />
           Delete
         </FilledButton>
       </div>
 
       {/* Waitlist Items */}
-      <div className="flex flex-row h-[100%] gap-4 overflow-x-auto my-2">
+      <div className="flex flex-row h-full gap-4 overflow-x-auto my-2">
         {waitlist?.map((item) => (
           <div
             key={item.id}
-            className="bg-white p-3 rounded-xl max-w-[280px] md:max-w-none md:w-[300px] flex gap-6 text-[12px] md:text-[16px] text-secondary-black cursor-pointer"
+            className="bg-white p-3 rounded-xl max-w-[17.5rem] md:max-w-none md:w-[18.75rem] flex gap-6 text-[0.75rem] md:text-[1rem] text-secondary-black cursor-pointer"
             onClick={() => handleSelectNotification(item)}
           >
             {/* First Column */}
@@ -80,10 +80,10 @@ function Waitlist({
             {/* Second Column */}
             <div className="flex items-center">
               <OutlineButton
-                className="flex items-center gap-1 !px-2 !py-1 text-[10px] md:text-[14px] disabled:opacity-50"
+                className="flex items-center gap-1 !px-2 !py-1 text-[0.625rem] md:text-[0.875rem] disabled:opacity-50"
                 onClick={() => setIsDeleteModalOpen(true)}
               >
-                <DeleteIcon color="#40942b" width="15px" />
+                <DeleteIcon color="#40942b" width="0.9375rem" />
                 Delete
               </OutlineButton>
             </div>

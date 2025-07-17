@@ -509,7 +509,7 @@ export const ManageTeeTimeListing = ({
         </div>
         {selectedTeeTime?.listingId ===
           selectedTeeTime?.listingIdFromRedis && (
-            <div className="text-center text-[1.25rem] text-red">
+            <div className="text-center text-xl text-red">
               Users are trying to buy this tee time and hence, editing is not
               allowed.
             </div>
@@ -572,7 +572,7 @@ export const ManageTeeTimeListing = ({
               {formatMoney(totalPayout)}
             </div>
           </div>
-          <div className="text-center text-[0.875rem] font-[300] text-primary-gray">
+          <div className="text-center text-sm font-[300] text-primary-gray">
             All sales are final.
           </div>
           <div className="flex flex-col gap-2">

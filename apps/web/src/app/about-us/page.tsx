@@ -25,7 +25,7 @@ export default function AboutUs() {
           <h2 className="text-lg text-secondary-black md:text-2xl">
             This is an example of an in-page title
           </h2>
-          <p className="text-[14px] font-light text-primary-gray md:text-[16px]">
+          <p className="text-[0.875rem] font-light text-primary-gray md:text-[1rem]">
             Adipiscing veniam, ad consequat. illum praesent delenit commodo nisl
             feugiat Duis dolor nulla velit esse aliquip qui accumsan elit,
             blandit eros iriure nulla facilisis dolore dignissim at vel
@@ -36,7 +36,7 @@ export default function AboutUs() {
             laoreet suscipit sit eu vulputate hendrerit eum ut te dolore
             lobortis molestie in exerci duis
           </p>
-          <p className="text-[14px] font-light text-primary-gray md:text-[16px]">
+          <p className="text-[0.875rem] font-light text-primary-gray md:text-[1rem]">
             Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam
             nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat
             volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation
@@ -47,7 +47,7 @@ export default function AboutUs() {
             blandit praesent luptatum zzril delenit augue duis dolore te feugait
             nulla facilisi.
           </p>
-          <p className="text-[14px] font-light text-primary-gray md:text-[16px]">
+          <p className="text-[0.875rem] font-light text-primary-gray md:text-[1rem]">
             Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam
             nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat
             volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci
@@ -58,7 +58,7 @@ export default function AboutUs() {
           <h3 className="text-lg text-secondary-black md:text-xl">
             This is an example of an in-page sub-title
           </h3>
-          <p className="text-[14px] font-light text-primary-gray md:text-[16px]">
+          <p className="text-[0.875rem] font-light text-primary-gray md:text-[1rem]">
             Adipiscing veniam, ad consequat. illum praesent delenit commodo nisl
             feugiat Duis dolor nulla velit esse aliquip qui accumsan elit,
             blandit eros iriure nulla facilisis dolore dignissim at vel
@@ -69,7 +69,7 @@ export default function AboutUs() {
             laoreet suscipit sit eu vulputate hendrerit eum ut te dolore
             lobortis molestie in exerci duis
           </p>
-          <ul className="list-disc pl-6 text-[14px] font-light text-primary-gray md:text-[16px]">
+          <ul className="list-disc pl-6 text-[0.875rem] font-light text-primary-gray md:text-[1rem]">
             <li>Delenit dolore nostrud ut ea</li>
             <li>
               Dolor vero odio facilisi nonummy iusto praesent magna eum vel enim
@@ -84,7 +84,7 @@ export default function AboutUs() {
           <h3 className="text-lg text-secondary-black md:text-xl">
             This is an example of an in-page sub-title
           </h3>
-          <p className="text-[14px] font-light text-primary-gray md:text-[16px]">
+          <p className="text-[0.875rem] font-light text-primary-gray md:text-[1rem]">
             Adipiscing veniam, ad consequat. illum praesent delenit commodo nisl
             feugiat Duis dolor nulla velit esse aliquip qui accumsan elit,
             blandit eros iriure nulla facilisis dolore dignissim at vel
