@@ -1198,23 +1198,12 @@ export const CheckoutForm = ({
 
         {/* Section 4 */}
 
-        {!isMobile && <div>
-          <h2 className="mb-3">Payment Details</h2>
-          <div className="rounded-xl bg-white border border-grey-100 pb-2 pr-2 pl-2" id="card-detail-form-checkout">
-            <UnifiedCheckout
-              id="unified-checkout"
-              options={unifiedCheckoutOptions}
-            />
-          </div>
-        </div>}
-
-        {/* Section 5 */}
-
         {roundUpCharityId && (
-          <div className="mt-4">
+          <div>
             <h2
-              className="mt-2 flex items-center"
+              className="flex items-center text-center text-start mb-3"
               id="charity-name-checkout"
+
             >
               {charityData?.charityName}
               <Tooltip
@@ -1222,7 +1211,7 @@ export const CheckoutForm = ({
                 content="Course operator pays a card processing fee and the remaining goes to the course."
               />
             </h2>
-            <div className="flex w-full flex-col gap-2 bg-white p-4 rounded-xl my-2 border border-grey-100">
+            <div className="flex w-full flex-col gap-2 bg-white px-2 pt-2 pb-1 rounded-xl border border-grey-100">
               <div className="flex items-top">
                 {charityData?.charityLogo && (
                   // eslint-disable-next-line  @next/next/no-img-element
@@ -1360,6 +1349,18 @@ export const CheckoutForm = ({
             </div>
           </div>
         )}
+
+        {/* Section 5 */}
+
+        {!isMobile && <div className="mt-6">
+          <h2 className="mb-2">Payment Details</h2>
+          <div className="rounded-xl bg-white border border-grey-100 pb-2 pr-2 pl-2" id="card-detail-form-checkout">
+            <UnifiedCheckout
+              id="unified-checkout"
+              options={unifiedCheckoutOptions}
+            />
+          </div>
+        </div>}
 
         {(isLoadingMerchandise || (courseMerchandise?.length === 0) || !course?.supportsSellingMerchandise || !(isFirstHand.length || isFirstHandGroup.length)) ?
           null :
