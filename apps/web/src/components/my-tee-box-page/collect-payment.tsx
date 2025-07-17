@@ -32,8 +32,10 @@ import { EmailOpen } from "../icons/mailOpen";
 import { Pending } from "../icons/pending";
 import { LinkExpired } from "../icons/link-expired";
 import { OutlineButton } from "../buttons/outline-button";
-import { SaleTypeOption, SaleTypeSelector } from "../input/sale-type-select";
+import type { SaleTypeOption } from "../input/sale-type-select";
+import { SaleTypeSelector } from "../input/sale-type-select";
 import { isValidEmail } from "@golf-district/shared";
+import { useMediaQuery } from "usehooks-ts";
 type CollectInputs = {
   index?: number;
   email?: string;
@@ -55,20 +57,7 @@ type SideBarProps = {
   needsRedirect?: boolean;
   setIsSideBarClose: Dispatch<SetStateAction<boolean>>;
 };
-const SPLIT_TYPE_OPTIONS: SaleTypeOption[] = [
-  {
-    value: "equalSplit",
-    caption: "Equally distributed among players (Recommended) ",
-    description: "The amount is evenly split among 3 out of 4 players, with a 4.5% processing charge automatically added.",
-    tooltip: "Equal Split",
-  },
-  {
-    value: "customSplit",
-    caption: "Custom amount for each player",
-    description: "The amount requested from other players in a custom split includes a 4.5% processing charge, and the amount you receive will be after this charge is deducted from their contribution.",
-    tooltip: "Custom Split",
-  },
-];
+
 export const CollectPayment = ({
   isCollectPaymentOpen,
   setIsCollectPaymentOpen,
@@ -77,7 +66,23 @@ export const CollectPayment = ({
   needsRedirect,
   setIsSideBarClose
 }: SideBarProps) => {
+  console.log("selectedTeeTime", selectedTeeTime);
 
+  const SPLIT_TYPE_OPTIONS: SaleTypeOption[] = [
+    {
+      value: "equalSplit",
+      caption: "Equally Distributed to All (Recommended) ",
+      description: "The amount is evenly split among 3 out of 4 players.",
+      tooltip: `The amount you paid is equally distributed to all the players including you. You will be able to collect money from the remaining ${(selectedTeeTime?.golfers?.length ?? 0) - 1} ${(selectedTeeTime?.golfers?.length ?? 0) > 1 ? "players" : "player"}.`,
+    },
+    {
+      value: "customSplit",
+      caption: "Custom Amount",
+      description: "You decide the amount you want to collect from other players. This gives you the flexibility on who and how much you want to collect from.",
+      tooltip: "You will be able to collect a different amount from each player not exceeding the total amount. This gives you the flexibility to pay of your friends event like their birthdays.",
+    },
+  ];
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const { data: paymentProcessingCharge } = api.checkout.collectPaymentProcessorPercent.useQuery({})
   const paymentLinkResult =
@@ -246,7 +251,7 @@ export const CollectPayment = ({
     }
   };
   const isAdditionalMessageExceedingLimit = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const maxLength = 70;
+    const maxLength = 127;
     const value = e.target.value;
     setAddtionalMessage(value);
     if (value.length > maxLength) {
@@ -303,6 +308,13 @@ export const CollectPayment = ({
       });
       if (result?.error) {
         toast.error(result?.message);
+        setCollectPaymentInput((prevInputs) =>
+          prevInputs.map((input) =>
+            input.index === index
+              ? { ...input, email: "" }
+              : input
+          )
+        );
         setLoadingStates((prev) => {
           const newLoadingStates = [...prev];
           newLoadingStates[index] = false;
@@ -357,6 +369,13 @@ export const CollectPayment = ({
       });
       if (result?.error) {
         toast.error(result?.message);
+        setCollectPaymentInput((prevInputs) =>
+          prevInputs.map((input) =>
+            input.index === index
+              ? { ...input, email: "" }
+              : input
+          )
+        );
         setLoadingStates((prev) => {
           const newLoadingStates = [...prev];
           newLoadingStates[index] = false;
@@ -461,7 +480,32 @@ export const CollectPayment = ({
       setTotalPaidAmount(totalPaidAmount || 0);
       setTotalAmount(totalAmount);
     }
-  }, [collectPaymentInputs, sendTrigger])
+  }, [collectPaymentInputs, sendTrigger]);
+
+  useEffect(() => {
+    if (
+      selectedOption === "equalSplit" &&
+      collectPaymentInputs.length > 0
+    ) {
+      const totalBookingPrice = Number(selectedTeeTime?.purchasedFor);
+      const totalPlayers = Number(selectedTeeTime?.golfers.length);
+      if (totalPlayers > 0) {
+        const processingChargeFees = (Number(paymentProcessingCharge) / 100);
+        console.log("processing fee charge", processingChargeFees)
+        const splitAmount = parseFloat(
+          (totalBookingPrice / totalPlayers).toFixed(2)
+        ) + processingChargeFees;
+
+        const updatedInputs = collectPaymentInputs.map((input) => ({
+          ...input,
+          amount: splitAmount.toString(),
+        }));
+
+        setCollectPaymentInput(updatedInputs);
+      }
+    }
+  }, [selectedOption]);
+
   return (
     <>
       {isCollectPaymentOpen && (
@@ -483,7 +527,7 @@ export const CollectPayment = ({
         <div className="relative flex h-full flex-col overflow-y-auto ">
           <div className="flex flex-col items-start justify-between p-4">
             <div className="flex justify-between w-full" >
-              <div className="text-lg">Collect Payment</div>
+              <div className="text-lg">Request Payment</div>
               <button
                 // ref={trigger}
                 onClick={toggleSidebar}
@@ -525,15 +569,31 @@ export const CollectPayment = ({
               </div>
             </div>
 
-            <div className="flex flex-col justify-between w-full px-3 mt-[25px]">
-              <div>
+            <div className="flex flex-col justify-between w-full px-1 mt-[25px]">
+              {/* <div>
                 <p className="text-red text-[12px] pt-4 pb-4">
                   *Payment processor charges of {Number(paymentProcessingCharge || 0) / 100}% will be applicable.
                 </p>
+              </div> */}
+              <div className="w-full mb-2">
+                <label htmlFor="message" className="block text-primary-gray font-medium mb-1">
+                  <div>
+                    <span>Additional Message</span>
+                    <span className="ml-4 text-sm text-blue-500" >{validationMsg}</span>
+                  </div>
+                </label>
+                <textarea
+                  id="message"
+                  placeholder="Addtional message"
+                  className="w-full h-25 p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                  onChange={(e) => isAdditionalMessageExceedingLimit(e)}
+                  value={additionalMessage}
+                  maxLength={127}
+                ></textarea>
               </div>
               <div className="flex justify-between">
                 <h4 className="text-primary-gray" >
-                  Send Payment Link
+                  Enter Recipient Information
                 </h4>
                 <Refresh
                   onClick={() => setSendTrigger((prev) => prev + 1)}
@@ -546,26 +606,33 @@ export const CollectPayment = ({
             <div className="flex flex-col w-full gap-3 ">
 
               {collectPaymentInputs.map((player, index) => (
-                <div key={index} className="flex w-full gap-x-3 justify-center items-center">
-                  <div className="w-full flex gap-3">
+                <div
+                  key={index}
+                  className={`flex w-full ${isMobile ? "flex-col gap-y-2 items-start" : "gap-x-3 justify-center items-center"}`}
+                >
+                  {/* Row 1: Email + Amount */}
+                  <div className={`w-full flex ${isMobile ? "flex-row gap-2 items-center" : "flex-row gap-2 items-center"}`}>
                     {(player.isPaid === 1) ? (
-                      <p
-                        className="max-w-[320px] truncate cursor-default w-full"
+                      <input
+                        className="outline-none bg-secondary-white px-3 py-1 rounded-md cursor-default text-black w-[17rem]"
+                        type="text"
+                        value={player.email}
+                        readOnly
+                        disabled // optional if you want to gray it out
                         title={player.email}
-                      >
-                        {player.email}
-                      </p>
+                      />
                     ) : (
                       <input
-                        className="outline-none bg-secondary-white focus:outline-white px-3 py-1 rounded-md w-full "
+                        className="outline-none bg-secondary-white focus:outline-white px-3 py-1 rounded-md w-[17rem]"
                         type="text"
                         placeholder="Enter the email"
                         onChange={(e) => handleEmailChange(index, e.target.value)}
                         value={player.email}
                       />
                     )}
+
                     {(selectedOption === "equalSplit" || player.isPaid === 1) ? (
-                      <p className="px-4">
+                      <p className="px-2 min-w-[80px] text-center">
                         ${(Number(player.amount) || 0).toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
@@ -573,59 +640,46 @@ export const CollectPayment = ({
                       </p>
                     ) : (
                       <div className="flex items-center">
-                        $
+                        <span className="px-1 text-sm text-black">$</span>
                         <input
-                          className=" bg-secondary-white outline-none focus:outline-white px-2 py-1 rounded-md w-20 text-center "
+                          className="bg-secondary-white outline-none focus:outline-white px-2 py-1 rounded-md w-20 text-center"
                           type="text"
                           placeholder="Enter the Amount"
                           value={player.amount}
                           onChange={(e) => {
-                            //+paymentProcessingCharge
-                            const addedValue = e.target.value
+                            const addedValue = e.target.value;
                             handleAmountChange(index, addedValue);
-                          }
-                          }
-                        // value={sendEmailedUsers?.[index]?.isPaid === 1
-                        //   ? sendEmailedUsers?.[index]?.amount
-                        //   : amount[index] ?? sendEmailedUsers?.[index]?.amount}
-                        // value={amount[index]}
-                        // disabled={selectedOption === "equalSplit"}
-                        // disabled={sendEmailedUsers?.[index]?.isPaid === 1}
-                        //style={{ paddingRight: "87px" }}
+                          }}
                         />
                       </div>
                     )}
-                    {player.isPaid === 1 ? (
-                      <Fragment>
-                        <div className="flex gap-12 px-8 py-1.5 justify-between items-center">
-                          <p>Paid</p>
-                          <CheckedIcon color="green" />
-                        </div>
-                      </Fragment>
-                    ) : player.isPaid === 0 &&
-                      player.isActive === 1 ? (
-                      <div className="flex justify-center items-center">
-                        <FilledButton
-                          onClick={() =>
-                            resendHyperSwitchPaymentLinkOnEmail(index)
-                          }
-                          className={`text-sm flex justify-center items-center ${!player.isLinkExpired ? " text-white/50 cursor-not-allowed" : "text-white"}`}
-                          disabled={loadingStates[index] || !player.isLinkExpired}
-                        >
-                          {loadingStates[index] ? (
-                            <Loader size={20} color="fill-white-600" />
-                          ) : (
-                            "Resend"
-                          )}
-                        </FilledButton>
+                  </div>
 
+                  {/* Row 2: Button + Paid/Icons */}
+                  <div className={`w-full flex ${isMobile ? "flex-row justify-between items-center" : "items-center"} gap-2 mt-1`}>
+                    {player.isPaid === 1 ? (
+                      <div className="flex items-center gap-2" style={{
+                        marginLeft: isMobile ? "35px" : "35px"
+                      }}>
+                        <p>Paid</p>
+                        <CheckedIcon color="green" />
                       </div>
+                    ) : player.isPaid === 0 && player.isActive === 1 ? (
+                      <FilledButton
+                        onClick={() => resendHyperSwitchPaymentLinkOnEmail(index)}
+                        className={`text-sm flex justify-center items-center ${!player.isLinkExpired ? "text-white/50 cursor-not-allowed" : "text-white"}`}
+                        disabled={loadingStates[index] || !player.isLinkExpired}
+                      >
+                        {loadingStates[index] ? (
+                          <Loader size={20} color="fill-white-600" />
+                        ) : (
+                          "Resend"
+                        )}
+                      </FilledButton>
                     ) : (
                       <FilledButton
-                        onClick={() =>
-                          handleEmailSendOnHyperSwitchPaymentLink(index)
-                        }
-                        className={`text-sm flex justify-center items-center text-black ${!isValidEmail(player.email ?? "") ? "text-white/50 cursor-not-allowed" : "text-white"} mr-16 `}
+                        onClick={() => handleEmailSendOnHyperSwitchPaymentLink(index)}
+                        className={`text-sm flex justify-center items-center ${!isValidEmail(player.email ?? "") ? "text-white/50 cursor-not-allowed" : "text-white"} ${isMobile ? "" : "mr-16"}`}
                         disabled={loadingStates[index] || !isValidEmail(player.email ?? "")}
                       >
                         {loadingStates[index] ? (
@@ -635,77 +689,45 @@ export const CollectPayment = ({
                         )}
                       </FilledButton>
                     )}
-                    <div className="flex gap-1">
+
+                    {/* Payment Status Icons */}
+                    <div className="flex gap-2 items-center w-full justify-end">
                       {player && player.isActive === 1 && player.isPaid === 0 && !player.isLinkExpired ? (
-                        <div className="flex justify-center items-start gap-1">
-                          <Tooltip
-                            trigger={<Pending width={30} height={30} />}
-                            content="Payment is pending"
-                          />
-                        </div>
-                      ) : (player?.isLinkExpired && player?.isPaid === 0) ? (
-                        <div>
-                          <Tooltip
-                            trigger={<LinkExpired width={30} height={30} color="#D22B2B" />}
-                            content="Payment link is expired"
-                          />
-                        </div>
+                        <Tooltip
+                          trigger={<Pending width={30} height={30} />}
+                          content="Payment is pending"
+                        />
+                      ) : player?.isLinkExpired && player?.isPaid === 0 ? (
+                        <Tooltip
+                          trigger={<LinkExpired width={30} height={30} color="#D22B2B" />}
+                          content="Payment link is expired"
+                        />
                       ) : null}
-                      <div>
-                        {player?.emailOpened === 1 ? (
-                          <div className="flex justify-center items-start gap-1" >
-                            <Tooltip
-                              trigger={<EmailOpen width={30} height={30} color="green" />}
-                              content="Email opened and read"
-                            />
-                          </div>
-                        ) : (player?.emailOpened === 0 && player?.isActive === 1 && player.isPaid === 0) ? (
-                          <div className="flex justify-center items-start gap-1">
-                            <Tooltip
-                              trigger={<Email width={30} height={30} />}
-                              content="Email has not been read"
-                            />
-                          </div>
-                        ) : null}
-                      </div>
+
+                      {player?.emailOpened === 1 ? (
+                        <Tooltip
+                          trigger={<EmailOpen width={30} height={30} color="green" />}
+                          content="Email opened and read"
+                        />
+                      ) : player?.emailOpened === 0 && player?.isActive === 1 && player.isPaid === 0 ? (
+                        <Tooltip
+                          trigger={<Email width={30} height={30} />}
+                          content="Email has not been read"
+                        />
+                      ) : null}
                     </div>
-                    {/* etc... */}
                   </div>
                 </div>
               ))}
             </div>
-            <div className="w-full">
-              <label htmlFor="message" className="block text-primary-gray font-medium mb-1">
-                Additional Message
-              </label>
-              <textarea
-                id="message"
-                placeholder="Addtional message"
-                className="w-full h-25 p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
-                onChange={(e) => isAdditionalMessageExceedingLimit(e)}
-                value={additionalMessage}
-              ></textarea>
-              <p className="text-sm text-primary-gray" >{validationMsg}</p>
-            </div>
+
             <div className="flex flex-col w-full gap-3">
               <div className="w-full flex justify-between px-3 pt-5">
                 <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
-                  <h4 className="text-primary-gray">Total Amount Paid</h4>
+                  <h4 className="text-primary-gray">Total Amount Requested</h4>
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="The total for the number of people who have paid"
-                  />
-                </div>
-                <div>
-                  <p className="text-[16px] font-[500] text-primary-gray">${paidAmount}</p>
-                </div>
-              </div>
-              <div className="w-full flex justify-between px-3 pt-5">
-                <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
-                  <h4 className="text-primary-gray">Total Amount</h4>
-                  <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content={<div className="max-w-[220px] text-sm break-words">This is total amount Including payment processing charges</div>}
+                    content={<div className="max-w-[220px] text-sm break-words">The total amount you will be requesting when you click the Send button.</div>}
                   />
                 </div>
                 <div>
@@ -717,29 +739,43 @@ export const CollectPayment = ({
               </div>
               <div className="w-full flex justify-between px-3 pt-3" >
                 <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
-                  <h4 className="text-primary-gray" >Payment Processor Charges</h4>
+                  <h4 className="text-primary-gray" >Payment Processor Fees</h4>
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content="Payment processing fee"
+                    content={<div className="max-w-[220px] text-sm break-words">This is the approximate amount our payment processor collects to facilitate this transaction.</div>}
                   />
                 </div>
                 <div>
                   <p className="text-primary-gray">
-                    ${(
+                    {`($${(
                       (Number(paymentProcessingCharge) / 100) * (Number(availableSlots) - 1)
                     ).toLocaleString("en-US", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
-                    })}
+                    })})`}
                   </p>
                 </div>
               </div>
+
+              <div className="w-full flex justify-between px-3 pt-3">
+                <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
+                  <h4 className="text-primary-gray">Total Amount Received</h4>
+                  <Tooltip
+                    trigger={<Info className="h-[14px] w-[14px]" />}
+                    content={<div className="max-w-[220px] text-sm break-words">The total amount that you have received so far. This amount should be available for you to withdraw. Go to Account Settings to withdraw this amount if you haven’t withdrawn.</div>}
+                  />
+                </div>
+                <div>
+                  <p className="text-[16px] font-[500] text-primary-gray">${paidAmount}</p>
+                </div>
+              </div>
+
               <div className="w-full flex justify-between px-3 pt-3">
                 <div className=" text-[16px] flex justify-start gap-2 font-[500]">
                   <h4 className="text-primary-gray" >Your Payout</h4>
                   <Tooltip
                     trigger={<Info className="h-[14px] w-[14px]" />}
-                    content={<div className="max-w-[220px] text-sm break-words">This Amount you will received in Cashout</div>}
+                    content={<div className="max-w-[220px] text-sm break-words">The amount you will receive from your players after fees.</div>}
                   />
                 </div>
                 <div>
@@ -815,13 +851,13 @@ const TeeTimeItem = ({
             You purchased for{" "}
             <span className="font-semibold">${purchasedFor}</span>
           </p>
-          <p className="font-light">
+          {/* <p className="font-light">
             {" "}
             Weather guarantee purchased At{" "}
             <span className="font-semibold">
               ${(weatherGuaranteeAmount ?? 0) / 100}
             </span>{" "}
-          </p>
+          </p> */}
         </div>
       </div>
     </div>
