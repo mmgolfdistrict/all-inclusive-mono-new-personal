@@ -1191,13 +1191,14 @@ export const CheckoutForm = ({
 
   return (
     <section
+      className={isMobile ? "px-3" : ""}
     // className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4"
     >
       <form onSubmit={handleSubmit} className="">
 
         {/* Section 4 */}
 
-        <div>
+        {!isMobile && <div>
           <h2 className="mb-3">Payment Details</h2>
           <div className="rounded-xl bg-white border border-grey-100 pb-2 pr-2 pl-2" id="card-detail-form-checkout">
             <UnifiedCheckout
@@ -1205,7 +1206,7 @@ export const CheckoutForm = ({
               options={unifiedCheckoutOptions}
             />
           </div>
-        </div>
+        </div>}
 
         {/* Section 5 */}
 
@@ -1359,6 +1360,38 @@ export const CheckoutForm = ({
             </div>
           </div>
         )}
+
+        {(isLoadingMerchandise || (courseMerchandise?.length === 0) || !course?.supportsSellingMerchandise || !(isFirstHand.length || isFirstHandGroup.length)) ?
+          null :
+          <div className="mb-2">
+            {isMobile && <div className='flex gap-1 items-center mb-2 mt-4'>
+              <h2>Priority Add-Ons</h2>
+              <Tooltip
+                trigger={<Info className="h-[0.9375rem] w-[0.9375rem] text-primary-gray" />}
+                content="Prepaying for add-ons guarantees your availability for your rentals and may be cheaper than paying at the course."
+              />
+            </div>}
+            <section className="md:hidden p-0 md:p-4 bg-white rounded-xl border border-grey-100 p-1">
+              <div className="bg-white md:rounded-xl p-4">
+                <MerchandiseCarousel
+                  items={courseMerchandise}
+                  onItemQuantityChange={handleMerchandiseUpdate}
+                  maxPlayers={Number(playerCount)}
+                />
+              </div>
+            </section>
+          </div>
+        }
+
+        {isMobile && <div className="mt-4">
+          <h2 className="mb-3">Payment Details</h2>
+          <div className="rounded-xl bg-white border border-grey-100 pb-2 pr-2 pl-2" id="card-detail-form-checkout">
+            <UnifiedCheckout
+              id="unified-checkout"
+              options={unifiedCheckoutOptions}
+            />
+          </div>
+        </div>}
 
         {/* Section 6 */}
         <div className="mt-4">
@@ -1773,27 +1806,6 @@ export const CheckoutForm = ({
           </div>
         </div>
 
-        {(isLoadingMerchandise || (courseMerchandise?.length === 0) || !course?.supportsSellingMerchandise || !(isFirstHand.length || isFirstHandGroup.length)) ?
-          null :
-          <div className="mb-2">
-            {isMobile && <div className='flex gap-1 items-center mb-2 mt-4'>
-              <h2>Priority Add-Ons</h2>
-              <Tooltip
-                trigger={<Info className="h-[0.9375rem] w-[0.9375rem] text-primary-gray" />}
-                content="Prepaying for add-ons guarantees your availability for your rentals and may be cheaper than paying at the course."
-              />
-            </div>}
-            <section className="md:hidden p-0 md:p-4 bg-white rounded-xl border border-grey-100 p-1">
-              <div className="bg-white md:rounded-xl p-4">
-                <MerchandiseCarousel
-                  items={courseMerchandise}
-                  onItemQuantityChange={handleMerchandiseUpdate}
-                  maxPlayers={Number(playerCount)}
-                />
-              </div>
-            </section>
-          </div>
-        }
         <label
           htmlFor="terms-of-service-checkbox"
           className={`mb-2 flex items-start rounded-xl p-2 border mt-4 bg-white
