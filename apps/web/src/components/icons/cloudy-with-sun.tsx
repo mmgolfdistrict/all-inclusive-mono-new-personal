@@ -2,8 +2,8 @@ import { type ComponentProps } from "react";
 
 export const CloudyWithSun = (props: ComponentProps<"svg">) => (
   <svg
-    width="100%"
-    height="36"
+    width={props.width ?? "1.875rem"}
+    height={props.height ?? "1.875rem"}
     viewBox="0 0 36 36"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
