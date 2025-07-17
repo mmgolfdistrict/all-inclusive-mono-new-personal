@@ -1002,7 +1002,7 @@ export const CheckoutForm = ({
     100;
   taxCharge += additionalTaxes;
   taxCharge = Math.ceil(taxCharge * 100) / 100;
-  const Total =
+  let Total =
     primaryGreenFeeCharge +
     taxCharge +
     sensibleCharge +
@@ -1010,6 +1010,10 @@ export const CheckoutForm = ({
     convenienceCharge +
     (!roundUpCharityId ? 0 : Number(donateValue)) +
     (!course?.supportsSellingMerchandise ? 0 : (merchandiseTotalCharge));
+
+  if ((Total - Number(Total.toFixed(2))) < 0.001) {
+    Total = Number(Total.toFixed(2))
+  }
 
   const TotalAmt = (Math.ceil(Total * 100) / 100).toLocaleString("en-US", {
     minimumFractionDigits: 2,
