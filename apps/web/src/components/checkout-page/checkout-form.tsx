@@ -1313,7 +1313,7 @@ export const CheckoutForm = ({
                   <button
                     id="no-thanks-checkout"
                     type="button"
-                    className={`text-primary text-xs underline ${roundOffStatus === "nothanks" ? "font-semibold" : ""
+                    className={`text-primary text-xs ${roundOffStatus === "nothanks" ? "font-bold underline" : ""
                       }`}
                     onClick={() => {
                       setRoundOffStatus("nothanks");
