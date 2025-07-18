@@ -935,7 +935,7 @@ export default function CourseHomePage() {
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
           {/* scrollable dates  */}
 
-          {isMobile && (
+          {(MOBILE_VIEW_VERSION === "v2" && isMobile) && (
             <div
               className={`w-full overflow-x-auto left-0 top-0 z-10 bg-secondary-white pt-2 pb-2 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
                 ? "fixed shadow-md"

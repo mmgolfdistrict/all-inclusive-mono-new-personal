@@ -9,9 +9,8 @@ import type { DateType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
-import { useEffect, useMemo, useRef } from "react";
-import { useElementSize, useIntersectionObserver } from "usehooks-ts";
-import { useDraggableScroll } from "../../hooks/useDraggableScroll";
+import { useEffect, useMemo } from "react";
+import { useElementSize } from "usehooks-ts";
 import { Info } from "../icons/info";
 import { Tooltip } from "../tooltip";
 import { ChevronUp } from "../icons/chevron-up";
@@ -31,7 +30,7 @@ export const DailyTeeTimesMobileV2 = ({
   pageDown,
   pageUp,
   scrollY,
-  divHeight,
+  divHeight: _divHeight,
   isLoadingTeeTimeDate,
   allDatesArr,
   // datesWithData
@@ -52,22 +51,19 @@ export const DailyTeeTimesMobileV2 = ({
   // datesWithData:string[]
   toggleFilters?: () => void;
 }) => {
-  const overflowRef = useRef<HTMLDivElement>(null);
-  const nextPageRef = useRef<HTMLDivElement>(null);
-  const { onMouseDown } = useDraggableScroll(overflowRef, {
-    direction: "horizontal",
-  });
+  // const overflowRef = useRef<HTMLDivElement>(null);
+  // const nextPageRef = useRef<HTMLDivElement>(null);
+  // const { onMouseDown } = useDraggableScroll(overflowRef, {
+  //   direction: "horizontal",
+  // });
 
   const {
     dateType,
     setDateType,
   } = useFiltersContext();
 
-  const entry = useIntersectionObserver(nextPageRef, {});
-  const isVisible = !!entry?.isIntersecting;
-  const [sizeRef, { width = 0 }] = useElementSize();
-  const { course } = useCourseContext();
-  const courseId = course?.id;
+  const [sizeRef] = useElementSize();
+  const { course, getAllowedPlayersForTeeTime } = useCourseContext();
   const courseImages = useMemo(() => {
     if (!course) return [];
     return course?.images;
@@ -86,10 +82,7 @@ export const DailyTeeTimesMobileV2 = ({
   const teeTimeStartTime = startTime[0];
   const teeTimeEndTime = startTime[1];
 
-  const { data: allowedPlayers } =
-    api.course.getNumberOfPlayersByCourse.useQuery({
-      courseId: courseId ?? "",
-    });
+  const allowedPlayers = useMemo(() => getAllowedPlayersForTeeTime(), [course]);
 
   const numberOfPlayers = allowedPlayers?.numberOfPlayers[0];
 
@@ -110,12 +103,9 @@ export const DailyTeeTimesMobileV2 = ({
   const {
     data: teeTimeData,
     isLoading,
-    isFetchedAfterMount,
-    isFetchingNextPage,
-    fetchNextPage,
     error,
-    refetch,
-  } = api.searchRouter.getTeeTimesForDay.useInfiniteQuery(
+    refetch
+  } = api.searchRouter.getTeeTimesForDay.useQuery(
     {
       courseId: course?.id ?? "",
       date,
@@ -142,16 +132,9 @@ export const DailyTeeTimesMobileV2 = ({
             ? "desc"
             : "",
       timezoneCorrection: course?.timezoneCorrection,
-      take: TAKE,
+      take: 99999,
     },
     {
-      getNextPageParam: (lastPage) => {
-        if (lastPage?.results?.length === 0) return null;
-        if (lastPage?.results?.length < TAKE) return null;
-        let c = lastPage.cursor ?? 1;
-        c = c + 1;
-        return c;
-      },
       enabled: course?.id !== undefined && date !== undefined,
       refetchOnWindowFocus: false,
     }
@@ -161,45 +144,9 @@ export const DailyTeeTimesMobileV2 = ({
     setError(error?.message ?? null);
   }, [error]);
 
-  const count = teeTimeData?.pages[0]?.count;
   const allTeeTimes =
-    teeTimeData?.pages[teeTimeData?.pages?.length - 1]?.results ?? [];
+    teeTimeData?.results ?? [];
 
-  const getNextPage = async () => {
-    if (!isLoading && !isFetchingNextPage) {
-      await fetchNextPage();
-    }
-  };
-
-  useEffect(() => {
-    if (isVisible && count !== allTeeTimes?.length) {
-      void getNextPage();
-    }
-  }, [isVisible]);
-
-  const scrollLeft = (scrollWidth = 0) => {
-    const boxWidth = overflowRef.current?.children[0]?.clientWidth || 265;
-    const getScrollWidth = () => {
-      if (width < 700) {
-        return boxWidth * 2 + 16 * 2;
-      }
-      return boxWidth * 3 + 16 * 3;
-    };
-
-    overflowRef.current?.classList.add("scroll-smooth");
-    overflowRef.current?.scrollBy({
-      left: -`${scrollWidth > 0 ? scrollWidth : getScrollWidth()}`,
-    });
-    overflowRef.current?.classList.remove("scroll-smooth");
-  };
-
-  useEffect(() => {
-    scrollLeft(width);
-  }, [isLoading]);
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [date]);
 
   const isAtStart = dayjs(allDatesArr[0]).format("YYYY-MM-DD") === dayjs(date).format("YYYY-MM-DD")
   const isAtEnd = dayjs(allDatesArr[allDatesArr.length - 1]).format("YYYY-MM-DD") === dayjs(date).format("YYYY-MM-DD")
@@ -207,7 +154,7 @@ export const DailyTeeTimesMobileV2 = ({
   return (
     <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
       <div className="flex flex-wrap justify-between gap-2 unmask-time">
-        {isLoadingTeeTimeDate || isLoading || isFetchingNextPage ? (
+        {isLoadingTeeTimeDate || isLoading ? (
           <div className="h-8 min-w-[9.375rem] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
         ) : (
           <div className="w-full flex items-center gap-3 flex-col">
@@ -307,10 +254,8 @@ export const DailyTeeTimesMobileV2 = ({
       }}>
         <div
           className="scrollbar-none w-full flex flex-col overflow-x-auto overflow-y-hidden gap-4"
-          ref={overflowRef}
-          onMouseDown={onMouseDown}
         >
-          {allTeeTimes.length === 0 ? isLoadingTeeTimeDate || isLoading || isFetchingNextPage ? Array(TAKE)
+          {allTeeTimes.length === 0 ? isLoadingTeeTimeDate || isLoading ? Array(TAKE)
             .fill(null)
             .map((_, idx) => <TeeTimeSkeletonV2 key={idx} />) : <div className="flex justify-center items-center h-[25rem]">
             <div className="text-center">
@@ -352,15 +297,9 @@ export const DailyTeeTimesMobileV2 = ({
             }
             return null;
           })}
-          <div
-            ref={nextPageRef}
-            className="h-[0.0625rem] w-[0.0625rem] text-[0.0625rem] text-white"
-          >
-            Loading
-          </div>
 
 
-          {isLoading || isFetchingNextPage || !isFetchedAfterMount
+          {isLoading
             ? Array(TAKE)
               .fill(null)
               .map((_, idx) => <TeeTimeSkeletonV2 key={idx} />)

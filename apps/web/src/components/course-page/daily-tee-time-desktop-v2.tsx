@@ -9,7 +9,7 @@ import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useDraggableScroll } from "~/hooks/useDraggableScroll";
 import { api } from "~/utils/api";
 import { dayMonthDate, dayMonthDateV2 } from "~/utils/formatters";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { TeeTime } from "../cards/tee-time";
 import { Info } from "../icons/info";
 import { LeftChevron } from "../icons/left-chevron";
@@ -41,7 +41,7 @@ export const DailyTeeTimesDesktopV2 = ({
     const [date, setDate] = useState<string>(dates[0] ?? '');
     const [isAtStart, setIsAtStart] = useState(true);
     const [isAtEnd, setIsAtEnd] = useState(false);
-    const { course } = useCourseContext();
+    const { course, getAllowedPlayersForTeeTime } = useCourseContext();
     const courseId = course?.id;
     useEffect(() => {
         setDate(dates[0] ?? '')
@@ -84,10 +84,7 @@ export const DailyTeeTimesDesktopV2 = ({
     const teeTimeStartTime = startTime[0];
     const teeTimeEndTime = startTime[1];
 
-    const { data: allowedPlayers } =
-        api.course.getNumberOfPlayersByCourse.useQuery({
-            courseId: courseId ?? "",
-        });
+    const allowedPlayers = useMemo(() => getAllowedPlayersForTeeTime(), [course]);
 
     const numberOfPlayers = allowedPlayers?.numberOfPlayers[0];
 

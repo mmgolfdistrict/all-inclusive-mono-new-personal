@@ -84,15 +84,19 @@ export const TeeTime = ({
 }) => {
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
-  const { course } = useCourseContext();
+  const { course, getAllowedPlayersForTeeTime } = useCourseContext();
   const courseId = course?.id;
-  const { data: allowedPlayers } =
-    api.course.getNumberOfPlayersByCourse.useQuery({
-      courseId: courseId ?? "",
-      time: items.time ?? "",
-      date: items.date ?? "",
-      availableSlots: availableSlots,
-    });
+
+  const allowedPlayers = useMemo(() => getAllowedPlayersForTeeTime(
+    items.time,
+    items.date,
+    availableSlots
+  ), [
+    items.time,
+    items.date,
+    availableSlots,
+    course
+  ]);
 
   const [selectedPlayers, setSelectedPlayers] = useState<string>("");
 
@@ -108,6 +112,7 @@ export const TeeTime = ({
       );
     }
   }, [
+    allowedPlayers.numberOfPlayers,
     allowedPlayers,
     courseId,
     items.time,

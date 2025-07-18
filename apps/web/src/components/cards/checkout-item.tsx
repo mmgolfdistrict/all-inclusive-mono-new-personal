@@ -59,7 +59,7 @@ export const CheckoutItem = ({
   const [isCustomerValidated, setIsCustomerValidated] = useState<number | null>(
     null
   );
-  const { course } = useCourseContext();
+  const { course, getAllowedPlayersForTeeTime } = useCourseContext();
   const { user } = useUserContext();
   const courseId = course?.id;
   const [playerEmails, setPlayerEmails] = useState(
@@ -78,13 +78,16 @@ export const CheckoutItem = ({
   const { data: coursePreviewImage } =
     api.course.getCoursePreviewImage.useQuery({ courseId: courseId ?? "" });
 
-  const { data: allowedPlayers } =
-    api.course.getNumberOfPlayersByCourse.useQuery({
-      courseId: courseId ?? "",
-      time: teeTime?.time,
-      date: teeTime?.date ?? "",
-      availableSlots: teeTime?.availableSlots,
-    });
+  const allowedPlayers = useMemo(() => getAllowedPlayersForTeeTime(
+    teeTime?.time,
+    teeTime?.date,
+    teeTime?.availableSlots
+  ), [
+    teeTime?.time,
+    teeTime?.date,
+    teeTime?.availableSlots,
+    course
+  ]);
 
   const { data: isSupportMemberShip } = api.course.getCourseById.useQuery({
     courseId: courseId ?? "",
