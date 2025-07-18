@@ -116,7 +116,7 @@ export default function ResetPassword() {
                   e.preventDefault();
                   setShowPassword(!showPassword);
                 }}
-                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors.password?.message ? "pb-10" : ""}`}
                 data-testid="show-password-id"
               >
                 {showPassword ? (
@@ -151,7 +151,7 @@ export default function ResetPassword() {
                   e.preventDefault();
                   setShowConfirmPassword(!showConfirmPassword);
                 }}
-                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors.confirmPassword?.message ? "pb-10" : ""}`}
                 data-testid="show-confirm-password-id"
               >
                 {showConfirmPassword ? (

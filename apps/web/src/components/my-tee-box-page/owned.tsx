@@ -391,7 +391,7 @@ const TableRow = ({
               data-qa={course}
               id="sell-teetime-button"
             >
-              Collect payment
+              Request payment
             </FilledButton>
 
           )}

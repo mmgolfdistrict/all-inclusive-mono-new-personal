@@ -249,7 +249,7 @@ export const CheckoutItem = ({
     <div className="relative flex w-full flex-col gap-2 bg-secondary-white lg:rounded-lg">
 
       {/* 1st box */}
-      <div className="rounded-md border border-grey-100">
+      <div className="rounded-xl border border-grey-100 bg-white">
         <div className="rounded-md bg-gray-300 p-2 text-black mb-5 ml-2 mr-2 mt-2">
           <h2 className="text-lg">
             Plans change. No worries! Resell your time.{" "}
@@ -541,7 +541,7 @@ export const CheckoutItem = ({
               content="Prepaying for add-ons guarantees your availability for your rentals and may be cheaper than paying at the course."
             />
           </div>
-          <section className="hidden md:block p-0 md:px-4 rounded-md border border-grey-100">
+          <section className="hidden md:block p-0 bg-white rounded-xl border border-grey-100">
             <div className="bg-white md:rounded-xl p-4">
               <MerchandiseCarousel
                 items={courseMerchandise}
@@ -554,7 +554,7 @@ export const CheckoutItem = ({
       {isSensibleInvalid || isLoading ? null : (
         <div className="mt-4">
           <h2 className="mb-2">Weather Guarantee</h2>
-          <div id="weather-guarantee" className="rounded-md border border-grey-100 p-1">
+          <div id="weather-guarantee" className="rounded-xl border border-grey-100 p-1">
             <SensibleWidget sensibleDataToMountComp={sensibleDataToMountComp} />
           </div>
         </div>

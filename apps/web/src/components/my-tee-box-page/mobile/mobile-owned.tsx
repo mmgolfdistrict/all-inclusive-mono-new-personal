@@ -313,7 +313,7 @@ const TableCard = ({
                         data-qa={course}
                         id="sell-teetime-button"
                       >
-                        Collect payment
+                        Request payment
                       </FilledButton>
                       <span className="text-xs text-gray-500 mt-1">Split Cost with your group</span>
                     </div>
