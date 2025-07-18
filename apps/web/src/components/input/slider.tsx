@@ -4,7 +4,7 @@ export const Slider = (props: RadixSlider.SliderProps) => {
   return (
     <form>
       <RadixSlider.Root
-        className="relative flex h-5 w-full touch-none select-none items-center"
+        className="relative flex h-[1.25rem] w-full touch-none select-none items-center"
         minStepsBetweenThumbs={1}
         {...props}
       >

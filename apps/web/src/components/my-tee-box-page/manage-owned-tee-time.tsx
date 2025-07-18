@@ -389,12 +389,12 @@ export const ManageOwnedTeeTime = ({
             >
               <label
                 htmlFor="minimumOfferPrice"
-                className="text-[16px] text-primary-gray md:text-[18px]"
+                className="text-base text-primary-gray md:text-lg"
               >
                 Minimum offer price per golfer
               </label>
               <div className="relative">
-                <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
+                <span className="absolute left-1 top-1 text-2xl md:text-4xl">
                   $
                 </span>
                 <input
@@ -403,7 +403,7 @@ export const ManageOwnedTeeTime = ({
                   onFocus={handleFocus}
                   onChange={handleMinimumOfferPrice}
                   onBlur={handleBlur}
-                  className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px]"
+                  className="mx-auto max-w-[18.75rem] rounded-lg bg-secondary-white px-4 py-1 text-center text-2xl font-semibold outline-none md:text-4xl"
                   data-testid="minimum-offer-price-id"
                 />
               </div>
@@ -415,7 +415,7 @@ export const ManageOwnedTeeTime = ({
             <div className={`flex flex-col gap-2 pb-6 text-center`}>
               <label
                 htmlFor="friends"
-                className="text-[16px] text-primary-gray md:text-[18px]"
+                className="text-base text-primary-gray md:text-lg"
               >
                 Add/edit invited friends
               </label>
@@ -424,10 +424,10 @@ export const ManageOwnedTeeTime = ({
                   return (
                     <div
                       key={friend.slotId}
-                      className="w-full max-w-[400px] rounded-lg"
+                      className="w-full max-w-[25rem] rounded-lg"
                     >
                       {!friend.currentlyEditing ? (
-                        <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-[16px] font-semibold outline-none">
+                        <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-base font-semibold outline-none">
                           <div style={{
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -437,7 +437,7 @@ export const ManageOwnedTeeTime = ({
                             <button
                               onClick={() => removeFriend(friend.slotId)}
                             >
-                              <Edit className="w-[20px]" />
+                              <Edit className="w-5" />
                             </button>
                           ) : null}
                         </div>
@@ -450,12 +450,12 @@ export const ManageOwnedTeeTime = ({
                             onChange={(e) => handleNewFriend(e, friend)}
                             onSelect={addFriend}
                             placeholder="Username or email"
-                            className="mx-auto w-full max-w-[400px] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-[14px] font-semibold outline-none"
+                            className="mx-auto w-full max-w-[25rem] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-sm font-semibold outline-none"
                             data-testid="search-friend-id"
                           />
                           {friend.slotId === newFriend.slotId &&
                             friendList.length ? (
-                            <div className="mx-auto w-full max-w-[400px] rounded-lg py-2 flex justify-between text-[14px] font-semibold outline-none">
+                            <div className="mx-auto w-full max-w-[25rem] rounded-lg py-2 flex justify-between text-sm font-semibold outline-none">
                               <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
                                 {friendList.map((frnd, idx) => (
                                   <li key={idx}>
@@ -483,7 +483,7 @@ export const ManageOwnedTeeTime = ({
                             debouncedValue.name.length > 0 &&
                             !isLoading &&
                             !friendList.length && (
-                              <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[400px]">
+                              <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[25rem]">
                                 {(!inviteSuccess[friend.slotId] ||
                                   isInviteVisible) && (
                                     <>
@@ -535,8 +535,8 @@ export const ManageOwnedTeeTime = ({
                 <div className="font-[300] text-primary-gray">
                   Service Fee{" "}
                   <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content={<div className="max-w-[200px] text-sm break-words">This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times</div>}
+                    trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
+                    content={<div className="max-w-[12.5rem] text-sm break-words">This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times</div>}
                   />
                 </div>
                 <div className="text-secondary-black">
@@ -553,11 +553,11 @@ export const ManageOwnedTeeTime = ({
               </div>
             </>
           ) : null}
-          <p className="mt-4 mb-2 text-[14px] text-primary-gray md:text-[16px] font-semibold text-justify">
+          <p className="mt-4 mb-2 text-sm text-primary-gray md:text-base font-semibold text-justify">
             Tip: If you know you can’t make your time, the earlier you can
             list, the greater the chance it sells.
           </p>
-          <div className="text-center text-[14px] font-[300] text-primary-gray">
+          <div className="text-center text-sm font-[300] text-primary-gray">
             All sales are final.
           </div>
           <div className="flex flex-col gap-2">
@@ -647,14 +647,14 @@ const TeeTimeItem = ({
           </div>
         </div>
       </div>
-      <div className="flex gap-4 text-[14px]">
-        <div className="w-[40px] ">
-          <Players className="ml-auto w-[30px]" />
+      <div className="flex gap-4 text-sm">
+        <div className="w-[2.5rem] ">
+          <Players className="ml-auto w-[1.875rem]" />
         </div>
         {golferCount} {golferCount === 1 ? "golfer" : "golfers"}
       </div>
-      <div className="flex text-[14px] font-[300]">
-        <div className="w-[55px]" />
+      <div className="flex text-sm font-[300]">
+        <div className="w-[3.4375rem]" />
         <div className="text-justify text-prmiary-gray">
           You purchased for{" "}
           <span className="font-semibold text-secondary-black">
@@ -663,8 +663,8 @@ const TeeTimeItem = ({
         </div>
       </div>
       {sensiblePurchasedFor !== undefined && sensiblePurchasedFor !== 0 && (
-        <div className="flex text-[14px] font-[300]">
-          <div className="w-[55px]" />
+        <div className="flex text-sm font-[300]">
+          <div className="w-[3.4375rem]" />
           <div className="text-justify text-prmiary-gray">
             Weather guarantee purchased for{" "}
             <span className="font-semibold text-secondary-black">

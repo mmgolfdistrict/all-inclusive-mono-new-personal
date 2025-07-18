@@ -521,7 +521,7 @@ export const CollectPayment = ({
       <aside
         // ref={sidebar}
         //w-[80vw]
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex w-full  h-[90dvh]  -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[650px] md:h-[100dvh] ${isCollectPaymentOpen ? "translate-x-0" : "translate-x-full"
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex w-full  h-[90vh]  -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:max-w-[40.625rem] md:h-screen ${isCollectPaymentOpen ? "translate-x-0" : "translate-x-full"
           }`}
       >
         <div className="relative flex h-full flex-col overflow-y-auto ">
@@ -537,7 +537,7 @@ export const CollectPayment = ({
                 aria-label="sidebarToggle"
                 data-testid="close-button-id"
               >
-                <Close className="h-[25px] w-[25px]" />
+                <Close className="h-[1.5625rem] w-[1.5625rem]" />
               </button>
             </div>
             <div className="flex flex-col gap-6 px-0 pt w-full mt-2">
@@ -569,9 +569,9 @@ export const CollectPayment = ({
               </div>
             </div>
 
-            <div className="flex flex-col justify-between w-full px-1 mt-[25px]">
+            <div className="flex flex-col justify-between w-full px-1 mt-[1.5625rem]">
               {/* <div>
-                <p className="text-red text-[12px] pt-4 pb-4">
+                <p className="text-red text-xs pt-4 pb-4">
                   *Payment processor charges of {Number(paymentProcessingCharge || 0) / 100}% will be applicable.
                 </p>
               </div> */}
@@ -659,7 +659,7 @@ export const CollectPayment = ({
                   <div className={`w-full flex ${isMobile ? "flex-row justify-between items-center" : "items-center"} gap-2 mt-1`}>
                     {player.isPaid === 1 ? (
                       <div className="flex items-center gap-2" style={{
-                        marginLeft: isMobile ? "35px" : "35px"
+                        marginLeft: isMobile ? "2.188rem" : "2.188rem"
                       }}>
                         <p>Paid</p>
                         <CheckedIcon color="green" />
@@ -694,24 +694,24 @@ export const CollectPayment = ({
                     <div className="flex gap-2 items-center w-full justify-end">
                       {player && player.isActive === 1 && player.isPaid === 0 && !player.isLinkExpired ? (
                         <Tooltip
-                          trigger={<Pending width={30} height={30} />}
+                          trigger={<Pending width={"1.875rem"} height={"1.875rem"} />}
                           content="Payment is pending"
                         />
                       ) : player?.isLinkExpired && player?.isPaid === 0 ? (
                         <Tooltip
-                          trigger={<LinkExpired width={30} height={30} color="#D22B2B" />}
+                          trigger={<LinkExpired width={"1.875rem"} height={"1.875rem"} color="#D22B2B" />}
                           content="Payment link is expired"
                         />
                       ) : null}
 
                       {player?.emailOpened === 1 ? (
                         <Tooltip
-                          trigger={<EmailOpen width={30} height={30} color="green" />}
+                          trigger={<EmailOpen width={"1.875rem"} height={"1.875rem"} color="green" />}
                           content="Email opened and read"
                         />
                       ) : player?.emailOpened === 0 && player?.isActive === 1 && player.isPaid === 0 ? (
                         <Tooltip
-                          trigger={<Email width={30} height={30} />}
+                          trigger={<Email width={"1.875rem"} height={"1.875rem"} />}
                           content="Email has not been read"
                         />
                       ) : null}
@@ -723,26 +723,26 @@ export const CollectPayment = ({
 
             <div className="flex flex-col w-full gap-3">
               <div className="w-full flex justify-between px-3 pt-5">
-                <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
+                <div className="text-base flex justify-start gap-2 font-[500] text-black">
                   <h4 className="text-primary-gray">Total Amount Requested</h4>
                   <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content={<div className="max-w-[220px] text-sm break-words">The total amount you will be requesting when you click the Send button.</div>}
+                    trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
+                    content={<div className="max-w-[18.75rem] text-sm break-words">The total amount you will be requesting when you click the Send button.</div>}
                   />
                 </div>
                 <div>
-                  <p className="text-[16px] font-[500] text-primary-gray">${Number(totalAmount).toLocaleString("en-US", {
+                  <p className="text-base font-[500] text-primary-gray">${Number(totalAmount).toLocaleString("en-US", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}</p>
                 </div>
               </div>
               <div className="w-full flex justify-between px-3 pt-3" >
-                <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
+                <div className="text-base flex justify-start gap-2 font-[500] text-black">
                   <h4 className="text-primary-gray" >Payment Processor Fees</h4>
                   <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content={<div className="max-w-[220px] text-sm break-words">This is the approximate amount our payment processor collects to facilitate this transaction.</div>}
+                    trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
+                    content={<div className="max-w-[18.75rem] text-sm break-words">This is the approximate amount our payment processor collects to facilitate this transaction.</div>}
                   />
                 </div>
                 <div>
@@ -756,30 +756,29 @@ export const CollectPayment = ({
                   </p>
                 </div>
               </div>
-
               <div className="w-full flex justify-between px-3 pt-3">
-                <div className="text-[16px] flex justify-start gap-2 font-[500] text-black">
+                <div className="text-base flex justify-start gap-2 font-[500] text-black">
                   <h4 className="text-primary-gray">Total Amount Received</h4>
                   <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content={<div className="max-w-[220px] text-sm break-words">The total amount that you have received so far. This amount should be available for you to withdraw. Go to Account Settings to withdraw this amount if you haven’t withdrawn.</div>}
+                    trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
+                    content={<div className="max-w-[18.75rem] text-sm break-words">The total amount that you have received so far. This amount should be available for you to withdraw. Go to Account Settings to withdraw this amount if you haven’t withdrawn.</div>}
                   />
                 </div>
                 <div>
-                  <p className="text-[16px] font-[500] text-primary-gray">${paidAmount}</p>
+                  <p className="text-base font-[500] text-primary-gray">${paidAmount}</p>
                 </div>
               </div>
 
               <div className="w-full flex justify-between px-3 pt-3">
-                <div className=" text-[16px] flex justify-start gap-2 font-[500]">
+                <div className=" text-base flex justify-start gap-2 font-[500]">
                   <h4 className="text-primary-gray" >Your Payout</h4>
                   <Tooltip
-                    trigger={<Info className="h-[14px] w-[14px]" />}
-                    content={<div className="max-w-[220px] text-sm break-words">The amount you will receive from your players after fees.</div>}
+                    trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
+                    content={<div className="max-w-[18.75rem] text-sm break-words">The amount you will receive from your players after fees.</div>}
                   />
                 </div>
                 <div>
-                  <p className="text-[16px] font-[500] text-primary-gray">
+                  <p className="text-base font-[500] text-primary-gray">
                     ${(
                       totalAmount - (Number(paymentProcessingCharge) / 100) * (Number(availableSlots) - 1)
                     ).toLocaleString("en-US", {
@@ -838,14 +837,14 @@ const TeeTimeItem = ({
           </div>
         </div>
       </div>
-      <div className="flex gap-4 text-[14px]">
-        <div className="w-[40px] ">
-          <Players className="ml-auto w-[30px]" />
+      <div className="flex gap-4 text-sm">
+        <div className="w-[2.5rem] ">
+          <Players className="ml-auto w-[1.875rem]" />
         </div>
         {golferCount} {golferCount === 1 ? "golfer" : "golfers"}
       </div>
-      <div className="flex gap-4 text-[14px]">
-        <div className="w-[40px]" />
+      <div className="flex gap-4 text-sm">
+        <div className="w-[2.5rem]" />
         <div>
           <p className="font-light">
             You purchased for{" "}
