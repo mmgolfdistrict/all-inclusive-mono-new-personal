@@ -1182,8 +1182,10 @@ Thank you for choosing us.`;
             collectedAmount: bookingSplitPayment.collectedAmount,
             bookingDateTime: teeTimes.providerDate,
             courseName: courses.name,
+            courseId: courses.id,
             courseTimeZone: courses.timezoneCorrection,
             userName: users.name,
+            userId: users.id,
             websiteURL: courses.websiteURL,
           })
           .from(bookingSplitPayment)
@@ -1202,6 +1204,36 @@ Thank you for choosing us.`;
         //   message
         // );
 
+        const courseId = result?.courseId ?? "";
+        const userId = result?.userId ?? "";
+
+        const [course] = await this.database
+          .select({
+            key: assets.key,
+            extension: assets.extension,
+            websiteURL: courses.websiteURL,
+            name: courses.name,
+            id: courses.id,
+          })
+          .from(courses)
+          .where(eq(courses.id, courseId))
+          .leftJoin(assets, eq(assets.id, courses.logoId))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error retrieving course: ${err}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/createListingForGroupBookings",
+              userAgent: "",
+              message: "ERROR_RETRIEVING_COURSE",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                courseId,
+              }),
+            });
+            throw new Error(`Error retrieving course`);
+          });
+
         const emailSend = await this.notificationService.sendEmailByTemplate(
           result?.email ?? "",
           "Payment Successful",
@@ -1211,6 +1243,7 @@ Thank you for choosing us.`;
             USERNAME: `${result?.userName}`,
             CourseName: result?.courseName ?? "",
             CourseURL: result?.websiteURL ?? "",
+            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
             PlayDateTime: formatTime(result?.bookingDateTime ?? "", false, result?.courseTimeZone ?? 0),
             CourseReservationID: `${result?.bookingId}`,
             SUBJECT_LINE: `Payment Successfully processed`,
@@ -1220,6 +1253,7 @@ Thank you for choosing us.`;
           []
         );
         // email send the admins after payment completed of the user
+        console.log("emailSend", emailSend);
 
         const messageAdmin = `Payment of  $${
           Number(result?.collectedAmount) / 100
@@ -1327,8 +1361,10 @@ Thank you for choosing us.`;
             collectedAmount: bookingSplitPayment.collectedAmount,
             bookingDateTime: teeTimes.providerDate,
             courseName: courses.name,
+            courseId: courses.id,
             courseTimeZone: courses.timezoneCorrection,
             userName: users.name,
+            userId: users.id,
             websiteURL: courses.websiteURL,
           })
           .from(bookingSplitPayment)
@@ -1347,7 +1383,36 @@ Thank you for choosing us.`;
         //   "Payment Successful",
         //   message
         // );
-        console.log("result", result);
+
+        const courseId = result?.courseId ?? "";
+        const userId = result?.userId ?? "";
+
+        const [course] = await this.database
+          .select({
+            key: assets.key,
+            extension: assets.extension,
+            websiteURL: courses.websiteURL,
+            name: courses.name,
+            id: courses.id,
+          })
+          .from(courses)
+          .where(eq(courses.id, courseId))
+          .leftJoin(assets, eq(assets.id, courses.logoId))
+          .execute()
+          .catch((err) => {
+            this.logger.error(`Error retrieving course: ${err}`);
+            loggerService.errorLog({
+              userId: userId,
+              url: "/createListingForGroupBookings",
+              userAgent: "",
+              message: "ERROR_RETRIEVING_COURSE",
+              stackTrace: `${err.stack}`,
+              additionalDetailsJSON: JSON.stringify({
+                courseId,
+              }),
+            });
+            throw new Error(`Error retrieving course`);
+          });
 
         const emailSend = await this.notificationService.sendEmailByTemplate(
           result?.email ?? "",
@@ -1358,6 +1423,7 @@ Thank you for choosing us.`;
             USERNAME: `${result?.userName}`,
             CourseName: result?.courseName ?? "",
             CourseURL: result?.websiteURL ?? "",
+            CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`,
             PlayDateTime: formatTime(result?.bookingDateTime ?? "", false, result?.courseTimeZone ?? 0),
             CourseReservationID: `${result?.bookingId}`,
             SUBJECT_LINE: `Payment Successfully processed`,
