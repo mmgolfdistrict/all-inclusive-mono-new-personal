@@ -848,7 +848,7 @@ const TeeTimeItem = ({
         <div>
           <p className="font-light">
             You purchased for{" "}
-            <span className="font-semibold">${purchasedFor}</span>
+            <span className="font-semibold">{formatMoney(purchasedFor ?? 0)}</span>
           </p>
           {/* <p className="font-light">
             {" "}
