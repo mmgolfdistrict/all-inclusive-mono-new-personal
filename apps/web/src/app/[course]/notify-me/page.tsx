@@ -442,7 +442,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                 teeTimeId={"-"}
                 playersOptions={["1", "2", "3", "4"]}
                 numberOfPlayers={["1", "2", "3", "4"]}
-                supportsGroupBooking={course?.supportsGroupBooking}
+                supportsGroupBooking={false}
               />
             </div>
           </div>

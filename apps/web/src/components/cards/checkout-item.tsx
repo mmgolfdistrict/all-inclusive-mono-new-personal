@@ -636,7 +636,7 @@ const Data = ({
                 teeTimeId={teeTimeId}
                 numberOfPlayers={numberOfPlayers ? numberOfPlayers : []}
                 id="number-of-players-checkout"
-                supportsGroupBooking={shouldShowGroupBookingButton ? course?.supportsGroupBooking : false}
+                supportsGroupBooking={false}
                 groupBookingParams={groupBookingParams}
               />
             ) : (
