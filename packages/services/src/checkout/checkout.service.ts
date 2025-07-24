@@ -308,7 +308,8 @@ export class CheckoutService {
         id: users.id,
       })
       .from(users)
-      .where(eq(users.id, userId));
+      .where(eq(users.id, userId))
+      .execute();
     if (!user) {
       this.logger.warn(`User not found: ${customerCart.customerId}`);
       throw new Error(`User not found: ${customerCart.customerId}`);
