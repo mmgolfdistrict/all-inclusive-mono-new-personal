@@ -17,7 +17,7 @@ export class EntityService {
    * Constructs the EntityService.
    * @param database - The database instance to use for queries.
    */
-  constructor(private readonly database: Db) { }
+  constructor(private readonly database: Db) {}
 
   /**
    * Retrieves an entity associated with a given course ID.
@@ -103,8 +103,8 @@ export class EntityService {
    * @TODO entity return as url
    */
   getEntityFromDomain = async (domain: string, rootDomain: string) => {
-    const subdomain = domain.endsWith(`.${rootDomain}`) ? domain.replace(`.${rootDomain}`, "") : null;
-    // const subdomain = "demo.golfdistrict.in";
+    // const subdomain = domain.endsWith(`.${rootDomain}`) ? domain.replace(`.${rootDomain}`, "") : null;
+    const subdomain = "demo.golfdistrict.in";
 
     const query = this.database
       .select({

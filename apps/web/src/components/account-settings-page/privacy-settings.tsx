@@ -7,6 +7,7 @@ import { api } from "~/utils/api";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { useAppContext } from "~/contexts/AppContext";
 
 const Options = ["PUBLIC", "PRIVATE"];
 type OptionsType = "PUBLIC" | "PRIVATE";
@@ -14,6 +15,7 @@ type OptionsType = "PUBLIC" | "PRIVATE";
 export const PrivacySettings = () => {
   const [privacy, setPrivacy] = useState<OptionsType>("PRIVATE");
   const { userId } = useParams();
+  const { entity } = useAppContext();
   const updateUser = api.user.updateUser.useMutation();
   const [isMutating, setIsMutating] = useState<boolean>(false);
   const { course } = useCourseContext();
@@ -38,6 +40,7 @@ export const PrivacySettings = () => {
       await updateUser.mutateAsync({
         profileVisibility: value,
         courseId,
+        color1: entity?.color1 ?? "#40942A",
       });
       await refetch();
       toast.success("Privacy settings updated successfully");

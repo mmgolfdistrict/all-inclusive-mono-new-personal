@@ -118,6 +118,7 @@ export const checkoutRouter = createTRPCRouter({
         courseLogo: z.string(),
         additionalMessage: z.string(),
         index: z.number(),
+        color1: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -133,7 +134,8 @@ export const checkoutRouter = createTRPCRouter({
           input.courseLogo,
           input.additionalMessage,
           ctx.session.user.email,
-          input.index
+          input.index,
+          input.color1
         );
     }),
 
@@ -143,12 +145,18 @@ export const checkoutRouter = createTRPCRouter({
         paymentId: z.string(),
         referencePaymentId: z.string().optional(),
         courseLogo: z.string(),
+        color1: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getHyperSwitchService()
-        .updateSplitPaymentStatus(input.paymentId, input.referencePaymentId ?? "", input.courseLogo);
+        .updateSplitPaymentStatus(
+          input.paymentId,
+          input.referencePaymentId ?? "",
+          input.courseLogo,
+          input.color1
+        );
     }),
 
   checkEmailedUserPaidTheAmount: protectedProcedure

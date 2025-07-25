@@ -172,6 +172,7 @@ export default function CourseHomePage() {
       await updateUser.mutateAsync({
         handle: uName,
         courseId,
+        color1: entity?.color1 ?? "#40942A",
       });
     } catch (error) {
       console.log("error", error);

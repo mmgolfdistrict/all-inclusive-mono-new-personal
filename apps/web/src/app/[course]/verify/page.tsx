@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 
 export default function Verify() {
   const { course } = useCourseContext();
-  const { setPrevPath } = useAppContext();
+  const { entity, setPrevPath } = useAppContext();
   const params = useSearchParams();
   const userId = params.get("userId");
   const verificationToken = params.get("verificationToken");
@@ -32,6 +32,7 @@ export default function Verify() {
         userId,
         token: verificationToken,
         redirectHref: window.location.origin,
+        color1: entity?.color1 ?? "#40942A",
       });
       if (response?.error) {
         toast.error(response?.message);

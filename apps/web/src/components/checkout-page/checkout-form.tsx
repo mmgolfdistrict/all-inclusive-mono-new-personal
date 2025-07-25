@@ -38,6 +38,7 @@ import { PhoneNumberUtil } from "google-libphonenumber";
 import { NAME_VALIDATION_REGEX } from "@golf-district/shared";
 import MerchandiseCarousel from "./merchandise-carousel";
 import Link from "next/link";
+import { useAppContext } from "~/contexts/AppContext";
 
 type charityData = {
   charityDescription: string | undefined;
@@ -403,6 +404,7 @@ export const CheckoutForm = ({
   const [charityAmountError, setCharityAmountError] = useState("");
   const [additionalNote, setAdditionalNote] = useState("");
   const updateUser = api.user.updateUser.useMutation();
+  const { entity } = useAppContext();
 
   // const [customerID, setCustomerID] = useState("");
   const {
@@ -622,6 +624,7 @@ export const CheckoutForm = ({
         const response = await updateUser.mutateAsync({
           ...dataToUpdate,
           courseId,
+          color1: entity?.color1 ?? "#40942A",
         });
 
         if (response?.error) {
@@ -931,6 +934,7 @@ export const CheckoutForm = ({
       playerCountForMemberShip: playerCount ?? "",
       providerCourseMembershipId:
         validatePlayers[0]?.providerCourseMembershipId ?? "",
+      color1: entity?.color1 ?? "#40942A",
     });
     return bookingResponse;
   };

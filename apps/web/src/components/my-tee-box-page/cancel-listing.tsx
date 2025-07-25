@@ -14,6 +14,7 @@ import { Players } from "../icons/players";
 import Flyout from "../modal/flyout";
 import { Modal } from "../modal/modal";
 import { useMediaQuery } from "usehooks-ts";
+import { useAppContext } from "~/contexts/AppContext";
 
 type SideBarProps = {
   isCancelListingOpen: boolean;
@@ -63,7 +64,7 @@ export const CancelListing = ({
   const cancel = api.teeBox.cancelListing.useMutation();
   const cancelGroupListing = api.teeBox.cancelGroupListing.useMutation();
   const isMobile = useMediaQuery("(max-width: 768px)");
-
+  const { entity } = useAppContext();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { course } = useCourseContext();
@@ -92,11 +93,13 @@ export const CancelListing = ({
     try {
       if (isGroupBooking) {
         await cancelGroupListing.mutateAsync({
-          groupId: groupBookingId ?? ""
+          groupId: groupBookingId ?? "",
+          color1: entity?.color1 ?? "#40942A",
         })
       } else {
         await cancel.mutateAsync({
           listingId: listingId,
+          color1: entity?.color1 ?? "#40942A",
         });
       }
       await refetch?.();

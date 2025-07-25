@@ -14,6 +14,7 @@ import { createRef, useEffect } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
+import { useAppContext } from "~/contexts/AppContext";
 
 export default function ForgotPassword() {
   const { course } = useCourseContext();
@@ -28,6 +29,7 @@ export default function ForgotPassword() {
   });
   const recaptchaRef = createRef<ReCAPTCHA>();
   const forgotFn = api.user.forgotPasswordRequest.useMutation();
+  const { entity } = useAppContext();
 
   useEffect(() => {
     const href = window.location.href;
@@ -50,7 +52,7 @@ export default function ForgotPassword() {
     if (forgotFn.isSuccess) return;
     if (forgotFn.isLoading) return;
     try {
-      const forgotPasswordData = { ...data, courseProviderId: course?.id };
+      const forgotPasswordData = { ...data, courseProviderId: course?.id, color1: entity?.color1 ?? "#40942A" };
       const result = await forgotFn.mutateAsync(forgotPasswordData);
       if (result.error) {
         toast.error(result.message);

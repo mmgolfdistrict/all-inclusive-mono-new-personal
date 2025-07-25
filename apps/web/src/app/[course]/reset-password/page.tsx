@@ -43,6 +43,7 @@ export default function ResetPassword() {
   });
 
   const resetFn = api.user.executeForgotPassword.useMutation();
+  const { entity } = useAppContext();
 
   useEffect(() => {
     if (!userId || !verificationToken) return;
@@ -54,7 +55,7 @@ export default function ResetPassword() {
     if (resetFn.isSuccess) return;
     if (resetFn.isLoading) return;
     try {
-      await resetFn.mutateAsync({ ...data, courseId: course?.id });
+      await resetFn.mutateAsync({ ...data, courseId: course?.id, color1: entity?.color1 ?? "#40942A" });
     } catch (error) {
       toast.error(
         (error as Error)?.message ??

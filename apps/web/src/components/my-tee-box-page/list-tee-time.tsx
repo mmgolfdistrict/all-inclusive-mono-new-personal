@@ -31,6 +31,7 @@ import { Modal } from "../modal/modal";
 import { useMediaQuery } from "usehooks-ts";
 import type { SaleTypeOption } from "../input/sale-type-select";
 import { SaleTypeSelector } from "../input/sale-type-select";
+import { useAppContext } from "~/contexts/AppContext";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -113,7 +114,7 @@ const ListTeeTimeDetail = ({
   needsRedirect,
 }: ListTeeTimeDetailsProps) => {
   const availableSlots = selectedTeeTime?.golfers.length || 0;
-
+  const { entity } = useAppContext();
   const [listingPrice, setListingPrice] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
@@ -319,6 +320,7 @@ const ListTeeTimeDetail = ({
           listPrice: listingPrice,
           endTime: new Date(selectedTeeTime?.date),
           slots: parseInt(players),
+          color1: entity?.color1 ?? "#40942A",
         })
       } else {
         const saleTypeParams = getSaleTypeParams(saleType)
@@ -327,6 +329,7 @@ const ListTeeTimeDetail = ({
           listPrice: listingPrice,
           endTime: new Date(selectedTeeTime?.date),
           slots: parseInt(players),
+          color1: entity?.color1 ?? "#40942A",
           ...saleTypeParams
         });
       }

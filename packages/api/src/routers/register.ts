@@ -22,6 +22,7 @@ export const registerRouter = createTRPCRouter({
       country: input.country,
       redirectHref: input.redirectHref,
       ReCAPTCHA: input.ReCAPTCHA,
+      color1: input.color1,
     };
     return await ctx.serviceFactory.getUserService().createUser(input?.courseId, createUserData);
   }),
@@ -35,12 +36,13 @@ export const registerRouter = createTRPCRouter({
         token: z.string(),
         courseId: z.string().optional(),
         redirectHref: z.string(),
+        color1: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       return await ctx.serviceFactory
         .getUserService()
-        .verifyUserEmail(input?.courseId, input.userId, input.token, input.redirectHref);
+        .verifyUserEmail(input?.courseId, input.userId, input.token, input.redirectHref, input.color1);
     }),
   generateUsername: publicProcedureWithCaptcha.input(z.number()).query(async ({ input, ctx }) => {
     return await ctx.serviceFactory.getUserService().generateUsername(input);
