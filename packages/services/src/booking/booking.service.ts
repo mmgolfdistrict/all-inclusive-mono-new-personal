@@ -4361,7 +4361,7 @@ export class BookingService {
           courseMembershipId: courseMembershipId,
           playerCountForMemberShip,
           purchasedMerchandise,
-          color1: color1 ?? "",
+          color1: color1,
         })
         .catch(async (err) => {
           this.logger.error(`Error creating booking, ${err}`);

@@ -52,7 +52,7 @@ export default function ForgotPassword() {
     if (forgotFn.isSuccess) return;
     if (forgotFn.isLoading) return;
     try {
-      const forgotPasswordData = { ...data, courseProviderId: course?.id, color1: entity?.color1 ?? "#40942A" };
+      const forgotPasswordData = { ...data, courseProviderId: course?.id, color1: entity?.color1 ?? "#000000" };
       const result = await forgotFn.mutateAsync(forgotPasswordData);
       if (result.error) {
         toast.error(result.message);

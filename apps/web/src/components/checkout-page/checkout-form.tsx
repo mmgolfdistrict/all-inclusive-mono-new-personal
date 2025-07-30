@@ -624,7 +624,7 @@ export const CheckoutForm = ({
         const response = await updateUser.mutateAsync({
           ...dataToUpdate,
           courseId,
-          color1: entity?.color1 ?? "#40942A",
+          color1: entity?.color1 ?? "#000000",
         });
 
         if (response?.error) {
@@ -934,7 +934,7 @@ export const CheckoutForm = ({
       playerCountForMemberShip: playerCount ?? "",
       providerCourseMembershipId:
         validatePlayers[0]?.providerCourseMembershipId ?? "",
-      color1: entity?.color1 ?? "#40942A",
+      color1: entity?.color1 ?? "#000000",
     });
     return bookingResponse;
   };

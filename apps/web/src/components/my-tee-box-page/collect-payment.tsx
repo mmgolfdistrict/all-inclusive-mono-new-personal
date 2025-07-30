@@ -307,7 +307,7 @@ export const CollectPayment = ({
         courseLogo: `${course?.logo}`,
         additionalMessage: additionalMessage,
         index: index,
-        color1: entity?.color1 ?? "#40942A"
+        color1: entity?.color1 ?? "#000000"
       });
       if (result?.error) {
         toast.error(result?.message);

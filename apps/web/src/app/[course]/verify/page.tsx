@@ -32,7 +32,7 @@ export default function Verify() {
         userId,
         token: verificationToken,
         redirectHref: window.location.origin,
-        color1: entity?.color1 ?? "#40942A",
+        color1: entity?.color1 ?? "#000000",
       });
       if (response?.error) {
         toast.error(response?.message);

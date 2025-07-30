@@ -64,7 +64,7 @@ export default function CheckoutProcessing() {
       additionalNoteFromUser: "",
       needRentals,
       redirectHref,
-      color1: entity?.color1 ?? "#40942A",
+      color1: entity?.color1 ?? "#000000",
     });
     return bookingResponse;
   };

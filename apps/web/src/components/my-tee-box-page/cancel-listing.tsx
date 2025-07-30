@@ -94,12 +94,12 @@ export const CancelListing = ({
       if (isGroupBooking) {
         await cancelGroupListing.mutateAsync({
           groupId: groupBookingId ?? "",
-          color1: entity?.color1 ?? "#40942A",
+          color1: entity?.color1 ?? "#000000",
         })
       } else {
         await cancel.mutateAsync({
           listingId: listingId,
-          color1: entity?.color1 ?? "#40942A",
+          color1: entity?.color1 ?? "#000000",
         });
       }
       await refetch?.();

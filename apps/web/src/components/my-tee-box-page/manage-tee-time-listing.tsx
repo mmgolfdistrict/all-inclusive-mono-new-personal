@@ -160,12 +160,12 @@ export const ManageTeeTimeListing = ({
         if (selectedTeeTime?.groupId) {
           await cancelGroupListing.mutateAsync({
             groupId: selectedTeeTime?.groupId ?? "",
-            color1: entity?.color1 ?? "#40942A",
+            color1: entity?.color1 ?? "#000000",
           });
         } else {
           await cancel.mutateAsync({
             listingId: selectedTeeTime?.listingId,
-            color1: entity?.color1 ?? "#40942A",
+            color1: entity?.color1 ?? "#000000",
           });
         }
         await refetch?.();
@@ -351,7 +351,7 @@ export const ManageTeeTimeListing = ({
             listPrice: listingPrice,
             endTime: new Date(selectedTeeTime?.date),
             slots: parseInt(players),
-            color1: entity?.color1 ?? "#40942A",
+            color1: entity?.color1 ?? "#000000",
           });
         } else {
           await updateListingForBooking.mutateAsync({
@@ -362,7 +362,7 @@ export const ManageTeeTimeListing = ({
             updatedSlots: parseInt(players),
             endTime: new Date(selectedTeeTime?.date),
             allowSplit: saleType === "split" ? true : false,
-            color1: entity?.color1 ?? "#40942A",
+            color1: entity?.color1 ?? "#000000",
           });
         }
         setIsManageTeeTimeListingOpen(false);

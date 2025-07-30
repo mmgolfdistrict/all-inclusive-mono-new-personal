@@ -18,7 +18,7 @@ const SplitPaymentSuccessPage = () => {
   const isSuccess = paymentStatus === "succeeded";
   const { entity } = useAppContext();
   const { data: result, isLoading: isLoading } =
-    api.checkout.updateSplitPaymentStatus.useQuery({ paymentId: paymentId, referencePaymentId: referencePaymentId, courseLogo: course?.logo || "", color1: entity?.color1 ?? "#40942A" });
+    api.checkout.updateSplitPaymentStatus.useQuery({ paymentId: paymentId, referencePaymentId: referencePaymentId, courseLogo: course?.logo || "", color1: entity?.color1 ?? "#000000" });
   const saveCashOutResult =
     api.checkout.saveSplitPaymentAmountIntoCashOut.useMutation();
   const saveCashOut = async () => {
