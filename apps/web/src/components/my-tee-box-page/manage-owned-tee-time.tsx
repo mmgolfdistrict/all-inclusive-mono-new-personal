@@ -72,15 +72,20 @@ export const ManageOwnedTeeTime = ({
         : href.match(/^(https?:\/\/[^/]+\/[0-9A-Fa-f-]+)/)?.[0]) || "";
 
     const handleInviteFriend = async (friend: InviteFriend, index: number) => {
+      console.log("handleInviteFriend", friend, index, selectedTeeTime?.golfers[index]);
+
       if (invite.isLoading) return;
-      const bookingSlotId = selectedTeeTime?.golfers[index]?.slotId || "";
+      const bookingSlotId = friend?.slotId;
+      const match = friend?.slotId.match(/\d(?=\D*$)/);
+
+      const lastDigit = match ? match[0] : null;
 
       try {
         await invite.mutateAsync({
           emailOrPhone: friend.name || "",
           teeTimeId: selectedTeeTime?.teeTimeId || "",
           bookingSlotId,
-          slotPosition: index + 1,
+          slotPosition: lastDigit ? parseInt(lastDigit, 10) : 0,
           redirectHref: redirectHref,
         });
 
@@ -89,7 +94,7 @@ export const ManageOwnedTeeTime = ({
             idx === index ? { ...f, name: friend.name } : f
           )
         );
-        await refetch();
+        // await refetch();
         setInviteSuccess((prev) => ({ ...prev, [friend.slotId]: true }));
         setIsInviteVisible(false);
         toast.success("Invitation sent successfully.");
@@ -517,6 +522,111 @@ export const ManageOwnedTeeTime = ({
                   );
                 })
                 : null}
+            </div>
+          )}
+          {!selectedTeeTime?.isGroupBooking || !course?.supportsPlayerNameChange ? null : (
+            <div className="flex flex-col gap-2 pb-6 text-center">
+              <label
+                htmlFor="friends"
+                className="text-base text-primary-gray md:text-lg"
+              >
+                Add/edit invited friends
+              </label>
+              {Array.from({ length: selectedTeeTime?.golfers.length || 1 }).map((_, index) => {
+                const friend = friends[index] ?? {
+                  id: "",
+                  handle: "",
+                  name: "",
+                  email: "",
+                  slotId: `slot-${index}`,
+                  bookingId: "",
+                  currentlyEditing: true,
+                  emailOrPhoneNumber: "",
+                };
+                return (
+                  <div
+                    key={friend.slotId}
+                    className="w-full max-w-[25rem] rounded-lg"
+                  >
+                    {!friend.currentlyEditing ? (
+                      <div className="mx-auto w-full rounded-lg bg-secondary-white px-4 py-1 flex justify-between text-base font-semibold outline-none">
+                        <div
+                          style={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {index === 0 ? "You" : friend.name || `Guest`}
+                        </div>
+                        {index !== 0 && course?.supportsPlayerNameChange ? (
+                          <button onClick={() => removeFriend(friend.slotId)}>
+                            <Edit className="w-5" />
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <>
+                        <input
+                          value={friend.name}
+                          type="search"
+                          list="searchedFriends"
+                          onChange={(e) => handleNewFriend(e, friend)}
+                          onSelect={addFriend}
+                          placeholder="Username or email"
+                          className="mx-auto w-full max-w-[25rem] rounded-lg bg-secondary-white px-4 py-2 flex justify-between text-sm font-semibold outline-none"
+                          data-testid="search-friend-id"
+                        />
+                        {friend.slotId === newFriend.slotId && friendList.length ? (
+                          <div className="mx-auto w-full max-w-[25rem] rounded-lg py-2 flex justify-between text-sm font-semibold outline-none">
+                            <ul className="w-full text-opacity-100 text-gray-700 shadow-md border border-solid border-gray-200 rounded-8 text-start">
+                              {friendList.map((frnd, idx) => (
+                                <li key={idx}>
+                                  <div
+                                    className="cursor-pointer p-4 border-b border-solid border-gray-300"
+                                    onClick={() =>
+                                      addFriendUpdated(
+                                        {
+                                          ...frnd,
+                                          slotId: friend.slotId,
+                                        },
+                                        index
+                                      )
+                                    }
+                                  >
+                                    {frnd.email} ({frnd.handle})
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
+                        {friend.slotId === newFriend.slotId &&
+                          debouncedValue.name.length > 0 &&
+                          !isLoading &&
+                          !friendList.length && (
+                            <div className="flex justify-center items-center flex-col gap-1 rounded-md w-full mx-auto max-w-[25rem]">
+                              {(!inviteSuccess[friend.slotId] || isInviteVisible) && (
+                                <div className="flex justify-center gap-4 mt-2 items-center w-full fade-in">
+                                  Friend not found. Invite them!
+                                  <FilledButton
+                                    className={`w-full !max-w-fit ${invite.isLoading ? "animate-pulse" : ""
+                                      }`}
+                                    onClick={() =>
+                                      handleInviteFriend(friend, index)
+                                    }
+                                    data-testid="invite-button-id"
+                                  >
+                                    {invite.isLoading ? "Inviting..." : "Invite"}
+                                  </FilledButton>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
