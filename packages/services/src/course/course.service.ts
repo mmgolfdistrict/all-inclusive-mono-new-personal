@@ -200,6 +200,8 @@ export class CourseService extends DomainService {
           groupStartTime: courses.groupStartTime,
           groupEndTime: courses.groupEndTime,
           supportsSellingMerchandise: courses.supportsSellingMerchandise,
+          primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
+          primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
         })
         .from(courses)
         .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -299,16 +301,30 @@ export class CourseService extends DomainService {
       .limit(1)
       .execute();
 
-    const [courseDetailsArray, listTeeTimePricesArray, primarySaleTeeTimePricesArray] = await Promise.all([
+    const courseAllowedTimeToSellQuery = this.database
+      .select({
+        day: courseAllowedTimeToSell.day,
+        fromTime: courseAllowedTimeToSell.fromTime,
+        toTime: courseAllowedTimeToSell.toTime,
+        primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
+        primaryMarketSellLeftoverSinglePlayer: courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer
+      })
+      .from(courseAllowedTimeToSell)
+      .where(eq(courseAllowedTimeToSell.courseId, courseId))
+      .execute();
+
+    const [courseDetailsArray, listTeeTimePricesArray, primarySaleTeeTimePricesArray, courseAllowedTimeToSellArray] = await Promise.all([
       courseDetailsQuery,
       listTeeTimePriceQuery,
       primarySaleTeeTimePriceQuery,
+      courseAllowedTimeToSellQuery
     ]);
 
     // Destructure the first element from each resulting array
     const course = courseDetailsArray[0];
     const listTeeTimePrices = listTeeTimePricesArray[0];
     const primarySaleTeeTimePrices = primarySaleTeeTimePricesArray[0];
+    const courseAllowedTimeToSellSlots = courseAllowedTimeToSellArray.length > 0 ? courseAllowedTimeToSellArray : null;
 
     if (!course) return null;
     const { providerConfiguration, ...courseDetails } = course;
@@ -318,6 +334,7 @@ export class CourseService extends DomainService {
       ...courseDetails,
       ...listTeeTimePrices,
       ...primarySaleTeeTimePrices,
+      courseAllowedTimeToSellSlots
     };
 
     if (!result) return null;

@@ -36,6 +36,7 @@ import CountryDropdown from "~/components/dropdown/country-dropdown";
 import type { Country } from "~/components/dropdown/country-dropdown";
 import { allCountries } from "country-telephone-data";
 import type { CountryData } from "~/utils/types";
+import { useAppContext } from "~/contexts/AppContext";
 
 const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: CountryData) => ({
   name,
@@ -46,6 +47,7 @@ const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: Count
 
 export default function RegisterPage() {
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
   const {
     register,
     handleSubmit,
@@ -291,6 +293,7 @@ export default function RegisterPage() {
         ...data,
         // country: "USA",
         courseId: course?.id,
+        color1: entity?.color1 ?? "#000000",
       });
       if (response?.error) {
         await recaptchaRef.current?.executeAsync();
@@ -323,10 +326,10 @@ export default function RegisterPage() {
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
-      <h1 className="pb-4 text-center text-[24px] md:pb-6 md:pt-8 md:text-[32px]">
+      <h1 className="pb-4 text-center text-[1.5rem] md:pb-6 md:pt-8 md:text-[2rem]">
         Create an Account
       </h1>
-      <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
+      <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[31.25rem] sm:rounded-xl sm:p-6">
         <p>
           Using social login like Google or Facebook? Go to the login page and
           select the respective social icon to login. The below form is not
@@ -404,13 +407,13 @@ export default function RegisterPage() {
                 <div className="flex gap-1">
                   <label
                     htmlFor="phoneNumber"
-                    className="text-[14px] text-primary-gray"
+                    className="text-[0.875rem] text-primary-gray"
                   >
                     Phone Number
                     <span className="text-red"> *</span>
                   </label>
                 </div>
-                <div className="flex rounded-lg bg-secondary-white px-1 text-[14px] text-gray-500 outline-none text-ellipsis h-12">
+                <div className="flex rounded-lg bg-secondary-white px-1 text-[0.875rem] text-gray-500 outline-none text-ellipsis h-12">
                   <CountryDropdown defaultCountry={currentCountry} items={countries} onSelect={handleSelectCountry} />
                   <Input
                     {...field}
@@ -431,12 +434,12 @@ export default function RegisterPage() {
                   />
                 </div>
                 {errors.phoneNumber && (
-                  <p className="text-[12px] text-red">
+                  <p className="text-[0.75rem] text-red">
                     {errors.phoneNumber.message}
                   </p>
                 )}
                 {errors.phoneNumberCountryCode && (
-                  <p className="text-[12px] text-red">
+                  <p className="text-[0.75rem] text-red">
                     {errors.phoneNumberCountryCode.message}
                   </p>
                 )}
@@ -480,7 +483,7 @@ export default function RegisterPage() {
               className={`mb-1  ${rotate ? "animate-spin" : ""}`}
               data-testid="register-user-name-refresh-id"
             >
-              <Refresh className="h-[14px] w-[14px]" />
+              <Refresh className="h-[0.875rem] w-[0.875rem]" />
             </IconButton>
           </div>
           {/* <Input
@@ -577,7 +580,7 @@ export default function RegisterPage() {
               <div>
                 <label
                   htmlFor="state"
-                  style={{ fontSize: "14px", color: "rgb(109 119 124" }}
+                  style={{ fontSize: "0.875rem", color: "rgb(109 119 124" }}
                 >
                   State <span className="text-red"> *</span>
                 </label>
@@ -593,7 +596,7 @@ export default function RegisterPage() {
                     field.ref(e);
                   }}
                   sx={{
-                    fontSize: "14px",
+                    fontSize: "0.875rem",
                     color: "rgb(109 119 124)",
                     backgroundColor: "rgb(247, 249, 250)",
                     border: "none",
@@ -624,7 +627,7 @@ export default function RegisterPage() {
                     </MenuItem>
                   ))}
                 </Select>
-                {errors?.state?.message && <p className="text-[12px] text-red">{errors?.state?.message}</p>}
+                {errors?.state?.message && <p className="text-[0.75rem] text-red">{errors?.state?.message}</p>}
               </div>
             )}
           />
@@ -684,7 +687,7 @@ export default function RegisterPage() {
               <div>
                 <label
                   htmlFor="country"
-                  style={{ fontSize: "14px", color: "rgb(109 119 124)" }}
+                  style={{ fontSize: "0.875rem", color: "rgb(109 119 124)" }}
                 >
                   Country <span className="text-red"> *</span>
                 </label>
@@ -700,7 +703,7 @@ export default function RegisterPage() {
                     field.ref(e);
                   }}
                   sx={{
-                    fontSize: "14px",
+                    fontSize: "0.875rem",
                     color: "rgb(109 119 124)",
                     backgroundColor: "rgb(247, 249, 250)",
                     border: "none",
@@ -730,7 +733,7 @@ export default function RegisterPage() {
                   <MenuItem value="Canada">Canada</MenuItem>
                 </Select>
                 {errors.country && (
-                  <span style={{ fontSize: "12px", color: "red" }}>
+                  <span style={{ fontSize: "0.75rem", color: "red" }}>
                     {errors.country.message}
                   </span>
                 )}
@@ -776,16 +779,16 @@ export default function RegisterPage() {
               data-testid="register-show-password-id"
             >
               {showPassword ? (
-                <Hidden className="h-[14px] w-[14px]" />
+                <Hidden className="h-[0.875rem] w-[0.875rem]" />
               ) : (
-                <Visible className="h-[14px] w-[14px]" />
+                <Visible className="h-[0.875rem] w-[0.875rem]" />
               )}
             </IconButton>
           </div>
           {passwordFeedback && passwordFeedback.length > 0 ? (
             <ul className={`flex flex-col gap-2 list-disc pl-4`}>
               {passwordFeedback?.map((advice, idx) => (
-                <li className="text-[12px] text-red" key={`${idx}+passsword`}>
+                <li className="text-[0.75rem] text-red" key={`${idx}+passsword`}>
                   {advice}
                 </li>
               ))}
@@ -823,9 +826,9 @@ export default function RegisterPage() {
               data-testid="register-show-confirm-password-id"
             >
               {showConfirmPassword ? (
-                <Hidden className="h-[14px] w-[14px]" />
+                <Hidden className="h-[0.875rem] w-[0.875rem]" />
               ) : (
-                <Visible className="h-[14px] w-[14px]" />
+                <Visible className="h-[0.875rem] w-[0.875rem]" />
               )}
             </IconButton>
           </div>
@@ -844,7 +847,7 @@ export default function RegisterPage() {
           )}
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY &&
             errors.ReCAPTCHA?.message && (
-              <p className="text-[12px] text-red">
+              <p className="text-[0.75rem] text-red">
                 {errors.ReCAPTCHA?.message}
               </p>
             )}
@@ -859,7 +862,7 @@ export default function RegisterPage() {
           </FilledButton>
         </form>
       </section>
-      <div className="pt-4 text-center text-[14px] text-primary-gray">
+      <div className="pt-4 text-center text-[0.875rem] text-primary-gray">
         Already have an account?{" "}
         <Link
           className="text-primary"

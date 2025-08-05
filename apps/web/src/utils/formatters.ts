@@ -108,6 +108,13 @@ export const formatTime = (
     .format("dddd, MMM D h:mm A");
 };
 
+export const toLocalTime = (timestamp: string): string => {
+  const cleanTimeString = !timestamp.includes("T")
+    ? timestamp.replace(" ", "T") + "Z"
+    : timestamp;
+  return dayjs.utc(cleanTimeString).local().format("dddd, MMM D h:mm A");
+};
+
 export const fullDate = (timestamp: string, utcOffset = 0): string => {
   const cleanTimeString = !timestamp.includes("T")
     ? timestamp.replace(" ", "T") + "Z"

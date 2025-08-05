@@ -921,7 +921,7 @@ export class Lightspeed extends BaseProvider {
   }
 
   shouldAddSaleData(): boolean {
-    return true;
+    return false;
   }
 
   getSalesDataOptions(

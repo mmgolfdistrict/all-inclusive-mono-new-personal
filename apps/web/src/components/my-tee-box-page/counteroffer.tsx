@@ -94,9 +94,8 @@ export const Counteroffer = ({
       )}
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isCounterofferOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:max-w-[31.25rem] md:h-screen ${isCounterofferOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
@@ -111,7 +110,7 @@ export const Counteroffer = ({
               aria-label="sidebarToggle"
               data-testid="close-button-id"
             >
-              <Close className="h-[25px] w-[25px]" />
+              <Close className="h-[1.5625rem] w-[1.5625rem]" />
             </button>
           </div>
           <div className="flex h-full flex-col justify-between overflow-y-auto">
@@ -171,13 +170,12 @@ export const Counteroffer = ({
                     <Item
                       key={index}
                       value={value}
-                      className={`${
-                        index === 0
+                      className={`${index === 0
                           ? "rounded-l-full border-b border-l border-t border-stroke"
                           : index === PlayerOptions.length - 1
-                          ? "rounded-r-full border border-stroke"
-                          : "border-b border-l border-t border-stroke"
-                      } px-[1.75rem]`}
+                            ? "rounded-r-full border border-stroke"
+                            : "border-b border-l border-t border-stroke"
+                        } px-[1.75rem]`}
                       dataTestId="player-item-id"
                       dataQa={value}
                       label={value}

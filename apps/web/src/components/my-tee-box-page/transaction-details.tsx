@@ -1,4 +1,4 @@
-import { formatMoney, formatTime } from "@golf-district/shared";
+import { formatMoney } from "@golf-district/shared";
 import { TableCell, TableRow } from "@mui/material";
 import { useSidebar } from "~/hooks/useSidebar";
 import type { Dispatch, SetStateAction } from "react";
@@ -8,6 +8,7 @@ import { FilledButton } from "../buttons/filled-button";
 import Flyout from "../modal/flyout";
 import { Modal } from "../modal/modal";
 import { useMediaQuery } from "usehooks-ts";
+import { toLocalTime } from "~/utils/formatters";
 
 type BookingDetailsProps = {
   isReceiptOpen: boolean;
@@ -52,7 +53,7 @@ export const TransactionDetails = ({
             width="50%"
           >
             {selectedReceipt?.createdDateTime
-              ? formatTime(selectedReceipt?.createdDateTime)
+              ? toLocalTime(selectedReceipt.createdDateTime)
               : "-"}
           </TableCell>
         </TableRow>

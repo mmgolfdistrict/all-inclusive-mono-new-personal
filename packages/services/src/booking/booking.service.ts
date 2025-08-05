@@ -754,10 +754,10 @@ export class BookingService {
       if (!combinedData[teeTime.providerBookingId]) {
         const slotData = !teeTime.providerBookingId
           ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
-            name: "",
-            slotId: "",
-            customerId: "",
-          }))
+              name: "",
+              slotId: "",
+              customerId: "",
+            }))
           : [];
 
         combinedData[teeTime.providerBookingId] = {
@@ -1025,10 +1025,10 @@ export class BookingService {
       if (!combinedGroupData[teeTime.groupId!]) {
         const slotData = !teeTime.providerBookingId
           ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
-            name: "",
-            slotId: "",
-            customerId: "",
-          }))
+              name: "",
+              slotId: "",
+              customerId: "",
+            }))
           : [];
 
         combinedGroupData[teeTime.groupId!] = {
@@ -1135,7 +1135,8 @@ export class BookingService {
     bookingIds: string[],
     endTime: Date,
     slots: number,
-    allowSplit?: boolean
+    allowSplit?: boolean,
+    color1?: string
   ) => {
     console.warn("bookingIds", bookingIds);
     // console.log("CREATINGLISTING FOR DATE:", dayjs(endTime).utc().format('YYYY-MM-DD'), dayjs(endTime).utc().format('HHmm'));
@@ -1411,6 +1412,7 @@ export class BookingService {
             PlayerCount: slots ?? 0,
             ListedPricePerPlayer: listPrice ? `${listPrice}` : "-",
             TotalAmount: formatMoney(firstBooking.totalAmount / 100 ?? 0),
+            color1: color1,
           },
           []
         )
@@ -1472,7 +1474,8 @@ export class BookingService {
     updatedSlots: number,
     bookingIds: string[],
     endTime: Date,
-    allowSplit: boolean
+    allowSplit: boolean,
+    color1?: string
   ) => {
     if (new Date().getTime() >= endTime.getTime()) {
       this.logger.warn("End time cannot be before current time");
@@ -1654,6 +1657,7 @@ export class BookingService {
           PreviousListedPrice: previousListing.listPrice / 100,
           NewListedPrice: updatedPrice,
           CustomerFirstName: user?.name?.split(" ")[0],
+          color1: color1,
         },
         []
       )
@@ -1680,7 +1684,7 @@ export class BookingService {
    * const listingId = "listing456";
    * await bookingService.cancelListing(userId, listingId);
    */
-  cancelListing = async (userId: string, listingId: string) => {
+  cancelListing = async (userId: string, listingId: string, color1?: string) => {
     const [listing] = await this.database
       .select({
         id: lists.id,
@@ -1859,6 +1863,7 @@ export class BookingService {
           CourseName: course?.name,
           HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
           CustomerFirstName: user?.name?.split(" ")[0],
+          color1: color1,
         },
         []
       );
@@ -3575,13 +3580,13 @@ export class BookingService {
     const primaryData = {
       primaryGreenFeeCharge: isNaN(
         slotInfo[0].price -
-        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
-        markupCharge1
+          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
+          markupCharge1
       )
         ? slotInfo[0].price - markupCharge1
         : slotInfo[0].price -
-        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
-        markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
+          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
+          markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
       teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
       playerCount:
         slotInfo[0].product_data.metadata.number_of_bookings === undefined
@@ -3632,7 +3637,9 @@ export class BookingService {
 
     const advancedBookingAmount =
       customerCartData?.cart?.cart
-        ?.filter(({ product_data }: ProductData) => product_data.metadata.type === "advanced_booking_fees_per_player")
+        ?.filter(
+          ({ product_data }: ProductData) => product_data.metadata.type === "advanced_booking_fees_per_player"
+        )
         ?.reduce((acc: number, i: any) => acc + i.price, 0) / 100;
 
     const charityId = customerCartData?.cart?.cart?.find(
@@ -3652,7 +3659,7 @@ export class BookingService {
       "weatherGuaranteeTaxPercent",
       "markupTaxPercent",
       "merchandiseTaxPercent",
-      "advanced_booking_fees_per_player"
+      "advanced_booking_fees_per_player",
     ];
     let total = customerCartData?.cart?.cart
       .filter(({ product_data }: ProductData) => {
@@ -3662,7 +3669,7 @@ export class BookingService {
         return acc + i.price;
       }, 0);
 
-    total = total - (merchandiseOverriddenTaxAmount * 100);
+    total = total - merchandiseOverriddenTaxAmount * 100;
     return {
       ...primaryData,
       cart: customerCartData.cart as CustomerCart,
@@ -3681,7 +3688,7 @@ export class BookingService {
       merchandiseCharge,
       merchandiseWithTaxOverrideCharge,
       merchandiseOverriddenTaxAmount,
-      advancedBookingAmount
+      advancedBookingAmount,
     };
   };
 
@@ -3755,7 +3762,8 @@ export class BookingService {
     redirectHref: string,
     courseMembershipId: string,
     playerCountForMemberShip: string,
-    providerCourseMembershipId: string
+    providerCourseMembershipId: string,
+    color1?: string
   ) => {
     let bookingStage = "Normalizing Cart Data";
     try {
@@ -3778,54 +3786,52 @@ export class BookingService {
         merchandiseCharge,
         merchandiseWithTaxOverrideCharge,
         merchandiseOverriddenTaxAmount,
-        advancedBookingAmount
+        advancedBookingAmount,
       } = await this.normalizeCartData({
         cartId,
         userId,
-      })
+      });
       bookingStage = "Checking if payment id is valid";
       console.log(`Check if payment id is valid ${payment_id}`);
-      const isValid = await this.checkIfPaymentIdIsValid(payment_id)
-        .catch((e: any) => {
-          this.logger.error(`Error validating payment id: ${payment_id}`);
-          void loggerService.errorLog({
-            userId,
-            url: "/BookingService/reserveBooking",
-            message: `ERROR_VALIDATING_PAYMENT_ID`,
-            stackTrace: `${e.stack}`,
-            additionalDetailsJSON: JSON.stringify({ e, payment_id, cartId, userId, teeTimeId, playerCount }),
-            userAgent: "",
-            ip: "",
-          })
-          return null;
+      const isValid = await this.checkIfPaymentIdIsValid(payment_id).catch((e: any) => {
+        this.logger.error(`Error validating payment id: ${payment_id}`);
+        void loggerService.errorLog({
+          userId,
+          url: "/BookingService/reserveBooking",
+          message: `ERROR_VALIDATING_PAYMENT_ID`,
+          stackTrace: `${e.stack}`,
+          additionalDetailsJSON: JSON.stringify({ e, payment_id, cartId, userId, teeTimeId, playerCount }),
+          userAgent: "",
+          ip: "",
         });
+        return null;
+      });
       if (!isValid) {
         throw new Error("Payment Id not is not valid");
       }
       if (!weatherQuoteId) {
         bookingStage = "Cancelling sensible quote Because it is not valid";
         console.log("Cancel Sensible Quote ID : ", sensibleQuoteId);
-        void this.sensibleService.cancelQuote(sensibleQuoteId)
-          .catch((err) => {
-            this.logger.error(`Error cancelling sensible quote: ${sensibleQuoteId}`);
-            void loggerService.errorLog({
+        void this.sensibleService.cancelQuote(sensibleQuoteId).catch((err) => {
+          this.logger.error(`Error cancelling sensible quote: ${sensibleQuoteId}`);
+          void loggerService.errorLog({
+            userId,
+            url: "/BookingService/reserveBooking",
+            message: `ERROR_CANCELLING_SENSIBLE_QUOTE`,
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              err,
+              sensibleQuoteId,
+              payment_id,
+              cartId,
               userId,
-              url: "/BookingService/reserveBooking",
-              message: `ERROR_CANCELLING_SENSIBLE_QUOTE`,
-              stackTrace: `${err.stack}`,
-              additionalDetailsJSON: JSON.stringify({
-                err,
-                sensibleQuoteId,
-                payment_id,
-                cartId,
-                userId,
-                teeTimeId,
-                playerCount,
-              }),
-              userAgent: "",
-              ip: "",
-            })
+              teeTimeId,
+              playerCount,
+            }),
+            userAgent: "",
+            ip: "",
           });
+        });
       }
 
       bookingStage = "Checking if booking is already done";
@@ -3850,11 +3856,11 @@ export class BookingService {
               userId,
               teeTimeId,
               playerCount,
-              cart
+              cart,
             }),
             userAgent: "",
             ip: "",
-          })
+          });
           return [];
         });
 
@@ -3964,7 +3970,9 @@ export class BookingService {
       // Calculate additional taxes
 
       const greenFeeTaxTotal =
-        (((teeTime?.greenFees ?? 0) / 100) + advancedBookingAmount) * ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) * playerCount;
+        ((teeTime?.greenFees ?? 0) / 100 + advancedBookingAmount) *
+        ((teeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) *
+        playerCount;
       const markupTaxTotal = (markupCharge / 100) * ((teeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
       const weatherGuaranteeTaxTotal =
         (sensibleCharge / 100) * ((teeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
@@ -3979,7 +3987,7 @@ export class BookingService {
         cartFeeTaxPercentTotal +
         merchandiseTaxTotal +
         merchandiseOverriddenTaxAmount;
-      additionalTaxes = Math.ceil(additionalTaxes * 100) / 100;
+      additionalTaxes = Math.ceil(Number((additionalTaxes * 100).toFixed(2))) / 100;
       const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge;
 
       if (!teeTime) {
@@ -4060,7 +4068,7 @@ export class BookingService {
           teeTimeId: teeTime.id,
           providerTeeTimeId: teeTime.providerTeeTimeId,
           startTime: teeTime.providerDate,
-          greenFees: (teeTime.greenFees / 100) + advancedBookingAmount,
+          greenFees: teeTime.greenFees / 100 + advancedBookingAmount,
           cartFees: teeTime.cartFees / 100,
           providerCustomerId: providerCustomer.customerId?.toString() ?? null,
           providerAccountNumber: providerCustomer.playerNumber,
@@ -4119,7 +4127,7 @@ export class BookingService {
           }
         }
         if (additionalNoteFromUser || needRentals || merchandiseTotalCharge > 0) {
-          bookingStage = "Preparing and sending course operatior email"
+          bookingStage = "Preparing and sending course operatior email";
           const merchandiseDetails: { caption: string; qty: number }[] = [];
           const merchandiseData = cart?.cart?.filter(
             (item: ProductData) => item.product_data.metadata.type === "merchandise"
@@ -4177,13 +4185,13 @@ export class BookingService {
                 merchandiseDetails.push({
                   caption: merchandise.caption,
                   qty: merchandiseWithTaxOverrideItem?.qty ?? 0,
-                })
+                });
               }
             } else if (merchandiseWithTaxOverrideItem) {
               merchandiseDetails.push({
                 caption: merchandise.caption,
                 qty: merchandiseWithTaxOverrideItem?.qty ?? 0,
-              })
+              });
             }
           }
 
@@ -4235,6 +4243,7 @@ export class BookingService {
                   CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
                   PurchasedMerchandise: purchasedMerchandise?.length > 0 ? true : false,
                   MerchandiseDetails: merchandiseDetails,
+                  color1: color1,
                 },
                 []
               );
@@ -4258,7 +4267,7 @@ export class BookingService {
             userEmail: customerDetails?.userEmail ?? "",
             courseName: teeTime.courseName ?? "",
             teeTimeDate: teeTime.providerDate,
-            errMessage: e.message
+            errMessage: e.message,
           }
         );
         throw "Booking failed on provider";
@@ -4333,7 +4342,7 @@ export class BookingService {
             cartId,
             markupCharge,
             merchandiseCharge: merchandiseTotalCharge,
-            advancedBookingAmount
+            advancedBookingAmount,
           },
           isWebhookAvailable: teeTime?.isWebhookAvailable ?? false,
           providerBookingIds,
@@ -4352,6 +4361,7 @@ export class BookingService {
           courseMembershipId: courseMembershipId,
           playerCountForMemberShip,
           purchasedMerchandise,
+          color1: color1,
         })
         .catch(async (err) => {
           this.logger.error(`Error creating booking, ${err}`);
@@ -4381,8 +4391,7 @@ export class BookingService {
         isEmailSend: bookingId.isEmailSend,
         isValidForCollectPayment: bookingId?.validForCollectPayment,
       } as ReserveTeeTimeResponse;
-    }
-    catch (err: any) {
+    } catch (err: any) {
       this.logger.error(`Error creating booking, ${err}`);
       void loggerService.errorLog({
         userId: userId,
@@ -4401,7 +4410,7 @@ export class BookingService {
           redirectHref,
           courseMembershipId,
           playerCountForMemberShip,
-          bookingStage
+          bookingStage,
         }),
       });
       throw new Error("Error creating booking");
@@ -4477,8 +4486,9 @@ export class BookingService {
               url: "/confirmBooking",
               userAgent: "",
               message: "ERROR CONFIRMING BOOKING",
-              stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
-                }`,
+              stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
+                booking?.teeTimeId ?? ""
+              }`,
               additionalDetailsJSON: err,
             });
           });
@@ -5140,7 +5150,8 @@ export class BookingService {
     redirectHref: string,
     courseMembershipId: string,
     playerCountForMemberShip: string,
-    providerCourseMembershipId: string
+    providerCourseMembershipId: string,
+    color1?: string
   ) => {
     let bookingStage = "Normalizing Cart Data";
     try {
@@ -5165,7 +5176,7 @@ export class BookingService {
         merchandiseCharge,
         merchandiseWithTaxOverrideCharge,
         merchandiseOverriddenTaxAmount,
-        advancedBookingAmount
+        advancedBookingAmount,
       } = await this.normalizeCartData({
         cartId,
         userId,
@@ -5174,47 +5185,45 @@ export class BookingService {
 
       bookingStage = "Checking if payment id is valid";
       console.log(`Check if payment id is valid ${payment_id}`);
-      const isValid = await this.checkIfPaymentIdIsValid(payment_id)
-        .catch((e: any) => {
-          this.logger.error(`Error validating payment id: ${payment_id}`);
-          void loggerService.errorLog({
-            userId,
-            url: "/BookingService/reserveGroupBooking",
-            message: `ERROR_VALIDATING_PAYMENT_ID`,
-            stackTrace: `${e.stack}`,
-            additionalDetailsJSON: JSON.stringify({ e, payment_id, cartId, userId, teeTimeIds, playerCount }),
-            userAgent: "",
-            ip: "",
-          })
-          return null;
+      const isValid = await this.checkIfPaymentIdIsValid(payment_id).catch((e: any) => {
+        this.logger.error(`Error validating payment id: ${payment_id}`);
+        void loggerService.errorLog({
+          userId,
+          url: "/BookingService/reserveGroupBooking",
+          message: `ERROR_VALIDATING_PAYMENT_ID`,
+          stackTrace: `${e.stack}`,
+          additionalDetailsJSON: JSON.stringify({ e, payment_id, cartId, userId, teeTimeIds, playerCount }),
+          userAgent: "",
+          ip: "",
         });
+        return null;
+      });
       if (!isValid) {
         throw new Error("Payment Id not is not valid");
       }
       if (!weatherQuoteId) {
         bookingStage = "Cancelling sensible quote Because it is not valid";
         console.log("Cancel Sensible Quote ID : ", sensibleQuoteId);
-        void this.sensibleService.cancelQuote(sensibleQuoteId)
-          .catch((err) => {
-            this.logger.error(`Error cancelling sensible quote: ${sensibleQuoteId}`);
-            void loggerService.errorLog({
+        void this.sensibleService.cancelQuote(sensibleQuoteId).catch((err) => {
+          this.logger.error(`Error cancelling sensible quote: ${sensibleQuoteId}`);
+          void loggerService.errorLog({
+            userId,
+            url: "/BookingService/reserveGroupBooking",
+            message: `ERROR_CANCELLING_SENSIBLE_QUOTE`,
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              err,
+              sensibleQuoteId,
+              payment_id,
+              cartId,
               userId,
-              url: "/BookingService/reserveGroupBooking",
-              message: `ERROR_CANCELLING_SENSIBLE_QUOTE`,
-              stackTrace: `${err.stack}`,
-              additionalDetailsJSON: JSON.stringify({
-                err,
-                sensibleQuoteId,
-                payment_id,
-                cartId,
-                userId,
-                teeTimeIds,
-                playerCount,
-              }),
-              userAgent: "",
-              ip: "",
-            })
+              teeTimeIds,
+              playerCount,
+            }),
+            userAgent: "",
+            ip: "",
           });
+        });
       }
 
       bookingStage = "Checking if booking is already done";
@@ -5239,11 +5248,11 @@ export class BookingService {
               userId,
               teeTimeIds,
               playerCount,
-              cart
+              cart,
             }),
             userAgent: "",
             ip: "",
-          })
+          });
           return [];
         });
 
@@ -5355,10 +5364,11 @@ export class BookingService {
       // Calculate additional taxes
 
       const greenFeeTaxTotal =
-        (((firstTeeTime?.greenFees ?? 0) / 100) + advancedBookingAmount) *
+        ((firstTeeTime?.greenFees ?? 0) / 100 + advancedBookingAmount) *
         ((firstTeeTime?.greenFeeTaxPercent ?? 0) / 100 / 100) *
         playerCount;
-      const markupTaxTotal = (markupCharge / 100) * ((firstTeeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
+      const markupTaxTotal =
+        (markupCharge / 100) * ((firstTeeTime?.markupTaxPercent ?? 0) / 100) * playerCount;
       const weatherGuaranteeTaxTotal =
         (sensibleCharge / 100) * ((firstTeeTime?.weatherGuaranteeTaxPercent ?? 0) / 100);
       const cartFeeTaxPercentTotal =
@@ -5373,7 +5383,7 @@ export class BookingService {
         cartFeeTaxPercentTotal +
         merchandiseTaxTotal +
         merchandiseOverriddenTaxAmount;
-      additionalTaxes = Math.ceil(additionalTaxes * 100) / 100;
+      additionalTaxes = Math.ceil(Number((additionalTaxes * 100).toFixed(2))) / 100;
       const merchandiseTotalCharge = merchandiseCharge + merchandiseWithTaxOverrideCharge;
 
       if (!firstTeeTime) {
@@ -5409,7 +5419,9 @@ export class BookingService {
         firstTeeTime.providerCourseConfiguration!
       );
       if (!provider || !token) {
-        this.logger.error(`Error finding provider or token for tee time id ${firstTeeTime.internalId}, ${firstTeeTime.courseId}, ${firstTeeTime.providerCourseConfiguration}`);
+        this.logger.error(
+          `Error finding provider or token for tee time id ${firstTeeTime.internalId}, ${firstTeeTime.courseId}, ${firstTeeTime.providerCourseConfiguration}`
+        );
         void loggerService.errorLog({
           userId: userId,
           url: "/reserveGroupBooking",
@@ -5419,9 +5431,11 @@ export class BookingService {
           additionalDetailsJSON: JSON.stringify({
             userId,
             teeTimeIds,
-          })
-        })
-        throw new Error(`Error finding provider or token for tee time id ${firstTeeTime.internalId}, ${firstTeeTime.courseId}, ${firstTeeTime.providerCourseConfiguration}`);
+          }),
+        });
+        throw new Error(
+          `Error finding provider or token for tee time id ${firstTeeTime.internalId}, ${firstTeeTime.courseId}, ${firstTeeTime.providerCourseConfiguration}`
+        );
       }
       for (const teeTime of tempTeeTimes) {
         try {
@@ -5483,7 +5497,7 @@ export class BookingService {
             teeTimeId: teeTime.id,
             providerTeeTimeId: teeTime.providerTeeTimeId,
             startTime: teeTime.providerDate,
-            greenFees: (teeTime.greenFees / 100) + advancedBookingAmount,
+            greenFees: teeTime.greenFees / 100 + advancedBookingAmount,
             cartFees: teeTime.cartFees / 100,
             providerCustomerId: providerCustomer.customerId?.toString() ?? null,
             providerAccountNumber: providerCustomer.playerNumber,
@@ -5545,7 +5559,7 @@ export class BookingService {
             firstTeeTime.id === teeTime.id &&
             (additionalNoteFromUser || needRentals || merchandiseTotalCharge > 0)
           ) {
-            bookingStage = "Preparing and sending course operatior email"
+            bookingStage = "Preparing and sending course operatior email";
             const merchandiseDetails: { caption: string; qty: number }[] = [];
             const merchandiseData = cart?.cart?.filter(
               (item: ProductData) => item.product_data.metadata.type === "merchandise"
@@ -5645,6 +5659,7 @@ export class BookingService {
                     CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.cdnKey}.${teeTime.extension}`,
                     PurchasedMerchandise: purchasedMerchandise?.length > 0 ? true : false,
                     MerchandiseDetails: merchandiseDetails,
+                    color1: color1,
                   },
                   []
                 );
@@ -5745,7 +5760,7 @@ export class BookingService {
             cartId,
             markupCharge,
             merchandiseCharge: merchandiseTotalCharge,
-            advancedBookingAmount
+            advancedBookingAmount,
           },
           isWebhookAvailable: firstTeeTime?.isWebhookAvailable ?? false,
           providerBookingIds,
@@ -5857,7 +5872,7 @@ export class BookingService {
           redirectHref,
           courseMembershipId,
           playerCountForMemberShip,
-          bookingStage
+          bookingStage,
         }),
       });
       throw new Error("Error creating booking");
@@ -5879,7 +5894,8 @@ export class BookingService {
     listPrice: number,
     groupId: string,
     endTime: Date,
-    slots: number
+    slots: number,
+    color1?: string
   ) => {
     console.warn("Group ID:", groupId);
     // console.log("CREATINGLISTING FOR DATE:", dayjs(endTime).utc().format('YYYY-MM-DD'), dayjs(endTime).utc().format('HHmm'));
@@ -6156,6 +6172,7 @@ export class BookingService {
             PlayerCount: slots ?? 0,
             ListedPricePerPlayer: listPrice ? `${listPrice}` : "-",
             TotalAmount: formatMoney(lastBooking.totalAmount / 100 ?? 0),
+            color1: color1,
           },
           []
         )
@@ -6221,7 +6238,7 @@ export class BookingService {
    * const groupId = "grouping456";
    * await bookingService.cancelGroupListing(userId, listingId);
    */
-  cancelGroupListing = async (userId: string, groupId: string) => {
+  cancelGroupListing = async (userId: string, groupId: string, color1?: string) => {
     if (!groupId) {
       this.logger.error("Invalid group ID");
       throw new Error("Invalid group ID");
@@ -6419,6 +6436,7 @@ export class BookingService {
           CourseName: course?.name,
           HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
           CustomerFirstName: user?.name?.split(" ")[0],
+          color1: color1,
         },
         []
       );

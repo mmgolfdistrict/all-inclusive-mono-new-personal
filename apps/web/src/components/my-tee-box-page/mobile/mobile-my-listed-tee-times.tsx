@@ -56,7 +56,7 @@ export const MobileMyListedTeeTimes = () => {
 
   if (isError && error) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         {error?.message ?? "An error occurred fetching tee times"}
       </div>
     );
@@ -69,7 +69,7 @@ export const MobileMyListedTeeTimes = () => {
     !error
   ) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         No listed tee times found
       </div>
     );
@@ -77,7 +77,7 @@ export const MobileMyListedTeeTimes = () => {
 
   return (
     <>
-      <div className="relative flex max-w-full flex-col overflow-auto text-[14px] m-2 px-1">
+      <div className="relative flex max-w-full flex-col overflow-auto text-sm m-2 px-1">
         {isLoading
           ? Array(3)
             .fill(null)

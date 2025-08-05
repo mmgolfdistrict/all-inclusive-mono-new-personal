@@ -9,7 +9,7 @@ import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useDraggableScroll } from "~/hooks/useDraggableScroll";
 import { api } from "~/utils/api";
 import { dayMonthDate } from "~/utils/formatters";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useElementSize, useIntersectionObserver } from "usehooks-ts";
 import { TeeTime } from "../cards/tee-time";
 import { Info } from "../icons/info";
@@ -44,8 +44,7 @@ export const DailyTeeTimes = ({
   const entry = useIntersectionObserver(nextPageRef, {});
   const isVisible = !!entry?.isIntersecting;
   const [sizeRef] = useElementSize();
-  const { course } = useCourseContext();
-  const courseId = course?.id;
+  const { course, getAllowedPlayersForTeeTime } = useCourseContext();
   const handleScroll = () => {
     const container = overflowRef.current;
     if (!container) return;
@@ -82,10 +81,7 @@ export const DailyTeeTimes = ({
   const teeTimeStartTime = startTime[0];
   const teeTimeEndTime = startTime[1];
 
-  const { data: allowedPlayers } =
-    api.course.getNumberOfPlayersByCourse.useQuery({
-      courseId: courseId ?? "",
-    });
+  const allowedPlayers = useMemo(() => getAllowedPlayersForTeeTime(), [course]);
 
   const numberOfPlayers = allowedPlayers?.numberOfPlayers[0];
 

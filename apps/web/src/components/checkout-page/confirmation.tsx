@@ -66,7 +66,7 @@ export const Confirmation = ({
     router.replace(`/${course?.id}/my-tee-box`);
   }
   function handleNavigationForCollectPayment() {
-    router.replace(`/${course?.id}/my-tee-box/?bookingId=${bookingId}&collectPayment=${isValidForCollectPayment}`)
+    router.replace(`/${course?.id}/my-tee-box/?bookingId=${bookingId}&collectPayment=true`)
   }
   return (
     <section className="mx-auto flex w-full flex-col gap-4 bg-white px-3 py-2 text-center md:max-w-[80vw] md:rounded-xl md:p-6 md:py-4">
@@ -129,14 +129,19 @@ export const Confirmation = ({
                     <div className="w-full md:w-fit md:min-w-[15.625rem] ">
                       <FilledButton
                         onClick={handleNavigationForCollectPayment}
-                        className="w-full">Collect Payment</FilledButton>
+                        className="w-full">Request Payment</FilledButton>
                     </div>
                   </div>
                 ) : null}
+                <div className="mt-5">
+                  <span className="text-primary-gray font-semibold text-center text-justify">
+                    Collect the payment from your players in your tee time.
+                  </span>
+                </div>
                 {isEmailSend ? (
                   <Fragment>
                     <div>
-                      <span className="text-yellow-600 font-semibold text-center ">
+                      <span className="text-yellow-600 font-semibold text-center text-justify">
                         Your booking is confirmed though we are unable to send
                         the email. Rest assured our customer service
                         representative will call you shortly
@@ -153,12 +158,21 @@ export const Confirmation = ({
             <h1 className="text-[1.5rem] md:text-[2rem]">
               Thanks for your purchase
             </h1>
-            <p className="text-[0.875rem] text-primary-gray md:text-[1rem]">
+            <div className="flex justify-center items-center w-full my-3">
+              <FilledButton
+                onClick={handleNavigationGotoMyTeeBox}
+                className="min-w-[250px]"
+              >
+                Go To My Tee Box
+              </FilledButton>
+            </div>
+
+            <p className="text-[14px] text-primary-gray md:text-[16px] text-justify">
               Your tee time will be viewable in My Tee Box. Please note that all
               purchases are final. You can manage or update the players in your
               party at any time before the round.
             </p>
-            <p className="text-[0.875rem] text-primary-gray md:text-[1rem]">
+            <p className="text-[14px] text-primary-gray md:text-[16px] text-justify">
               Add golfers to your tee time by entering their names, selecting
               them by their Golf District handle, or inviting them via email.
             </p>
@@ -194,11 +208,6 @@ export const Confirmation = ({
             >
               <FilledButton className="w-full">Go To My Tee Box</FilledButton>
             </Link> */}
-            <div className="w-full md:w-fit md:min-w-[15.625rem] ">
-              <FilledButton
-                onClick={handleNavigationGotoMyTeeBox}
-                className="w-full">Go To My Tee Box</FilledButton>
-            </div>
           </div>
         </div>
       </div>

@@ -35,7 +35,7 @@ const OwnerTeeTimeDetails = ({
       {" "}
       {!session ? (
         status == "loading" ? null : (
-          <div className="min-h-[450px] flex items-center justify-center">
+          <div className="min-h-[28.125rem] flex items-center justify-center">
             <Link
               href={`/${courseId}/login`}
               onClick={() => {

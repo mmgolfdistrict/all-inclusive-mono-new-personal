@@ -59,7 +59,7 @@ export const TableView = () => {
 
   return (
     <Tabs.Root value={section ?? "owned"}>
-      <Tabs.List className="flex gap-10 overflow-x-auto border-b border-stroke bg-white px-6 pt-4 md:rounded-t-xl">
+      <Tabs.List className="flex gap-10 overflow-x-auto border-b border-stroke bg-white px-[1.5rem] pt-[1rem] md:rounded-t-xl">
         <TabTrigger id="sell-owned" value={"owned"}>
           Owned
         </TabTrigger>
@@ -85,7 +85,7 @@ export const TableView = () => {
             >
               Offers Received{" "}
               {unreadOffers && unreadOffers > 0 ? (
-                <Badge className="py-[.15rem] text-[12px]">
+                <Badge className="py-[.15rem] text-xs">
                   {unreadOffers}
                 </Badge>
               ) : null}
@@ -190,11 +190,11 @@ const TabTrigger = ({
     >
       <Tabs.Trigger
         value={value}
-        className="flex items-center gap-2 whitespace-nowrap px-4 py-2 text-[16px] text-secondary-black
+        className="flex items-center gap-2 whitespace-nowrap px-4 py-2 text-base text-secondary-black
              data-[state=active]:border data-[state=active]:border-primary
              data-[state=active]:rounded-lg data-[state=active]:text-primary
              data-[state=active]:-mt-1
-             outline-none md:text-[24px]"
+             outline-none md:text-2xl"
       >
         {children}
       </Tabs.Trigger>

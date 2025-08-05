@@ -6,7 +6,7 @@ export const Skeleton = () => (
       <div className="h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
       <div className="h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
     </div>
-    <div className="scrollbar-none relative flex gap-4 overflow-x-auto overflow-y-hidden h-[262px]">
+    <div className="scrollbar-none relative flex gap-4 overflow-x-auto overflow-y-hidden h-[16.375rem]">
       {Array(5)
         .fill(null)
         .map((_, idx) => (

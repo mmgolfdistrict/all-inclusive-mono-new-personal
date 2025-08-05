@@ -647,7 +647,7 @@ export const Item = ({
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white flex items-center px-4 py-2 text-left text-[0.875rem] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white unmask-players ${className ?? ""
+      className={`bg-white flex items-center px-4 py-2 text-left text-[0.875rem] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white unmask-players ${className ?? ""}
         }`}
       data-testid={dataTestId}
       data-qa={dataQa}

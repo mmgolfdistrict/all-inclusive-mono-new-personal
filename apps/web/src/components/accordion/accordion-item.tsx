@@ -31,7 +31,7 @@ export const AccordionItem = ({
         </Accordion.Trigger>
       </Accordion.Header>
       <Accordion.Content
-        className={`overflow-hidden bg-white text-[15px] data-[state=closed]:animate-slideUp data-[state=open]:animate-slideDown md:rounded-b-xl`}
+        className={`overflow-hidden bg-white text-[0.9375rem] data-[state=closed]:animate-slideUp data-[state=open]:animate-slideDown md:rounded-b-xl`}
       >
         <div className="px-5 py-[0.9375rem] text-[0.875rem] font-light text-primary-gray md:text-[1rem]">
           {children}
