@@ -34,6 +34,7 @@ function Waitlists() {
   const [selectedNotifications, setSelectedNotifications] = useState<
     WaitlistItem[]
   >([]);
+  const [selectedIndividualNotification, setSelectedIndividualNotification] = useState<WaitlistItem | undefined>(undefined);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { mutateAsync: deleteNotifications } =
     api.userWaitlist.deleteWaitlistNotification.useMutation();
@@ -71,10 +72,14 @@ function Waitlists() {
   const handleDeleteNotifications = async () => {
     let notificationsToDelete;
 
-    if (selectedNotifications.length > 0) {
-      notificationsToDelete = selectedNotifications.map((item) => item.id);
+    if (selectedIndividualNotification) {
+      notificationsToDelete = [selectedIndividualNotification.id];
     } else {
-      notificationsToDelete = waitlist?.map((item) => item.id);
+      if (selectedNotifications.length > 0) {
+        notificationsToDelete = selectedNotifications.map((item) => item.id);
+      } else {
+        notificationsToDelete = waitlist?.map((item) => item.id);
+      }
     }
 
     await deleteNotifications(
@@ -131,6 +136,11 @@ function Waitlists() {
     [waitlist]
   );
 
+  const handleCloseModel = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedIndividualNotification(undefined);
+  };
+
   return (
     <div className="flex flex-col mb-4 justify-center gap-2 md:gap-1  px-4 py-3 rounded-xl md:px-8 md:py-6">
       <div className="relative flex items-center justify-between md:mb-2">
@@ -178,6 +188,7 @@ function Waitlists() {
                 handleSelectNotifications={handleSelectNotifications}
                 selectedNotifications={selectedNotifications}
                 setIsDeleteModalOpen={setIsDeleteModalOpen}
+                setSelectedIndividualNotification={setSelectedIndividualNotification}
               />
             ))
             : null}
@@ -187,7 +198,7 @@ function Waitlists() {
         <>
           <div
             className={`fixed left-0 top-0 z-20 h-[100dvh] w-screen backdrop-blur `}
-            onClick={() => setIsDeleteModalOpen(false)}
+            onClick={handleCloseModel}
           >
             <div className="h-screen bg-[#00000099]" />
           </div>
@@ -196,7 +207,7 @@ function Waitlists() {
               className="absolute right-4 top-4 cursor-pointer"
               height={24}
               width={24}
-              onClick={() => setIsDeleteModalOpen(false)}
+              onClick={handleCloseModel}
             />
             <h1 className="text-[1.25rem] md:text-2xl">
               Delete selected notifications
@@ -207,24 +218,39 @@ function Waitlists() {
             </p>
 
             <div className="flex flex-col gap-2 self-center max-h-[15.625rem] overflow-y-auto">
-              {selectedNotifications.map((item) => (
-                <div
+              {selectedIndividualNotification ?
+                (<div
                   className="flex items-center gap-2 justify-between bg-secondary-white p-2 rounded-md"
-                  key={item.id}
+                  key={selectedIndividualNotification.id}
                 >
                   <div className="text-[0.875rem] md:text-md">
-                    {dayjs(item.date).format("ddd MMM DD, YYYY")}
+                    {dayjs(selectedIndividualNotification.date).format(
+                      "ddd MMM DD, YYYY"
+                    )}
                   </div>
                   <div className="text-[0.875rem] md:text-md">
-                    {item.startTimeFormated} - {item.endTimeFormated}
+                    {selectedIndividualNotification.startTimeFormated} - {selectedIndividualNotification.endTimeFormated}
                   </div>
                 </div>
-              ))}
+                ) : (
+                  selectedNotifications.map((item) => (
+                    <div
+                      className="flex items-center gap-2 justify-between bg-secondary-white p-2 rounded-md"
+                      key={item.id}
+                    >
+                      <div className="text-[0.875rem] md:text-md">
+                        {dayjs(item.date).format("ddd MMM DD, YYYY")}
+                      </div>
+                      <div className="text-[0.875rem] md:text-md">
+                        {item.startTimeFormated} - {item.endTimeFormated}
+                      </div>
+                    </div>
+                  )))}
             </div>
             <div className="flex gap-2">
               <OutlineButton
                 className="w-full mt-2 py-[.28rem] md:py-1.5 text-[0.625rem] md:text-[0.875rem]"
-                onClick={() => setIsDeleteModalOpen(false)}
+                onClick={handleCloseModel}
               >
                 No
               </OutlineButton>

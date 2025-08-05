@@ -164,17 +164,21 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
     await createNotifications(notificationsData, {
       onSuccess: (data) => {
-        const toastContent = (
-          <div>
-            <p>{data}</p>
-            <p className="text-green-600 text-[0.875rem] font-bold">
-              If you don’t see the notification emails please check your Junk
-              Mail or Spam folder. Remember to add no-reply@golfdistrict.com to
-              the safe senders list.
-            </p>
-          </div>
-        );
-        toast.success(toastContent);
+        if (data.noChanges) {
+          toast.info(data.message);
+        } else {
+          const toastContent = (
+            <div>
+              <p>{data.message}</p>
+              <p className="text-green-600 text-[0.875rem] font-bold">
+                If you don’t see the notification emails please check your Junk
+                Mail or Spam folder. Remember to add no-reply@golfdistrict.com to
+                the safe senders list.
+              </p>
+            </div>
+          );
+          toast.success(toastContent);
+        }
 
         setSelectedDates([]);
         setLocalStartTime([courseStartTimeNumber, courseEndTimeNumber]);
