@@ -73,7 +73,6 @@ export const ManageOwnedTeeTime = ({
         : href.match(/^(https?:\/\/[^/]+\/[0-9A-Fa-f-]+)/)?.[0]) || "";
 
     const handleInviteFriend = async (friend: InviteFriend, index: number) => {
-      console.log("handleInviteFriend", friend, index, selectedTeeTime?.golfers[index]);
 
       if (invite.isLoading) return;
       const bookingSlotId = friend?.slotId;
@@ -83,8 +82,6 @@ export const ManageOwnedTeeTime = ({
 
       const teeTimeIds = selectedTeeTime?.teeTimeId.split(",") || [];
       const teeTimeIdForFriend = teeTimeIds[Math.floor(index / 4)];
-
-      console.log("teeTimeIdForFriend", teeTimeIdForFriend);
 
       try {
         await invite.mutateAsync({
@@ -239,7 +236,6 @@ export const ManageOwnedTeeTime = ({
           minimumOfferPrice,
         });
         toast.success("Tee time listing updated successfully");
-        console.log("Updated friends 2:");
         if (params.get("groupId")) {
           router.replace(`/${course?.id}/my-tee-box?section=owned`);
         }

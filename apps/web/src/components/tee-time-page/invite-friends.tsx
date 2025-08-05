@@ -88,9 +88,6 @@ export const InviteFriends = ({
 
     const lastDigit = match1 ? match1[0] : null;
 
-    console.log("hello", { teeTimeIds, teeTimeIdForFriend, bookingSlotId, lastDigit, friend, index });
-
-
     try {
       await invite.mutateAsync({
         emailOrPhone: friend.name || "",
@@ -181,12 +178,15 @@ export const InviteFriends = ({
 
     const bookingSlotId = selectedTeeTime[index]?.slotId || "";
 
+    const match1 = bookingSlotId.match(/\d(?=\D*$)/);
+    const lastDigit = match1 ? match1[0] : null;
+
     try {
       await invite.mutateAsync({
         emailOrPhone: friendToFind.emailOrPhoneNumber || "",
         teeTimeId: teeTimeId || "",
         bookingSlotId, // Ensure a string is passed
-        slotPosition: index + 1,
+        slotPosition: lastDigit ? parseInt(lastDigit, 10) : 0,
         redirectHref: match[0],
       });
       setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
