@@ -181,7 +181,7 @@ export const Confirmation = ({
       </div>
       {course?.supportsPlayerNameChange && (
         <div>
-          <InviteFriends teeTimeId={teeTimeId} isConfirmationPage />
+          <InviteFriends teeTimeId={teeTimeId} groupId={bookingData?.groupId ?? undefined} isConfirmationPage />
         </div>
       )}
       <div>

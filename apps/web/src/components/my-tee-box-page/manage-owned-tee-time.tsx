@@ -22,6 +22,7 @@ import { Tooltip } from "../tooltip";
 import { type OwnedTeeTime } from "./owned";
 import Flyout from "../modal/flyout";
 import { Modal } from "../modal/modal";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type SideBarProps = {
   isManageOwnedTeeTimeOpen: boolean;
@@ -36,9 +37,9 @@ export const ManageOwnedTeeTime = ({
   selectedTeeTime,
   refetch,
 }: SideBarProps) => {
-
+  const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)");
-
+  const params = useSearchParams();
   const ManageOwnedTeeTimeDetail = ({
     setIsManageOwnedTeeTimeOpen,
     selectedTeeTime,
@@ -80,10 +81,15 @@ export const ManageOwnedTeeTime = ({
 
       const lastDigit = match ? match[0] : null;
 
+      const teeTimeIds = selectedTeeTime?.teeTimeId.split(",") || [];
+      const teeTimeIdForFriend = teeTimeIds[Math.floor(index / 4)];
+
+      console.log("teeTimeIdForFriend", teeTimeIdForFriend);
+
       try {
         await invite.mutateAsync({
           emailOrPhone: friend.name || "",
-          teeTimeId: selectedTeeTime?.teeTimeId || "",
+          teeTimeId: teeTimeIdForFriend || "",
           bookingSlotId,
           slotPosition: lastDigit ? parseInt(lastDigit, 10) : 0,
           redirectHref: redirectHref,
@@ -233,6 +239,11 @@ export const ManageOwnedTeeTime = ({
           minimumOfferPrice,
         });
         toast.success("Tee time listing updated successfully");
+        console.log("Updated friends 2:");
+        if (params.get("groupId")) {
+          router.replace(`/${course?.id}/my-tee-box?section=owned`);
+        }
+
         await refetch();
         setIsManageOwnedTeeTimeOpen(false);
       } catch (error) {
@@ -305,13 +316,15 @@ export const ManageOwnedTeeTime = ({
       });
 
       const bookingSlotId = selectedTeeTime?.golfers[index]?.slotId || "";
+      const match = bookingSlotId.match(/\d(?=\D*$)/);
 
+      const lastDigit = match ? match[0] : null;
       try {
         await invite.mutateAsync({
           emailOrPhone: friendToFind.emailOrPhoneNumber || "",
           teeTimeId: selectedTeeTime?.teeTimeId || "",
           bookingSlotId, // Ensure a string is passed
-          slotPosition: index + 1,
+          slotPosition: lastDigit ? parseInt(lastDigit, 10) : 0,
           redirectHref: redirectHref,
         });
         setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
@@ -452,6 +465,15 @@ export const ManageOwnedTeeTime = ({
                             value={friend.name}
                             type="search"
                             list="searchedFriends"
+                            onFocus={(e: ChangeEvent<HTMLInputElement>) => {
+                              const friendsCopy = [...friends];
+                              friendsCopy.forEach((friend) => {
+                                if (friend.slotId === newFriend.slotId) {
+                                  friend.emailOrPhoneNumber = e.target.value;
+                                }
+                              });
+                              setFriends(friendsCopy);
+                            }}
                             onChange={(e) => handleNewFriend(e, friend)}
                             onSelect={addFriend}
                             placeholder="Username or email"
@@ -570,6 +592,15 @@ export const ManageOwnedTeeTime = ({
                           value={friend.name}
                           type="search"
                           list="searchedFriends"
+                          onFocus={(e: ChangeEvent<HTMLInputElement>) => {
+                            const friendsCopy = [...friends];
+                            friendsCopy.forEach((friend) => {
+                              if (friend.slotId === newFriend.slotId) {
+                                friend.emailOrPhoneNumber = e.target.value;
+                              }
+                            });
+                            setFriends(friendsCopy);
+                          }}
                           onChange={(e) => handleNewFriend(e, friend)}
                           onSelect={addFriend}
                           placeholder="Username or email"

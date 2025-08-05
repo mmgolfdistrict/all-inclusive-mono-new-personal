@@ -113,6 +113,9 @@ export const Owned = () => {
   };
 
   const openManageListTeeTime = (teeTime: OwnedTeeTime) => {
+    if (params.get("groupId")) {
+      router.replace(`/${course?.id}/my-tee-box?section=owned`);
+    }
     setSelectedTeeTime(teeTime);
     setIsManageOwnedTeeTimeOpen(true);
   };
@@ -120,6 +123,39 @@ export const Owned = () => {
     setIsCollectPaymentOpen(true);
     setSelectedTeeTime(teeTime);
   }
+
+  let groupIdFromParams = params.get("groupId");
+
+  useEffect(() => {
+    console.log("Updated groupIdFromParams", params.get("groupId"));
+
+    if (groupIdFromParams) {
+      console.log("Updated from owned");
+      const newTeeTime = ownedTeeTimes?.find((item) => item.groupId === params.get("groupId"));
+      if (newTeeTime) {
+        setSelectedTeeTime(newTeeTime);
+        setIsManageOwnedTeeTimeOpen(true);
+      }
+
+      // &groupId=0e2dec94-5e20-4edc-959a-56ad8b32500c
+    } else if (groupIdFromParams === undefined) {
+      console.log("Updated from else");
+      setIsManageOwnedTeeTimeOpen(false);
+    }
+  }, [ownedTeeTimes, groupIdFromParams]);
+
+  // useEffect(() => {
+  //   if (params.get("isManageOwnedTeeTimeOpen") === "true") {
+  //     setIsManageOwnedTeeTimeOpen(true);
+  //     const teeTimeId = params.get("teeTimeId");
+  //     setSelectedTeeTime(
+  //       ownedTeeTimes?.find((teeTime) => teeTime.teeTimeId === teeTimeId) ?? undefined
+  //     );
+  //   }
+  // }, [selectedTeeTime]);
+
+  // console.log("isManageOwnedTeeTimeOpen", isManageOwnedTeeTimeOpen, params.get("isManageOwnedTeeTimeOpen") === "true");
+
 
   const filteredResult = ownedTeeTimes?.find((item) => item.bookingIds[0] === paramBookingId);
   console.log(filteredResult, "filteredResult");
