@@ -36,6 +36,7 @@ import CountryDropdown from "~/components/dropdown/country-dropdown";
 import type { Country } from "~/components/dropdown/country-dropdown";
 import { allCountries } from "country-telephone-data";
 import type { CountryData } from "~/utils/types";
+import { useAppContext } from "~/contexts/AppContext";
 
 const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: CountryData) => ({
   name,
@@ -46,6 +47,7 @@ const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: Count
 
 export default function RegisterPage() {
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
   const {
     register,
     handleSubmit,
@@ -291,6 +293,7 @@ export default function RegisterPage() {
         ...data,
         // country: "USA",
         courseId: course?.id,
+        color1: entity?.color1 ?? "#000000",
       });
       if (response?.error) {
         await recaptchaRef.current?.executeAsync();

@@ -6,6 +6,7 @@ export const forgotPasswordSchema = z
     redirectHref: z.string().url(),
     ReCAPTCHA: z.string().optional(),
     courseProviderId: z.string().optional(),
+    color1: z.string().optional(),
   })
   .refine(
     (data) => {

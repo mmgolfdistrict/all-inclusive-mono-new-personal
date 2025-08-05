@@ -761,7 +761,8 @@ export class HyperSwitchService {
     courseLogo: string,
     additonalMessge: string,
     userEmail: string,
-    index: number
+    index: number,
+    color1?: string
   ) => {
     try {
       if (amount === 0) {
@@ -933,6 +934,7 @@ export class HyperSwitchService {
                 LOGO_URL: courseLogo,
                 HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
                 ADDITIONAL_MESSAGE: additonalMessge,
+                color1: color1,
               },
               []
             );
@@ -1047,6 +1049,7 @@ Thank you for choosing us.`;
                 LOGO_URL: courseLogo,
                 HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
                 ADDITIONAL_MESSAGE: additonalMessge,
+                color1: color1,
               },
               []
             );
@@ -1135,7 +1138,12 @@ Thank you for choosing us.`;
     }
   };
 
-  updateSplitPaymentStatus = async (paymentId: string, referencePaymentId: string, courseLogo: string) => {
+  updateSplitPaymentStatus = async (
+    paymentId: string,
+    referencePaymentId: string,
+    courseLogo: string,
+    color1?: string
+  ) => {
     try {
       if (paymentId) {
         const [isUserAlreadyPaid] = await this.database
@@ -1216,6 +1224,7 @@ Thank you for choosing us.`;
             SUBJECT_LINE: `Payment Successfully processed`,
             LOGO_URL: courseLogo,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            color1: color1,
           },
           []
         );
@@ -1363,6 +1372,7 @@ Thank you for choosing us.`;
             SUBJECT_LINE: `Payment Successfully processed`,
             LOGO_URL: courseLogo,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            color1: color1,
           },
           []
         );
