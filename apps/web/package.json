@@ -7,7 +7,8 @@
     "clean": "rm -rf .turbo node_modules",
     "dev": "next dev  ",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "test": "vitest run"
   },
   "eslintConfig": {
     "extends": [
@@ -81,6 +82,7 @@
   "devDependencies": {
     "@golf-district/eslint-config": "^0.1.0",
     "@golf-district/tsconfig": "^0.1.0",
+    "@testing-library/react": "^16.3.0",
     "@types/bcrypt": "^5.0.0",
     "@types/eslint": "^8.37.0",
     "@types/node": "^18.16.0",
@@ -90,14 +92,17 @@
     "@types/react-google-recaptcha": "^2.1.6",
     "@typescript-eslint/eslint-plugin": "6.0.0",
     "@typescript-eslint/parser": "6.0.0",
+    "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.14",
     "encoding": "^0.1.13",
     "eslint": "^8.40.0",
     "eslint-config-next": "^13.4.2",
+    "jsdom": "^26.1.0",
     "postcss": "^8.4.27",
     "prettier-plugin-tailwindcss": "^0.2.8",
     "tailwindcss": "^3.3.3",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vitest": "^3.2.4"
   },
   "brower": {
     "fs": false
