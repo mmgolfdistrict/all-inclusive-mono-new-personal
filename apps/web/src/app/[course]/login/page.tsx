@@ -453,10 +453,10 @@ export default function Login() {
       <LoadingContainer isLoading={isLoading}>
         <div></div>
       </LoadingContainer>
-      <h1 className="pb-4 text-center text-[24px] md:pb-6 md:pt-8 md:text-[32px]">
+      <h1 className="pb-4 text-center text-[1.5rem] md:pb-6 md:pt-8 md:text-[2rem]">
         Login
       </h1>
-      <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
+      <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[31.25rem] sm:rounded-xl sm:p-6">
         {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) ? (
           <p>
             First time users of Golf District need to create a new account.
@@ -491,7 +491,7 @@ export default function Login() {
                 </div>
               ) : (
                 <Fragment>
-                  <Google className="w-[24px]" />
+                  <Google className="w-6" />
                   Log In with Google
                 </Fragment>
               )}
@@ -512,7 +512,7 @@ export default function Login() {
                 </div>
               ) : (
                 <Fragment>
-                  <LinkedinLogo className="w-[30px] h-[30px]" />
+                  <LinkedinLogo className="w-[1.875rem] h-[1.875rem]" />
                   Log In with Linkedin
                 </Fragment>
               )}
@@ -532,7 +532,7 @@ export default function Login() {
               </div>
             ) : (
               <Fragment>
-                <Apple className="w-[24px]" />
+                <Apple className="w-6" />
                 Log In with Apple
               </Fragment>
             )}
@@ -553,7 +553,7 @@ export default function Login() {
               </Fragment>
             ) : (
               <Fragment>
-                <Facebook className="w-[24px]" />
+                <Facebook className="w-6" />
                 Log In with Facebook
               </Fragment>
             )}
@@ -563,9 +563,9 @@ export default function Login() {
           authenticationMethods?.length !== 1 &&
           hasProvidersSetUp ? (
           <div className="flex items-center py-4">
-            <div className="h-[1px] w-full bg-stroke" />
+            <div className="h-px w-full bg-stroke" />
             <div className="px-2 text-primary-gray">or</div>
-            <div className="h-[1px] w-full bg-stroke" />
+            <div className="h-px w-full bg-stroke" />
           </div>
         ) : null}
         {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) && (
@@ -605,14 +605,14 @@ export default function Login() {
                 data-testid="login-show-password-id"
               >
                 {showPassword ? (
-                  <Hidden className="h-[14px] w-[14px]" />
+                  <Hidden className="h-[0.875rem] w-[0.875rem]" />
                 ) : (
-                  <Visible className="h-[14px] w-[14px]" />
+                  <Visible className="h-[0.875rem] w-[0.875rem]" />
                 )}
               </IconButton>
             </div>
             <Link
-              className="text-[12px] text-primary"
+              className="text-[0.75rem] text-primary"
               href={`/${course?.id}/forgot-password`}
               data-testid="forgot-password-id"
             >
@@ -645,7 +645,7 @@ export default function Login() {
         )}
       </section>
       {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) && (
-        <div className="pt-4 text-center text-[14px] text-primary-gray">
+        <div className="pt-4 text-center text-[0.875rem] text-primary-gray">
           Don&apos;t have an account?{" "}
           <Link
             className="text-primary"

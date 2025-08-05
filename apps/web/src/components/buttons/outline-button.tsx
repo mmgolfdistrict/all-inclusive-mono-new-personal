@@ -12,9 +12,7 @@ export const OutlineButton = ({
 }: ButtonProps) => {
   return (
     <button
-      className={`rounded-full border-2 border-primary bg-white px-5 py-1.5 text-primary ${
-        className ?? ""
-      }`}
+      className={`rounded-full border-2 border-primary bg-white px-[1.25rem] py-[0.375rem] text-primary ${className ?? ""}`}
       {...rest}
     >
       {children}

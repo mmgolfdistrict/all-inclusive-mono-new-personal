@@ -117,13 +117,15 @@ export const checkoutRouter = createTRPCRouter({
         collectPaymentProcessorCharge: z.number(),
         courseLogo: z.string(),
         additionalMessage: z.string(),
-        index: z.number()
+        index: z.number(),
+        color1: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getHyperSwitchService()
-        .createPaymentLink(input.amount,
+        .createPaymentLink(
+          input.amount,
           input.email,
           input.bookingId,
           input.origin,
@@ -132,7 +134,8 @@ export const checkoutRouter = createTRPCRouter({
           input.courseLogo,
           input.additionalMessage,
           ctx.session.user.email,
-          input.index
+          input.index,
+          input.color1
         );
     }),
 
@@ -141,12 +144,19 @@ export const checkoutRouter = createTRPCRouter({
       z.object({
         paymentId: z.string(),
         referencePaymentId: z.string().optional(),
+        courseLogo: z.string(),
+        color1: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getHyperSwitchService()
-        .updateSplitPaymentStatus(input.paymentId, input.referencePaymentId ?? "");
+        .updateSplitPaymentStatus(
+          input.paymentId,
+          input.referencePaymentId ?? "",
+          input.courseLogo,
+          input.color1
+        );
     }),
 
   checkEmailedUserPaidTheAmount: protectedProcedure
@@ -171,7 +181,7 @@ export const checkoutRouter = createTRPCRouter({
         courseLogo: z.string(),
         additionalMessage: z.string(),
         index: z.number(),
-        paymentId: z.string()
+        paymentId: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {

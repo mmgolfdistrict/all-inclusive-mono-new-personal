@@ -37,8 +37,8 @@ export type TxnHistoryType = {
   weatherGuaranteeAmount: number;
   weatherGuaranteeId: string;
   markupFees?: number;
-  splitPaymentsAmount?:number;
-  isPaidSplitAmount?:number
+  splitPaymentsAmount?: number;
+  isPaidSplitAmount?: number
 };
 
 export const TransactionHistory = () => {
@@ -103,7 +103,7 @@ export const TransactionHistory = () => {
 
   if (isError && error) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         {error?.message ?? "An error occurred fetching tee times"}
       </div>
     );
@@ -116,7 +116,7 @@ export const TransactionHistory = () => {
     !error
   ) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         No transaction history found
       </div>
     );
@@ -124,7 +124,7 @@ export const TransactionHistory = () => {
 
   return (
     <>
-      <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-[14px] md:pb-3">
+      <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-sm md:pb-3">
         <table className="w-full table-auto  overflow-auto">
           <thead className="top-0 table-header-group">
             <tr className="text-left">
@@ -135,7 +135,7 @@ export const TransactionHistory = () => {
               <TableHeader text="" className="text-right" />
             </tr>
           </thead>
-          <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
+          <tbody className={`max-h-[18.75rem] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
                 .fill(null)
@@ -211,8 +211,8 @@ const TableRow = ({
   status: string;
   timezoneCorrection: number | undefined;
   playerCount?: number;
-  splitPayments?:number;
-  isPaidSplitAmount?:number;
+  splitPayments?: number;
+  isPaidSplitAmount?: number;
   openTxnDetails: () => void;
   openReceipt: () => void;
 }) => {

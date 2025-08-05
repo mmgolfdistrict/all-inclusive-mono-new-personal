@@ -43,6 +43,7 @@ export default function ResetPassword() {
   });
 
   const resetFn = api.user.executeForgotPassword.useMutation();
+  const { entity } = useAppContext();
 
   useEffect(() => {
     if (!userId || !verificationToken) return;
@@ -54,11 +55,11 @@ export default function ResetPassword() {
     if (resetFn.isSuccess) return;
     if (resetFn.isLoading) return;
     try {
-      await resetFn.mutateAsync({ ...data, courseId: course?.id });
+      await resetFn.mutateAsync({ ...data, courseId: course?.id, color1: entity?.color1 ?? "#000000" });
     } catch (error) {
       toast.error(
         (error as Error)?.message ??
-          "An error occurred submitting your request."
+        "An error occurred submitting your request."
       );
     }
   };
@@ -73,13 +74,13 @@ export default function ResetPassword() {
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
-      <h1 className="pb-4 text-center text-[24px] md:pb-6 md:pt-8 md:text-[32px]">
+      <h1 className="pb-4 text-center text-[1.5rem] md:pb-6 md:pt-8 md:text-[2rem]">
         Reset Password
       </h1>
-      <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
+      <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[31.25rem] sm:rounded-xl sm:p-6">
         {resetFn.isSuccess ? (
           <div className="flex flex-col gap-4 items-center">
-            <div className="text-[16px] text-center fade-in text-primary-gray">
+            <div className="text-[1rem] text-center fade-in text-primary-gray">
               Successfully reset password!
             </div>
             <Link href={`/${course?.id}/login`} data-testid="login-button-id">
@@ -116,20 +117,20 @@ export default function ResetPassword() {
                   e.preventDefault();
                   setShowPassword(!showPassword);
                 }}
-                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors.password?.message ? "pb-10" : ""}`}
                 data-testid="show-password-id"
               >
                 {showPassword ? (
-                  <Hidden className="h-[14px] w-[14px]" />
+                  <Hidden className="h-[0.875rem] w-[0.875rem]" />
                 ) : (
-                  <Visible className="h-[14px] w-[14px]" />
+                  <Visible className="h-[0.875rem] w-[0.875rem]" />
                 )}
               </IconButton>
             </div>
             {passwordFeedback && passwordFeedback.length > 0 ? (
               <ul className={`flex flex-col gap-2 list-disc pl-4`}>
                 {passwordFeedback?.map((advice, idx) => (
-                  <li className="text-[12px] text-red" key={`${idx}+passsword`}>
+                  <li className="text-[0.75rem] text-red" key={`${idx}+passsword`}>
                     {advice}
                   </li>
                 ))}
@@ -151,20 +152,19 @@ export default function ResetPassword() {
                   e.preventDefault();
                   setShowConfirmPassword(!showConfirmPassword);
                 }}
-                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors.confirmPassword?.message ? "pb-10" : ""}`}
                 data-testid="show-confirm-password-id"
               >
                 {showConfirmPassword ? (
-                  <Hidden className="h-[14px] w-[14px]" />
+                  <Hidden className="h-[0.875rem] w-[0.875rem]" />
                 ) : (
-                  <Visible className="h-[14px] w-[14px]" />
+                  <Visible className="h-[0.875rem] w-[0.875rem]" />
                 )}
               </IconButton>
             </div>
             <FilledButton
-              className={`w-full rounded-full ${
-                resetFn.isLoading ? "animate-pulse cursor-not-allopwed" : ""
-              }`}
+              className={`w-full rounded-full ${resetFn.isLoading ? "animate-pulse cursor-not-allopwed" : ""
+                }`}
               data-testid="submit-button-id"
             >
               {resetFn.isLoading ? "Submitting..." : "Submit"}
@@ -173,7 +173,7 @@ export default function ResetPassword() {
         )}
       </section>
       <div className="flex max-w-fit mx-auto items-center gap-4 justify-center flex-col md:flex-row">
-        <div className="pt-4 text-center text-[14px] text-primary-gray">
+        <div className="pt-4 text-center text-[0.875rem] text-primary-gray">
           Don&apos;t have an account?{" "}
           <Link
             className="text-primary"
@@ -184,9 +184,9 @@ export default function ResetPassword() {
           </Link>{" "}
           instead
         </div>
-        <div className="md:h-[20px] md:self-end w-full h-[2px] md:w-[2px] bg-stroke" />
+        <div className="md:h-[1.25rem] md:self-end w-full h-[0.125rem] md:w-[0.125rem] bg-stroke" />
         <Link
-          className="text-primary  md:self-end text-[14px]"
+          className="text-primary  md:self-end text-[0.875rem]"
           href={`/${course?.id}/login`}
           data-testid="back-to-login-button-id"
         >

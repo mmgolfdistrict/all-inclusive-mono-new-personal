@@ -86,7 +86,7 @@ export const MobileOwned = () => {
 
   if (isError && error) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         {error?.message ?? "An error occurred fetching tee times"}
       </div>
     );
@@ -99,7 +99,7 @@ export const MobileOwned = () => {
     !error
   ) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         No owned tee times found
       </div>
     );
@@ -107,7 +107,7 @@ export const MobileOwned = () => {
 
   return (
     <>
-      <div className="relative flex max-w-full flex-col overflow-auto text-[14px] m-2 px-2">
+      <div className="relative flex max-w-full flex-col overflow-auto text-sm m-2 px-2">
         {isLoading
           ? Array(3)
             .fill(null)
@@ -302,25 +302,29 @@ const TableCard = ({
             </tr>
             <tr>
               <td className="whitespace-nowrap px-2 py-2" colSpan={2}>
-                <div className="flex w-full justify-center gap-2">
+                <div className="flex flex-col w-full gap-2">
+                  {/* Row 1: Request Payment */}
                   {golfers.length > 1 && isCollectPaymemtEnabled && (
-                    <div className="flex flex-col items-center justify-center min-h-[100px]">
+                    <div className="flex items-center w-full gap-3">
                       <FilledButton
-                        className="min-w-[145px] mt-5"
+                        className="w-1/2"
                         onClick={collectPaymentList}
                         data-testid="sell-button-id"
                         data-test={courseId}
                         data-qa={course}
                         id="sell-teetime-button"
                       >
-                        Collect payment
+                        Request payment
                       </FilledButton>
-                      <span className="text-xs text-gray-500 mt-1">Split Cost with your group</span>
+                      <span className="text-xs text-gray-500">Split Cost with your group</span>
                     </div>
                   )}
-                  {golfers.length > 1 && (
-                    <div className="flex flex-col items-center justify-center min-h-[100px]" id="manage-teetime-button">
+
+                  {/* Row 2: Invite Players + Sell / Cancel */}
+                  <div className="flex w-full gap-2">
+                    {golfers.length > 1 && (
                       <OutlineButton
+                        className="w-1/2"
                         onClick={openManageListTeeTime}
                         data-testid="manage-button-id"
                         data-test={courseId}
@@ -328,12 +332,11 @@ const TableCard = ({
                       >
                         Invite Players
                       </OutlineButton>
-                    </div>
-                  )}
-                  <div className="flex flex-col items-center justify-center min-h-[100px]">
+                    )}
+
                     {isListed ? (
                       <FilledButton
-                        className="min-w-[145px]"
+                        className="w-1/2"
                         onClick={openCancelListing}
                         data-testid="cancel-listing-button-id"
                         data-test={courseId}
@@ -343,7 +346,7 @@ const TableCard = ({
                       </FilledButton>
                     ) : (
                       <FilledButton
-                        className="min-w-[145px]"
+                        className="w-1/2"
                         onClick={openListTeeTime}
                         data-testid="sell-button-id"
                         data-test={courseId}
@@ -354,9 +357,11 @@ const TableCard = ({
                       </FilledButton>
                     )}
                   </div>
+
                 </div>
               </td>
             </tr>
+
 
           </tbody>
         </table>

@@ -109,7 +109,18 @@ export type FullCourseType = {
   groupEndTime: number | null;
   isAllowCourseSwitching?: boolean;
   supportsSellingMerchandise: boolean;
+  primaryMarketAllowedPlayers: number | null;
+  primaryMarketSellLeftoverSinglePlayer: boolean | null;
+  courseAllowedTimeToSellSlots: CourseAllowedTimeToSellSlot[] | null;
 };
+
+export type CourseAllowedTimeToSellSlot = {
+  day: string;
+  fromTime: number;
+  toTime: number;
+  primaryMarketAllowedPlayers: number;
+  primaryMarketSellLeftoverSinglePlayer: boolean;
+}
 
 export type SupportedCharity = {
   charityDescription: string | null;

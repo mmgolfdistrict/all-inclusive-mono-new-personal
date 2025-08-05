@@ -167,7 +167,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
         const toastContent = (
           <div>
             <p>{data}</p>
-            <p className="text-green-600 text-[14px] font-bold">
+            <p className="text-green-600 text-[0.875rem] font-bold">
               If you don’t see the notification emails please check your Junk
               Mail or Spam folder. Remember to add no-reply@golfdistrict.com to
               the safe senders list.
@@ -201,27 +201,27 @@ function NotifyMe({ params }: { params: { course: string } }) {
   }, [selectedDates]);
 
   return (
-    <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[1360px] md:px-6">
+    <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[85rem] md:px-6">
       <div className="flex items-center justify-between px-4 md:px-6">
         <GoBack href={`/${courseId}`} text={`Back to tee times`} />
       </div>
       <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-4">
         {/* First Column */}
         <div className="col-span-3 flex flex-col items-start pl-4 md:px-6">
-          <h1 className="md:text-center text-[20px] capitalize text-secondary-black md:text-[32px]">
+          <h1 className="md:text-center text-[1.25rem] capitalize text-secondary-black md:text-[2rem]">
             How Waitlist Works
           </h1>
 
           <div className="mt-4 w-full">
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <PlaylistAddCheck width={isMobile ? "25px" : "30px"} />
+                <PlaylistAddCheck width={isMobile ? "1.5625rem" : "1.875rem"} />
               </div>
               <div>
-                <h2 className="text-[14px] md:text-[18px] font-semibold">
+                <h2 className="text-[0.875rem] md:text-[1.125rem] font-semibold">
                   Set Your Preferences
                 </h2>
-                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[0.75rem] md:text-[1rem] text-gray-600">
                   Choose your ideal play date, time range, and number of
                   players.
                 </p>
@@ -231,13 +231,13 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <Campaign width={isMobile ? "25px" : "30px"} />
+                <Campaign width={isMobile ? "1.5625rem" : "1.875rem"} />
               </div>
               <div>
-                <h2 className="text-[14px] md:text-[18px] font-semibold">
+                <h2 className="text-[0.875rem] md:text-[1.125rem] font-semibold">
                   Receive Alerts Instantly
                 </h2>
-                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[0.75rem] md:text-[1rem] text-gray-600">
                   We will alert you when a tee time becomes available or listed
                   for sale.
                 </p>
@@ -247,13 +247,13 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <Timer width={isMobile ? "25px" : "30px"} />
+                <Timer width={isMobile ? "1.5625rem" : "1.875rem"} />
               </div>
               <div>
-                <h2 className="text-[14px] md:text-[18px] font-semibold">
+                <h2 className="text-[0.875rem] md:text-[1.125rem] font-semibold">
                   Book in Seconds
                 </h2>
-                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[0.75rem] md:text-[1rem] text-gray-600">
                   Act fast to lock in your spots before someone else does!
                 </p>
               </div>
@@ -262,13 +262,13 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
             <div className="flex items-start">
               <div className="flex-shrink-0 mr-4">
-                <GolfCourse width={isMobile ? "25px" : "30px"} />
+                <GolfCourse width={isMobile ? "1.5625rem" : "1.875rem"} />
               </div>
               <div>
-                <h2 className="text-[14px] md:text-[18px] font-semibold">
+                <h2 className="text-[0.875rem] md:text-[1.125rem] font-semibold">
                   Enjoy Your Round
                 </h2>
-                <p className="text-justify text-[12px] md:text-[16px] text-gray-600">
+                <p className="text-justify text-[0.75rem] md:text-[1rem] text-gray-600">
                   Confirm your bookings, hit the greens, and make the most of
                   your day!
                 </p>
@@ -279,10 +279,10 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
         {/* Second Column - your existing code */}
         <div className="col-span-5 flex flex-col justify-center gap-1 bg-white  py-2 rounded-xl md:py-6 shadow">
-          <h1 className="md:text-center text-[20px] capitalize text-secondary-black px-4 md:text-[32px]">
+          <h1 className="md:text-center text-[1.25rem] capitalize text-secondary-black px-4 md:text-[2rem]">
             Tee Time Waitlist
           </h1>
-          <h2 className="md:text-center text-[14px] text-primary-gray px-4 md:text-[20px] mb-4">
+          <h2 className="md:text-center text-[0.875rem] text-primary-gray px-4 md:text-[1.25rem] mb-4">
             Get alerted when tee times are available
           </h2>
           <hr />
@@ -307,26 +307,26 @@ function NotifyMe({ params }: { params: { course: string } }) {
                   >
                     <div className="h-screen bg-[#00000099]" />
                   </div>
-                  <div className="date-selector w-[95%] flex flex-col max-w-[500px] p-6 gap-1 mt-14 rounded-xl bg-white fixed top-[50%] left-[50%] -translate-x-[50%] -translate-y-[60%] z-50">
+                  <div className="date-selector w-[95%] flex flex-col max-w-[31.25rem] p-6 gap-1 mt-[3.5rem] rounded-xl bg-white fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] z-50">
                     <Close
                       className="absolute right-4 top-4 cursor-pointer"
                       height={24}
                       width={24}
                       onClick={() => setIsDatePickerOpen(false)}
                     />
-                    <h1 className="text-[20px] md:text-2xl">Pick Date(s)</h1>
-                    <p className="text-[14px] mb-4 md:text-md">
+                    <h1 className="text-[1.25rem] md:text-2xl">Pick Date(s)</h1>
+                    <p className="text-[0.875rem] mb-4 md:text-md">
                       *Schedule your notifications for the rest of the year
                     </p>
                     <Calendar
-                      calendarClassName="!m-[0px] !h-[100%] !w-[75%] unmask-time"
+                      calendarClassName="!m-auto xs:!min-w-fit !h-full !w-[75%] unmask-time !text-[0.625rem]"
                       colorPrimary="#40942A"
                       value={selectedDates}
                       onChange={setSelectedDates}
                       minimumDate={minimumDate}
                     />
                     <FilledButton
-                      className="w-full mt-2 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px]"
+                      className="w-full mt-2 py-[.28rem] md:py-1.5 text-[0.625rem] md:text-[0.875rem]"
                       onClick={() => setIsDatePickerOpen(false)}
                     >
                       Done
@@ -338,7 +338,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
             <div className="flex flex-col gap-2" id="pick-start-time-field">
               <div className="flex items-center justify-between">
                 <label
-                  className="text-[14px] text-primary-gray"
+                  className="text-[0.875rem] text-primary-gray"
                   htmlFor="time-range"
                 >
                   Select Time Range
@@ -431,31 +431,31 @@ function NotifyMe({ params }: { params: { course: string } }) {
               </section>
             </div>
             <div className="" id="notify-number-of-players">
-              <label className="text-[14px] text-primary-gray">
+              <label className="text-[0.875rem] text-primary-gray">
                 {"Number of Players"}
               </label>
               <ChoosePlayers
-                className="py-2 !text-[10px] md:!text-[14px]"
+                className="py-2 !text-[0.625rem] md:!text-[0.875rem]"
                 availableSlots={4}
                 players={players}
                 setPlayers={setPlayers}
                 teeTimeId={"-"}
                 playersOptions={["1", "2", "3", "4"]}
                 numberOfPlayers={["1", "2", "3", "4"]}
-                supportsGroupBooking={course?.supportsGroupBooking}
+                supportsGroupBooking={false}
               />
             </div>
           </div>
           <FilledButton
             onClick={handleSubmit}
-            className="flex items-center justify-center gap-1 max-w-[200px] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50 transition-opacity duration-300"
+            className="flex items-center justify-center gap-1 max-w-[12.5rem] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[0.625rem] md:text-[0.875rem] disabled:opacity-50 transition-opacity duration-300"
             disabled={isCreatingNotifications}
             id="notify-get-alerted"
           >
-            <Bell width="15px" />
+            <Bell width="0.9375rem" />
             Get Alerted
           </FilledButton>
-          <div className="flex justify-center items-center text-justify mt-2 italic text-primary-gray text-[12px] md:text-[16px] px-4 py-2 md:px-8 md:py-6">
+          <div className="flex justify-center items-center text-justify mt-2 italic text-primary-gray text-[0.75rem] md:text-[1rem] px-4 py-2 md:px-8 md:py-6">
             <p>
               Bookings are paid in advance and non-refundable. If plans change
               simply list your time for sale, and easily cash out.

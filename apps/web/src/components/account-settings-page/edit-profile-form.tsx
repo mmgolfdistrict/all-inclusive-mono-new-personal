@@ -35,6 +35,7 @@ import type { Country } from "~/components/dropdown/country-dropdown";
 import { allCountries } from "country-telephone-data";
 import type { CountryData } from "~/utils/types";
 import { PhoneNumberUtil } from "google-libphonenumber";
+import { useAppContext } from "~/contexts/AppContext";
 
 const phoneUtil = PhoneNumberUtil.getInstance();
 const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: CountryData) => ({
@@ -70,7 +71,7 @@ export const EditProfileForm = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean | undefined>(false);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-
+  const { entity } = useAppContext();
   const [city, setCity] = useState(getValues("city"));
 
   const { update } = useSession();
@@ -423,6 +424,7 @@ export const EditProfileForm = () => {
       const response = await updateUser.mutateAsync({
         ...dataToUpdate,
         courseId,
+        color1: entity?.color1 ?? "#000000",
       });
 
       if (response?.error) {

@@ -25,9 +25,14 @@ import type { ProviderAPI } from "../tee-sheet-provider/sheet-providers";
 import { loggerService } from "../webhooks/logging.service";
 import type { ProviderBooking } from "../booking/booking.service";
 import { groupBookings } from "@golf-district/database/schema/groupBooking";
-import { bookingMerchandise, type InsertBookingMerchandise } from "@golf-district/database/schema/bookingMerchandise";
-import { courseMerchandise, type SelectCourseMerchandise } from "@golf-district/database/schema/courseMerchandise";
-
+import {
+  bookingMerchandise,
+  type InsertBookingMerchandise,
+} from "@golf-district/database/schema/bookingMerchandise";
+import {
+  courseMerchandise,
+  type SelectCourseMerchandise,
+} from "@golf-district/database/schema/courseMerchandise";
 
 /**
  * Service class for handling booking tokenization, transfers, and updates.
@@ -63,7 +68,7 @@ export class TokenizeService {
     private readonly database: Db,
     private readonly notificationService: NotificationService,
     private readonly sensibleService: SensibleService
-  ) { }
+  ) {}
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -180,6 +185,7 @@ export class TokenizeService {
     isFirstHandGroupBooking,
     providerBookings,
     purchasedMerchandise = [],
+    color1,
   }: {
     redirectHref: string;
     userId: string;
@@ -223,6 +229,7 @@ export class TokenizeService {
     isFirstHandGroupBooking?: boolean;
     providerBookings?: ProviderBooking[];
     purchasedMerchandise?: MerchandiseItem[];
+    color1?: string;
   }): Promise<BookingTypes> {
     this.logger.info(`tokenizeBooking tokenizing booking id: ${providerTeeTimeId} for user: ${userId}`);
     //@TODO add this to the transaction
@@ -236,11 +243,11 @@ export class TokenizeService {
         message: "NO_PROVIDER_BOOKINGS",
         stackTrace: "No provider bookings found",
         additionalDetailsJSON: "",
-      })
+      });
       throw new Error("No provider bookings found");
     }
 
-    const teeTimeIds = providerBookings?.map(booking => booking.teeTimeId) ?? [];
+    const teeTimeIds = providerBookings?.map((booking) => booking.teeTimeId) ?? [];
 
     console.log(`Retrieving tee time ${providerTeeTimeId}`);
     const existingTeeTimes = await this.database
@@ -266,11 +273,7 @@ export class TokenizeService {
         timezoneCorrection: courses.timezoneCorrection,
       })
       .from(teeTimes)
-      .where(
-        isFirstHandGroupBooking ?
-          inArray(teeTimes.id, teeTimeIds) :
-          eq(teeTimes.id, providerTeeTimeId)
-      )
+      .where(isFirstHandGroupBooking ? inArray(teeTimes.id, teeTimeIds) : eq(teeTimes.id, providerTeeTimeId))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(entities, eq(courses.entityId, entities.id))
@@ -329,7 +332,7 @@ export class TokenizeService {
     let bookingSlots: InsertBookingSlots[] = [];
     const merchandiseEntriesToCreate: InsertBookingMerchandise[] = [];
     const merchandiseItemsToUpdate: MerchandiseItem[] = [];
-    const merchandiseDetails: { caption: string, qty: number }[] = [];
+    const merchandiseDetails: { caption: string; qty: number }[] = [];
     const transactionId = randomUUID();
     const bookingId = randomUUID();
     const groupId = randomUUID();
@@ -421,7 +424,7 @@ export class TokenizeService {
       ) as MerchandiseProduct[];
 
       if (merchandiseData?.length > 0 && merchandiseData[0]!.price > 0) {
-        const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems
+        const merchandiseItems = merchandiseData[0]!.product_data.metadata.merchandiseItems;
         for (const merchandise of merchandiseItems) {
           merchandiseEntriesToCreate.push({
             id: randomUUID(),
@@ -429,8 +432,8 @@ export class TokenizeService {
             courseMerchandiseId: merchandise.id,
             qty: merchandise.qty,
             merchandiseAmountPerItem: merchandise.pricePerItem,
-            totalMerchandiseItemTaxAmount: Number(merchandise.taxAmountPerItem * merchandise.qty)
-          })
+            totalMerchandiseItemTaxAmount: Number(merchandise.taxAmountPerItem * merchandise.qty),
+          });
         }
 
         if (purchasedMerchandise?.length > 0) {
@@ -439,12 +442,12 @@ export class TokenizeService {
             if (merchandiseItem) {
               merchandiseItemsToUpdate.push({
                 ...merchandise,
-                qoh: merchandise.qoh !== -1 ? merchandise.qoh - merchandiseItem.qty : -1
-              })
+                qoh: merchandise.qoh !== -1 ? merchandise.qoh - merchandiseItem.qty : -1,
+              });
               merchandiseDetails.push({
                 caption: merchandise.caption,
-                qty: merchandiseItem?.qty ?? 0
-              })
+                qty: merchandiseItem?.qty ?? 0,
+              });
             }
           }
         }
@@ -455,7 +458,7 @@ export class TokenizeService {
       ) as MerchandiseWithTaxOverride[];
 
       if (merchandiseWithTaxOverrideData?.length > 0 && merchandiseWithTaxOverrideData[0]!.price > 0) {
-        const merchandiseItems = merchandiseWithTaxOverrideData[0]!.product_data.metadata.merchandiseItems
+        const merchandiseItems = merchandiseWithTaxOverrideData[0]!.product_data.metadata.merchandiseItems;
         for (const merchandise of merchandiseItems) {
           merchandiseEntriesToCreate.push({
             id: randomUUID(),
@@ -463,8 +466,8 @@ export class TokenizeService {
             courseMerchandiseId: merchandise.id,
             qty: merchandise.qty,
             merchandiseAmountPerItem: merchandise.pricePerItem,
-            totalMerchandiseItemTaxAmount: Number(merchandise.taxAmountPerItem * merchandise.qty)
-          })
+            totalMerchandiseItemTaxAmount: Number(merchandise.taxAmountPerItem * merchandise.qty),
+          });
         }
 
         if (purchasedMerchandise?.length > 0) {
@@ -473,12 +476,12 @@ export class TokenizeService {
             if (merchandiseItem) {
               merchandiseItemsToUpdate.push({
                 ...merchandise,
-                qoh: merchandise.qoh !== -1 ? merchandise.qoh - merchandiseItem.qty : -1
-              })
+                qoh: merchandise.qoh !== -1 ? merchandise.qoh - merchandiseItem.qty : -1,
+              });
               merchandiseDetails.push({
                 caption: merchandise.caption,
-                qty: merchandiseItem?.qty ?? 0
-              })
+                qty: merchandiseItem?.qty ?? 0,
+              });
             }
           }
         }
@@ -486,11 +489,15 @@ export class TokenizeService {
     }
 
     if (isFirstHandGroupBooking && providerBookings) {
-      let remainingAmount = Math.ceil((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100);
+      let remainingAmount = Math.ceil(
+        (normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100
+      );
 
       for (const booking of providerBookings) {
-        const isLastBooking = (providerBookings.length - bookingIds.length) === 1;
-        const teeTimeData = existingTeeTimes.find((existingTeeTime) => existingTeeTime.id === booking.teeTimeId);
+        const isLastBooking = providerBookings.length - bookingIds.length === 1;
+        const teeTimeData = existingTeeTimes.find(
+          (existingTeeTime) => existingTeeTime.id === booking.teeTimeId
+        );
         if (!teeTimeData) {
           this.logger.fatal(`TeeTime with ID: ${booking.teeTimeId} does not exist.`);
           loggerService.errorLog({
@@ -506,7 +513,8 @@ export class TokenizeService {
         const transactionId = randomUUID();
         const bookingId = randomUUID();
         bookingIds.push(bookingId);
-        const totalAmountPerPlayer = ((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100) / players;
+        const totalAmountPerPlayer =
+          ((normalizedCartData.total || 0) + additionalTaxes.additionalTaxes * 100) / players;
         const totalAmountForBooking = Math.round(totalAmountPerPlayer * booking.playerCount);
 
         bookingsToCreate.push({
@@ -522,11 +530,14 @@ export class TokenizeService {
           listId: null,
           cartId: normalizedCartData.cartId,
           playerCount: courseMembershipId ? Number(playerCountForMemberShip) : booking.playerCount ?? 0,
-          greenFeePerPlayer: teeTimeData.greenFee + (normalizedCartData.advancedBookingAmount * 100) || 0,
+          greenFeePerPlayer: teeTimeData.greenFee + normalizedCartData.advancedBookingAmount * 100 || 0,
           totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
           charityId: normalizedCartData.charityId || null,
           totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
-          totalAmount: (isLastBooking && remainingAmount !== totalAmountForBooking) ? remainingAmount : totalAmountForBooking,
+          totalAmount:
+            isLastBooking && remainingAmount !== totalAmountForBooking
+              ? remainingAmount
+              : totalAmountForBooking,
           providerPaymentId: paymentId,
           weatherQuoteId: normalizedCartData.weatherQuoteId ?? null,
           weatherGuaranteeId: acceptedQuote?.id ? acceptedQuote?.id : null,
@@ -607,7 +618,7 @@ export class TokenizeService {
           id: teeTimeData.id,
           availableSecondHandSpots: teeTimeData.availableSecondHandSpots + booking.playerCount,
           availableFirstHandSpots: teeTimeData.availableFirstHandSpots - booking.playerCount,
-        })
+        });
         remainingAmount = remainingAmount - totalAmountForBooking;
       }
     } else {
@@ -629,7 +640,10 @@ export class TokenizeService {
         // entityId: existingTeeTime.entityId,
         cartId: normalizedCartData.cartId,
         playerCount: courseMembershipId ? Number(playerCountForMemberShip) : players ?? 0,
-        greenFeePerPlayer: (isFirstHandBooking ? existingTeeTime.greenFee + (normalizedCartData.advancedBookingAmount * 100) : purchasePrice) || 0,
+        greenFeePerPlayer:
+          (isFirstHandBooking
+            ? existingTeeTime.greenFee + normalizedCartData.advancedBookingAmount * 100
+            : purchasePrice) || 0,
         totalTaxesAmount: additionalTaxes.additionalTaxes * 100, // normalizedCartData.taxCharge * 100 || 0,
         charityId: normalizedCartData.charityId || null,
         totalCharityAmount: normalizedCartData.charityCharge * 100 || 0,
@@ -736,11 +750,11 @@ export class TokenizeService {
                 groupId,
                 existingTeeTime,
                 paymentId,
-                providerBookings
+                providerBookings,
               }),
             });
             tx.rollback();
-          })
+          });
       }
 
       //create each booking
@@ -849,20 +863,19 @@ export class TokenizeService {
                 providerTeeTimeId,
                 providerBookingId,
                 merchandiseEntriesToCreate,
-              })
-            })
+              }),
+            });
           });
-        await Promise.all(merchandiseItemsToUpdate.map(
-          async (merchandiseItem) => {
+        await Promise.all(
+          merchandiseItemsToUpdate.map(async (merchandiseItem) => {
             await tx
               .update(courseMerchandise)
               .set(merchandiseItem)
               .where(eq(courseMerchandise.id, merchandiseItem.id))
               .execute();
-          }
-        ))
+          })
+        );
       }
-
     });
 
     void loggerService.auditLog({
@@ -883,7 +896,7 @@ export class TokenizeService {
       validForCollectPayment = false;
     }
 
-    const collectPaymentUrl = `http://localhost:3000/${existingTeeTime.courseId}/my-tee-box/?bookingId=${bookingId}&collectPayment=${validForCollectPayment}`
+    const collectPaymentUrl = `http://localhost:3000/${existingTeeTime.courseId}/my-tee-box/?bookingId=${bookingId}&collectPayment=${validForCollectPayment}`;
     const finalAmount =
       Math.floor(purchasePrice + (cartFeeCharge ?? 0)) * Number(players) +
       (normalizedCartData?.markupCharge ?? 0) * 100 +
@@ -931,7 +944,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         GroupReservationID: groupId,
         MyTeeBoxCollectPaymentUrl: `${redirectHref}/my-tee-box/?bookingId=${bookingId}&collectPayment=${validForCollectPayment}`,
         PurchasedMerchandise: purchasedMerchandise?.length > 0 ? true : false,
-        MerchandiseDetails: merchandiseDetails
+        MerchandiseDetails: merchandiseDetails,
+        color1: color1,
       };
     } else {
       event = {
@@ -958,8 +972,11 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         NumberOfHoles: existingTeeTime.numberOfHoles,
         GreenFeesPerPlayer:
           `$${(
-            ((existingTeeTime.greenFee + Number(cartFeeCharge) + (normalizedCartData?.markupCharge ?? 0) * 100) /
-              100) + normalizedCartData.advancedBookingAmount
+            (existingTeeTime.greenFee +
+              Number(cartFeeCharge) +
+              (normalizedCartData?.markupCharge ?? 0) * 100) /
+              100 +
+            normalizedCartData.advancedBookingAmount
           ).toLocaleString("en-US", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -968,7 +985,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
           `$${(
             ((existingTeeTime.greenFee +
               Number(cartFeeCharge) +
-              ((normalizedCartData?.markupCharge ?? 0) * 100) +
+              (normalizedCartData?.markupCharge ?? 0) * 100 +
               normalizedCartData.advancedBookingAmount * 100) *
               players) /
             100
@@ -996,7 +1013,8 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
         MyTeeBoxCollectPaymentUrl: `${redirectHref}/my-tee-box/?bookingId=${bookingId}&collectPayment=${validForCollectPayment}`,
         PurchasedMerchandise: purchasedMerchandise?.length > 0 ? true : false,
-        MerchandiseDetails: merchandiseDetails
+        MerchandiseDetails: merchandiseDetails,
+        color1: color1,
       };
     }
 
@@ -1004,7 +1022,9 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
 
     console.log(template);
 
-    const sendgridTemplateId = isFirstHandGroupBooking ? process.env.SENDGRID_TEE_TIMES_GROUP_PURCHASED_TEMPLATE_ID : process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID;
+    const sendgridTemplateId = isFirstHandGroupBooking
+      ? process.env.SENDGRID_TEE_TIMES_GROUP_PURCHASED_TEMPLATE_ID
+      : process.env.SENDGRID_TEE_TIMES_PURCHASED_TEMPLATE_ID;
 
     let isEmailSend = false;
     try {
@@ -1041,10 +1061,10 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         }),
       });
     }
-    const bookingIdObject: { bookingId: string; isEmailSend: boolean, validForCollectPayment: boolean } = {
+    const bookingIdObject: { bookingId: string; isEmailSend: boolean; validForCollectPayment: boolean } = {
       bookingId: isFirstHandGroupBooking ? bookingIds.toString() : bookingId,
       isEmailSend,
-      validForCollectPayment
+      validForCollectPayment,
     };
     return bookingIdObject;
   }
