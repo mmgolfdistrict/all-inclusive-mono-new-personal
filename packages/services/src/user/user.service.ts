@@ -54,6 +54,7 @@ export interface UserCreationData {
   country?: string;
   redirectHref?: string;
   ReCAPTCHA: string | undefined;
+  color1?: string;
 }
 
 interface UserUpdateData {
@@ -73,6 +74,7 @@ interface UserUpdateData {
   phoneNotifications?: boolean | null;
   emailNotifications?: boolean | null;
   courseId?: string;
+  color1?: string;
 }
 type TeeTimeEntry = {
   teeTimeId: string;
@@ -290,6 +292,7 @@ export class UserService {
         CourseURL,
         CourseName,
         HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+        color1: data?.color1,
       },
       []
     );
@@ -600,7 +603,8 @@ export class UserService {
     courseId: string | undefined,
     userId: string,
     token: string,
-    redirectHref: string
+    redirectHref: string,
+    color1?: string
   ) => {
     // this.logger.info(`verifyUserEmail called with userId: ${userId} and token: ${token}`);
     const [user] = await this.database.select().from(users).where(eq(users.id, userId));
@@ -674,6 +678,7 @@ export class UserService {
             CourseName,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
             BuyTeeTimeURL: encodeURI(redirectHref),
+            color1: color1,
           },
           []
         );
@@ -886,6 +891,7 @@ export class UserService {
               CourseName: course?.name || "",
               HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
               CustomerFirstName: user.name?.split(" ")[0],
+              color1: data?.color1,
             },
             []
           )
@@ -1121,7 +1127,8 @@ export class UserService {
     redirectHref: string,
     handleOrEmail: string,
     ReCAPTCHA: string | undefined,
-    courseProviderId: string | undefined
+    courseProviderId: string | undefined,
+    color1?: string
   ): Promise<{ error: boolean; message: string }> => {
     let isNotRobot;
     if (ReCAPTCHA) {
@@ -1286,6 +1293,7 @@ export class UserService {
       CourseURL,
       CourseName,
       HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+      color1: color1,
     };
 
     if (user.gdPassword) {
@@ -1375,7 +1383,8 @@ export class UserService {
     courseId: string | undefined,
     userId: string,
     token: string,
-    newPassword: string
+    newPassword: string,
+    color1?: string
   ): Promise<void> => {
     // this.logger.info(`executeForgotPassword called with userId: ${userId}`);
     if (isValidPassword(newPassword).score < 8) {
@@ -1480,6 +1489,7 @@ export class UserService {
             CourseURL,
             CourseName,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            color1: color1,
           },
           []
         );

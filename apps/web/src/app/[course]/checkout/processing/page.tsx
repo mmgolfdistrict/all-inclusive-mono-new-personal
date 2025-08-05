@@ -13,12 +13,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import styles from "../../../../components/checkout-page/checkout.module.css";
+import { useAppContext } from "~/contexts/AppContext";
 
 export default function CheckoutProcessing() {
   const { bookingSource, setBookingSource } = useBookingSourceContext();
   const { course } = useCourseContext();
   const { user } = useUserContext();
   const params = useSearchParams();
+  const { entity } = useAppContext();
   const status = params.get("status");
   const clientSecret = params.get("payment_intent_client_secret");
   const teeTimeId = params.get("teeTimeId");
@@ -62,6 +64,7 @@ export default function CheckoutProcessing() {
       additionalNoteFromUser: "",
       needRentals,
       redirectHref,
+      color1: entity?.color1 ?? "#000000",
     });
     return bookingResponse;
   };

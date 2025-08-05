@@ -2,7 +2,7 @@
 
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
-import { formatMoney, formatTime } from "~/utils/formatters";
+import { formatMoney, toLocalTime } from "~/utils/formatters";
 import type { InviteFriend } from "~/utils/types";
 import { useMemo, useState } from "react";
 import { OutlineButton } from "../buttons/outline-button";
@@ -114,7 +114,7 @@ export const Cashouts = () => {
               ],
               [
                 { text: "Date", style: "tableHeader", border: [] },
-                { text: formatTime(datetime), border: [] }
+                { text: toLocalTime(datetime), border: [] }
               ],
               [
                 { text: "Status", style: "tableHeader", border: [] },
@@ -159,11 +159,7 @@ export const Cashouts = () => {
                 key={idx}
                 amount={formatMoney((i?.amount ?? 0) / 100)}
                 status={i.externalStatus ?? ""}
-                time={formatTime(
-                  i.createdDateTime ?? "",
-                  false,
-                  course?.timezoneCorrection
-                )}
+                time={toLocalTime(i.createdDateTime ?? "")}
                 openReceipt={() => openReceipt(i)}
               />
             ))}

@@ -36,6 +36,7 @@ import type { SaleTypeOption } from "../input/sale-type-select";
 import { SaleTypeSelector } from "../input/sale-type-select";
 import { isValidEmail } from "@golf-district/shared";
 import { useMediaQuery } from "usehooks-ts";
+import { useAppContext } from "~/contexts/AppContext";
 type CollectInputs = {
   index?: number;
   email?: string;
@@ -81,6 +82,7 @@ export const CollectPayment = ({
       tooltip: "You will be able to collect a different amount from each player not exceeding the total amount. This gives you the flexibility to pay of your friends event like their birthdays.",
     },
   ];
+  const { entity } = useAppContext();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const { data: paymentProcessingCharge } = api.checkout.collectPaymentProcessorPercent.useQuery({})
@@ -303,7 +305,8 @@ export const CollectPayment = ({
         collectPaymentProcessorCharge: Number(paymentProcessingCharge),
         courseLogo: `${course?.logo}`,
         additionalMessage: additionalMessage,
-        index: index
+        index: index,
+        color1: entity?.color1 ?? "#000000"
       });
       if (result?.error) {
         toast.error(result?.message);
@@ -846,7 +849,7 @@ const TeeTimeItem = ({
         <div>
           <p className="font-light">
             You purchased for{" "}
-            <span className="font-semibold">${purchasedFor}</span>
+            <span className="font-semibold">{formatMoney(purchasedFor ?? 0)}</span>
           </p>
           {/* <p className="font-light">
             {" "}

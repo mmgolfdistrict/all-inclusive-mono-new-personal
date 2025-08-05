@@ -31,6 +31,7 @@ import { Modal } from "../modal/modal";
 import { useMediaQuery } from "usehooks-ts";
 import { SaleTypeSelector } from "../input/sale-type-select";
 import { SPLIT_TYPE_OPTIONS } from "./list-tee-time";
+import { useAppContext } from "~/contexts/AppContext";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -74,7 +75,7 @@ export const ManageTeeTimeListing = ({
     const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
     const [minimumListingPrice, setMinimumListingPrice] = useState<number>(200);
     const [players, setPlayers] = useState<PlayerType>("1");
-
+    const { entity } = useAppContext();
     const [initialPrice, setInitialPrice] = useState<number | null>(null); // Initial price when sidebar opens
     const [initialPlayers, setInitialPlayers] = useState<PlayerType | null>(null); // Initial players when sidebar opens
     const [saleType, setSaleType] = useState<string>("whole");
@@ -159,10 +160,12 @@ export const ManageTeeTimeListing = ({
         if (selectedTeeTime?.groupId) {
           await cancelGroupListing.mutateAsync({
             groupId: selectedTeeTime?.groupId ?? "",
+            color1: entity?.color1 ?? "#000000",
           });
         } else {
           await cancel.mutateAsync({
             listingId: selectedTeeTime?.listingId,
+            color1: entity?.color1 ?? "#000000",
           });
         }
         await refetch?.();
@@ -348,6 +351,7 @@ export const ManageTeeTimeListing = ({
             listPrice: listingPrice,
             endTime: new Date(selectedTeeTime?.date),
             slots: parseInt(players),
+            color1: entity?.color1 ?? "#000000",
           });
         } else {
           await updateListingForBooking.mutateAsync({
@@ -357,7 +361,8 @@ export const ManageTeeTimeListing = ({
             updatedPrice: listingPrice,
             updatedSlots: parseInt(players),
             endTime: new Date(selectedTeeTime?.date),
-            allowSplit: saleType === "split" ? true : false
+            allowSplit: saleType === "split" ? true : false,
+            color1: entity?.color1 ?? "#000000",
           });
         }
         setIsManageTeeTimeListingOpen(false);
