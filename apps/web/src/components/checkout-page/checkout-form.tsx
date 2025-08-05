@@ -38,6 +38,7 @@ import { PhoneNumberUtil } from "google-libphonenumber";
 import { NAME_VALIDATION_REGEX } from "@golf-district/shared";
 import MerchandiseCarousel from "./merchandise-carousel";
 import Link from "next/link";
+import { useAppContext } from "~/contexts/AppContext";
 import { calculateCheckoutTotals } from "~/utils/checkout-helpers";
 
 type charityData = {
@@ -404,6 +405,7 @@ export const CheckoutForm = ({
   const [charityAmountError, setCharityAmountError] = useState("");
   const [additionalNote, setAdditionalNote] = useState("");
   const updateUser = api.user.updateUser.useMutation();
+  const { entity } = useAppContext();
 
   // const [customerID, setCustomerID] = useState("");
   const {
@@ -575,6 +577,12 @@ export const CheckoutForm = ({
       );
       return;
     }
+
+    if (!maxReservation?.success) {
+      e.preventDefault();
+      toast.error(maxReservation?.message ?? "You have exceeded the maximum number of bookings allowed.");
+      return;
+    }
     googleAnalyticsEvent({
       action: `PAY NOW CLICKED`,
       category: "TEE TIME PURCHASE",
@@ -623,6 +631,7 @@ export const CheckoutForm = ({
         const response = await updateUser.mutateAsync({
           ...dataToUpdate,
           courseId,
+          color1: entity?.color1 ?? "#000000",
         });
 
         if (response?.error) {
@@ -932,6 +941,7 @@ export const CheckoutForm = ({
       playerCountForMemberShip: playerCount ?? "",
       providerCourseMembershipId:
         validatePlayers[0]?.providerCourseMembershipId ?? "",
+      color1: entity?.color1 ?? "#000000",
     });
     return bookingResponse;
   };
@@ -1389,11 +1399,14 @@ export const CheckoutForm = ({
 
         {!isMobile && <div className="mt-6">
           <h2 className="mb-2">Payment Details</h2>
-          <div className="rounded-xl bg-white border border-grey-100 pb-2 pr-2 pl-2" id="card-detail-form-checkout">
+          <div className="rounded-xl bg-white border border-grey-100 pb-2 pr-2 pl-2 relative" id="card-detail-form-checkout">
             <UnifiedCheckout
               id="unified-checkout"
               options={unifiedCheckoutOptions}
             />
+            {!maxReservation?.success && (
+              <div className="absolute inset-0 bg-white bg-opacity-75 z-10 flex items-center justify-center" />
+            )}
           </div>
         </div>}
 
@@ -1421,11 +1434,14 @@ export const CheckoutForm = ({
 
         {isMobile && <div className="mt-4">
           <h2 className="mb-3">Payment Details</h2>
-          <div className="rounded-xl bg-white border border-grey-100 pb-2 pr-2 pl-2" id="card-detail-form-checkout">
+          <div className="rounded-xl bg-white border border-grey-100 pb-2 pr-2 pl-2 relative" id="card-detail-form-checkout">
             <UnifiedCheckout
               id="unified-checkout"
               options={unifiedCheckoutOptions}
             />
+            {!maxReservation?.success && (
+              <div className="absolute inset-0 bg-white bg-opacity-75 z-10 flex items-center justify-center" />
+            )}
           </div>
         </div>}
 
@@ -1911,7 +1927,7 @@ export const CheckoutForm = ({
             type="submit"
             className={`w-full rounded-full disabled:opacity-60`}
             disabled={
-              isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername || !isChecked || isUpdatingPaymentIntent
+              isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername || !isChecked || isUpdatingPaymentIntent || !maxReservation?.success
             }
             data-testid="pay-now-id"
           >

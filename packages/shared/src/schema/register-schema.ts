@@ -50,6 +50,7 @@ export const registerSchema = z
     redirectHref: z.string().url(),
     ReCAPTCHA: z.string().optional(),
     courseId: z.string().optional(),
+    color1: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ["confirmPassword"],
