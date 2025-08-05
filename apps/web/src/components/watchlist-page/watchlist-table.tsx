@@ -274,16 +274,15 @@ const TableRow = ({
             <Avatar src={iconSrc} />
           )}
           <div className="flex flex-col">
-            <Link
-              href={href}
-              className="whitespace-nowrap text-secondary-black underline"
+            <div
+              className="whitespace-nowrap text-secondary-black"
               data-testid="course-id"
               data-qa={course}
             >
               {type === "SECOND_HAND"
                 ? "Sold by another Golf District golfer."
                 : course}
-            </Link>
+            </div>
             <div className="whitespace-nowrap text-primary-gray">
               {formatTime(date, false, timezoneCorrection)}
             </div>
