@@ -12,6 +12,7 @@ function Waitlist({
   handleSelectNotifications,
   selectedNotifications,
   setIsDeleteModalOpen,
+  setSelectedIndividualNotification
 }: {
   waitlist: WaitlistItem[] | undefined;
   formattedDate: string;
@@ -22,6 +23,7 @@ function Waitlist({
   ) => void;
   selectedNotifications: WaitlistItem[];
   setIsDeleteModalOpen: (value: boolean) => void;
+  setSelectedIndividualNotification: (notification: WaitlistItem | undefined) => void;
 }) {
   const handleIsChecked = () => {
     return (
@@ -33,6 +35,10 @@ function Waitlist({
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     handleSelectNotifications(waitlist ?? [], e.target.checked);
+  };
+
+  const isWaitlistSelected = (item: WaitlistItem) => {
+    return selectedNotifications.includes(item);
   };
 
   return (
@@ -63,7 +69,7 @@ function Waitlist({
         {waitlist?.map((item) => (
           <div
             key={item.id}
-            className="bg-white p-3 rounded-xl max-w-[17.5rem] md:max-w-none md:w-[18.75rem] flex gap-6 text-[0.75rem] md:text-[1rem] text-secondary-black cursor-pointer"
+            className={`bg-white p-3 rounded-xl max-w-[17.5rem] md:max-w-none md:w-[18.75rem] flex gap-6 text-[0.75rem] md:text-[1rem] text-secondary-black cursor-pointer ${isWaitlistSelected(item) ? "border border-primary" : "border border-transparent"}`}
             onClick={() => handleSelectNotification(item)}
           >
             {/* First Column */}
@@ -81,7 +87,11 @@ function Waitlist({
             <div className="flex items-center">
               <OutlineButton
                 className="flex items-center gap-1 !px-2 !py-1 text-[0.625rem] md:text-[0.875rem] disabled:opacity-50"
-                onClick={() => setIsDeleteModalOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDeleteModalOpen(true);
+                  setSelectedIndividualNotification(item)
+                }}
               >
                 <DeleteIcon color="#40942b" width="0.9375rem" />
                 Delete

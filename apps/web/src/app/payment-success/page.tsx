@@ -19,33 +19,6 @@ const SplitPaymentSuccessPage = () => {
   const { entity } = useAppContext();
   const { data: result, isLoading: isLoading } =
     api.checkout.updateSplitPaymentStatus.useQuery({ paymentId: paymentId, referencePaymentId: referencePaymentId, courseLogo: course?.logo || "", color1: entity?.color1 ?? "#000000" });
-  const saveCashOutResult =
-    api.checkout.saveSplitPaymentAmountIntoCashOut.useMutation();
-  const saveCashOut = async () => {
-    try {
-      if (!result) {
-        return;
-      }
-      if (result.error || result.amount === "" || result.bookingId === "") {
-        setErrorMessage(result?.message);
-        return;
-      }
-      const result1 = await saveCashOutResult.mutateAsync({
-        amount: Number(result?.amount),
-        bookingId: result?.bookingId || "",
-      });
-      console.log("result1", result1);
-      return result1;
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  useEffect(() => {
-    void saveCashOut().then((data) => {
-      console.log("data", data);
-    });
-  }, [result]);
-
   return (
     <Fragment>
       <div className="flex items-center justify-center h-screen bg-gray-100">

@@ -67,7 +67,6 @@ export const CollectPayment = ({
   needsRedirect,
   setIsSideBarClose
 }: SideBarProps) => {
-  console.log("selectedTeeTime", selectedTeeTime);
 
   const SPLIT_TYPE_OPTIONS: SaleTypeOption[] = [
     {
@@ -494,7 +493,6 @@ export const CollectPayment = ({
       const totalPlayers = Number(selectedTeeTime?.golfers.length);
       if (totalPlayers > 0) {
         const processingChargeFees = (Number(paymentProcessingCharge) / 100);
-        console.log("processing fee charge", processingChargeFees)
         const splitAmount = parseFloat(
           (totalBookingPrice / totalPlayers).toFixed(2)
         ) + processingChargeFees;
