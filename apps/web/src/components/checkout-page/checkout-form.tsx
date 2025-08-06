@@ -570,12 +570,6 @@ export const CheckoutForm = ({
     });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    if (!isChecked) {
-      e.preventDefault();
-      setTermsError("You must agree to the Terms of Service before paying.");
-      return;
-    }
-    setTermsError(null);
     if (checkIsBookingDisabled?.isBookingDisabled == 1) {
       e.preventDefault();
       toast.error(
@@ -1240,8 +1234,6 @@ export const CheckoutForm = ({
     }
   }, [TotalAmt, playerCount, amountOfPlayers, cartData, donateValue]);
 
-  const [termsError, setTermsError] = useState<string | null>(null);
-
   return (
     <section
       className={isMobile ? "px-3" : ""}
@@ -1412,7 +1404,7 @@ export const CheckoutForm = ({
               id="unified-checkout"
               options={unifiedCheckoutOptions}
             />
-            {!maxReservation?.success || !isChecked && (
+            {!maxReservation?.success && (
               <div className="absolute inset-0 bg-white bg-opacity-75 z-10 flex items-center justify-center" />
             )}
           </div>
@@ -1447,7 +1439,7 @@ export const CheckoutForm = ({
               id="unified-checkout"
               options={unifiedCheckoutOptions}
             />
-            {!maxReservation?.success || !isChecked && (
+            {!maxReservation?.success && (
               <div className="absolute inset-0 bg-white bg-opacity-75 z-10 flex items-center justify-center" />
             )}
           </div>
@@ -1893,9 +1885,7 @@ export const CheckoutForm = ({
             </Link>.
           </div>
         </label>
-        {termsError && (
-          <div className="text-red text-sm mb-2">{termsError}</div>
-        )}
+
         {!maxReservation?.success && (
           <div className="md:hidden bg-alert-red text-white p-1 pl-2 my-2  w-full rounded">
             {maxReservation?.message}
