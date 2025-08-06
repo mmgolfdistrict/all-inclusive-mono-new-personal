@@ -296,14 +296,8 @@ const TableRow = ({
       <td className="whitespace-nowrap px-4 py-3">
         {golfers} {golfers === 1 ? "golfers" : "golfers"}
       </td>
-      {/* <td className="whitespace-nowrap px-4 py-3 capitalize">
-        {status.toLowerCase()}
-      </td> */}
       <td className="whitespace-nowrap px-4 py-3" >
         <div className="flex  justify-end gap-2" id="buttons-watchlist">
-          <Link href={href} data-testid="details-button-id">
-            <OutlineButton className="min-w-[9.6875rem]">Details</OutlineButton>
-          </Link>
           {ownedById === user?.id && session ? (
             <FilledButton
               onClick={openManage}
@@ -311,7 +305,6 @@ const TableRow = ({
               data-testid="sell-button-id"
               data-test={teeTimeId}
               data-qa="Buy"
-            // data-cy={time}
             >
               {status === "UNLISTED" ? "Sell" : "Manage"}
             </FilledButton>
