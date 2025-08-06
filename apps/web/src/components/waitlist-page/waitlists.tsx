@@ -151,7 +151,7 @@ function Waitlists() {
             className="flex items-center gap-1 py-[.28rem] md:py-1.5 text-[10px] md:text-[14px] disabled:opacity-50"
             disabled={selectedNotifications.length === 0}
           >
-            <DeleteIcon color="#fff" width="0.9375rem" />
+            <DeleteIcon fill="#fff" width="0.9375rem" />
             Delete Selected Alerts
           </FilledButton>
         </h1>

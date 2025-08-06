@@ -219,7 +219,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
           <div className="mt-4 w-full">
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <PlaylistAddCheck width={isMobile ? "1.5625rem" : "1.875rem"} />
+                <PlaylistAddCheck width={isMobile ? "1.5625rem" : "1.875rem"} fill="var(--primary-color)" />
               </div>
               <div>
                 <h2 className="text-[0.875rem] md:text-[1.125rem] font-semibold">
@@ -235,7 +235,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <Campaign width={isMobile ? "1.5625rem" : "1.875rem"} />
+                <Campaign width={isMobile ? "1.5625rem" : "1.875rem"} fill="var(--primary-color)" />
               </div>
               <div>
                 <h2 className="text-[0.875rem] md:text-[1.125rem] font-semibold">
@@ -251,7 +251,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <Timer width={isMobile ? "1.5625rem" : "1.875rem"} />
+                <Timer width={isMobile ? "1.5625rem" : "1.875rem"} fill="var(--primary-color)" />
               </div>
               <div>
                 <h2 className="text-[0.875rem] md:text-[1.125rem] font-semibold">
@@ -266,7 +266,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
 
             <div className="flex items-start">
               <div className="flex-shrink-0 mr-4">
-                <GolfCourse width={isMobile ? "1.5625rem" : "1.875rem"} />
+                <GolfCourse width={isMobile ? "1.5625rem" : "1.875rem"} fill="var(--primary-color)" />
               </div>
               <div>
                 <h2 className="text-[0.875rem] md:text-[1.125rem] font-semibold">
@@ -324,7 +324,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
                     </p>
                     <Calendar
                       calendarClassName="!m-auto xs:!min-w-fit !h-full !w-[75%] unmask-time !text-[0.625rem]"
-                      colorPrimary="#40942A"
+                      colorPrimary="var(--primary-color)"
                       value={selectedDates}
                       onChange={setSelectedDates}
                       minimumDate={minimumDate}
