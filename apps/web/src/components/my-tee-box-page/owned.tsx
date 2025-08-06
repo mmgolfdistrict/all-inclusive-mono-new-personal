@@ -113,6 +113,9 @@ export const Owned = () => {
   };
 
   const openManageListTeeTime = (teeTime: OwnedTeeTime) => {
+    if (params.get("groupId")) {
+      router.replace(`/${course?.id}/my-tee-box?section=owned`);
+    }
     setSelectedTeeTime(teeTime);
     setIsManageOwnedTeeTimeOpen(true);
   };
@@ -121,12 +124,24 @@ export const Owned = () => {
     setSelectedTeeTime(teeTime);
   }
 
+  const groupIdFromParams = params.get("groupId");
+
+  useEffect(() => {
+    if (groupIdFromParams) {
+      const newTeeTime = ownedTeeTimes?.find((item) => item.groupId === params.get("groupId"));
+      if (newTeeTime) {
+        setSelectedTeeTime(newTeeTime);
+        setIsManageOwnedTeeTimeOpen(true);
+      }
+    } else if (groupIdFromParams === undefined) {
+      setIsManageOwnedTeeTimeOpen(false);
+    }
+  }, [ownedTeeTimes, groupIdFromParams]);
+
   const filteredResult = ownedTeeTimes?.find((item) => item.bookingIds[0] === paramBookingId);
-  console.log(filteredResult, "filteredResult");
 
   useEffect(() => {
     const handlePopState = () => {
-      console.log("Back button pressed>>>>>>", courseId);
       void router.push(`/${courseId}`);
     };
     window.addEventListener('popstate', handlePopState);

@@ -43,7 +43,6 @@ export const MainNav = () => {
       : 0;
   setmainHeaderHeight(divHeight);
 
-  console.log("isMobile", isMobile);
   return (
     <div>
       <div

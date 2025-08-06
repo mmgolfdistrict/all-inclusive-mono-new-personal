@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "crypto";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { and, asc, desc, eq, gt, lt, or } from "@golf-district/database";
+import { and, asc, desc, eq, gt, inArray, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
@@ -464,6 +464,8 @@ export class UserService {
         bookings: [],
       };
     }
+    const teeTimeIds = teeTimeId.includes(",") ? teeTimeId.split(",").map((id) => id.trim()) : [teeTimeId];
+
     const data = await this.database
       .select({
         bookingId: bookings.id,
@@ -475,7 +477,11 @@ export class UserService {
       .from(bookings)
       .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
       .where(
-        and(eq(bookings.teeTimeId, teeTimeId), eq(bookings.ownerId, userId), eq(bookings.isActive, true))
+        and(
+          inArray(bookings.teeTimeId, teeTimeIds),
+          eq(bookings.ownerId, userId),
+          eq(bookings.isActive, true)
+        )
       )
       .orderBy(asc(bookingslots.slotPosition))
       .execute()
@@ -494,6 +500,7 @@ export class UserService {
         });
         throw new Error("Error retrieving bookings");
       });
+
     if (!data || data.length == 0) {
       return {
         connectedUserIsOwner: false,
