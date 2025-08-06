@@ -4248,6 +4248,7 @@ export class BookingService {
                 []
               );
             });
+            console.log("emailList", emailList);
           }
         }
       } catch (e: any) {

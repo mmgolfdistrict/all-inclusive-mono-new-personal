@@ -631,7 +631,7 @@ export const CheckoutForm = ({
         const response = await updateUser.mutateAsync({
           ...dataToUpdate,
           courseId,
-          color1: entity?.color1 ?? "#000000",
+          color1: entity?.color1,
         });
 
         if (response?.error) {
@@ -913,6 +913,7 @@ export const CheckoutForm = ({
       playerCountForMemberShip: playerCount ?? "",
       providerCourseMembershipId:
         validatePlayers[0]?.providerCourseMembershipId ?? "",
+      color1: entity?.color1,
     });
     return bookingResponse;
   };
@@ -941,7 +942,7 @@ export const CheckoutForm = ({
       playerCountForMemberShip: playerCount ?? "",
       providerCourseMembershipId:
         validatePlayers[0]?.providerCourseMembershipId ?? "",
-      color1: entity?.color1 ?? "#000000",
+      color1: entity?.color1,
     });
     return bookingResponse;
   };

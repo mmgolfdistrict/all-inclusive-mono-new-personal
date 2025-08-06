@@ -40,7 +40,7 @@ export const PrivacySettings = () => {
       await updateUser.mutateAsync({
         profileVisibility: value,
         courseId,
-        color1: entity?.color1 ?? "#000000",
+        color1: entity?.color1,
       });
       await refetch();
       toast.success("Privacy settings updated successfully");

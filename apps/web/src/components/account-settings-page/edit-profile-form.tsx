@@ -424,7 +424,7 @@ export const EditProfileForm = () => {
       const response = await updateUser.mutateAsync({
         ...dataToUpdate,
         courseId,
-        color1: entity?.color1 ?? "#000000",
+        color1: entity?.color1,
       });
 
       if (response?.error) {

@@ -86,12 +86,14 @@ export const webhookRouter = createTRPCRouter({
         teeTimeId: z.string(),
         courseId: z.string(),
         cartId: z.string(),
-        otherDetails: z.object({
-          userName: z.string(),
-          userEmail: z.string(),
-          courseName: z.string(),
-          teeTimeDate: z.string(),
-        }).optional()
+        otherDetails: z
+          .object({
+            userName: z.string(),
+            userEmail: z.string(),
+            courseName: z.string(),
+            teeTimeDate: z.string(),
+          })
+          .optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

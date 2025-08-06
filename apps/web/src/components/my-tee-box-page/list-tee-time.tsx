@@ -320,7 +320,7 @@ const ListTeeTimeDetail = ({
           listPrice: listingPrice,
           endTime: new Date(selectedTeeTime?.date),
           slots: parseInt(players),
-          color1: entity?.color1 ?? "#000000",
+          color1: entity?.color1,
         })
       } else {
         const saleTypeParams = getSaleTypeParams(saleType)
@@ -329,7 +329,7 @@ const ListTeeTimeDetail = ({
           listPrice: listingPrice,
           endTime: new Date(selectedTeeTime?.date),
           slots: parseInt(players),
-          color1: entity?.color1 ?? "#000000",
+          color1: entity?.color1,
           ...saleTypeParams
         });
       }
