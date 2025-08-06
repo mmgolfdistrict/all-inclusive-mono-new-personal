@@ -2249,31 +2249,34 @@ export class HyperSwitchWebhookService {
       this.logger.warn("paymentId is here", paymentId);
       this.logger.warn("payment state is here", paymentState);
       if (entityType === "updated" && entity === "payment_link" && paymentState === "COMPLETED") {
-        const updateStatus = await this.database
-          .update(bookingSplitPayment)
-          .set({ webhookStatus: paymentState })
-          .where(eq(bookingSplitPayment.paymentId, paymentId));
         const [result] = await this.database
           .select({
-            email: bookingSplitPayment.email,
             bookingId: bookingSplitPayment.bookingId,
             amount: bookingSplitPayment.payoutAmount,
-            paymentId: bookingSplitPayment.paymentId,
-            collectedAmount: bookingSplitPayment.collectedAmount,
-            isPaid: bookingSplitPayment.isPaid,
-            webhookStatus: bookingSplitPayment.webhookStatus,
+            isCredited: bookingSplitPayment.isCredited,
           })
           .from(bookingSplitPayment)
           .where(eq(bookingSplitPayment.paymentId, paymentId));
-        if (result?.webhookStatus === "COMPLETED") {
-          const saveToProcessfunds = await this.saveSplitPaymentAmountIntoCashOut(
-            result.bookingId,
-            Number(result?.amount)
-          );
-          this.logger.warn("insert successfully", saveToProcessfunds);
+        if (!result?.isCredited) {
+          if (result?.bookingId) {
+            const saveToProcessfunds = await this.saveSplitPaymentAmountIntoCashOut(
+              result.bookingId,
+              Number(result?.amount)
+            );
+            await this.database
+              .update(bookingSplitPayment)
+              .set({ webhookStatus: paymentState, isCredited: 1 })
+              .where(eq(bookingSplitPayment.paymentId, paymentId));
+            this.logger.warn("insert successfully", saveToProcessfunds);
+          }
+          return {
+            message: "Payment Webhook status updated successfully",
+            error: false,
+          };
         }
+
         return {
-          message: "Payment Webhook status successFully",
+          message: "Amount was already credited",
           error: false,
         };
       }
