@@ -293,7 +293,7 @@ export default function RegisterPage() {
         ...data,
         // country: "USA",
         courseId: course?.id,
-        color1: entity?.color1 ?? "#000000",
+        color1: entity?.color1,
       });
       if (response?.error) {
         await recaptchaRef.current?.executeAsync();

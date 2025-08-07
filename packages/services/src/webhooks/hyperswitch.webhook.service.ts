@@ -700,7 +700,8 @@ export class HyperSwitchWebhookService {
     customer_id: string,
     paymentId: string,
     golferPrice: number,
-    redirectHref: string
+    redirectHref: string,
+    color1?: string
   ) => {
     let bookingStage = "Intializing Second hand Booking";
     try {
@@ -1258,6 +1259,7 @@ export class HyperSwitchWebhookService {
                   ),
                   HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
                   CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
+                  color1: color1,
                 },
                 []
               );

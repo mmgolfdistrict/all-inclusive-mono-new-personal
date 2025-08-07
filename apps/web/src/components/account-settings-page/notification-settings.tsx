@@ -46,7 +46,7 @@ export const NotificationSettings = () => {
       await updateUser.mutateAsync({
         phoneNotifications: newValue,
         courseId,
-        color1: entity?.color1 ?? "#000000",
+        color1: entity?.color1,
       });
       await refetch();
       toast.success("Phone notifications updated successfully");
@@ -69,7 +69,7 @@ export const NotificationSettings = () => {
       await updateUser.mutateAsync({
         emailNotification: newValue,
         courseId,
-        color1: entity?.color1 ?? "#000000",
+        color1: entity?.color1,
       });
       await refetch();
       toast.success("Email notifications updated successfully");
