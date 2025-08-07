@@ -1,5 +1,4 @@
 import React from "react";
-import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { DeleteIcon } from "../icons/delete";
 import { Checkbox } from "../input/checkbox";
@@ -54,14 +53,6 @@ function Waitlist({
         <h2 className="text-[0.8125rem] md:text-lg capitalize text-secondary-black unmask-time">
           {formattedDate}
         </h2>
-        <FilledButton
-          onClick={() => setIsDeleteModalOpen(true)}
-          className="flex items-center gap-1 py-[.28rem] md:py-1.5 text-[0.625rem] md:text-[0.875rem] disabled:opacity-50"
-          disabled={!handleIsChecked()}
-        >
-          <DeleteIcon color="#fff" width="0.9375rem" />
-          Delete
-        </FilledButton>
       </div>
 
       {/* Waitlist Items */}
@@ -93,7 +84,7 @@ function Waitlist({
                   setSelectedIndividualNotification(item)
                 }}
               >
-                <DeleteIcon color="#40942b" width="0.9375rem" />
+                <DeleteIcon fill="var(--primary-color)" width="0.9375rem" />
                 Delete
               </OutlineButton>
             </div>
