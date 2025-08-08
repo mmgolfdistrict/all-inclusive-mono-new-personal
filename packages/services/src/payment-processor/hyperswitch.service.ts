@@ -809,7 +809,7 @@ export class HyperSwitchService {
       const originalUserSplitAmount = amount * 100 - collectPaymentProcessorCharge;
       const splitPaymentEmailTemplateId = String(process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID);
       const paymentExpirationTime = await appSettingService.get("PAYMENT_EXPIRATION_TIME_IN_MINS");
-      if (paymentProcessor === "finix" && false) {
+      if (paymentProcessor === "finix") {
         const referencePaymentId = randomUUID();
         const paymentData: PaymentRequest = {
           merchant_id: this.merchantId,
