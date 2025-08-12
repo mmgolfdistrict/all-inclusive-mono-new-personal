@@ -868,7 +868,7 @@ export class BookingService {
             finaldata.push({
               id: user.id,
               handle: user.handle,
-              name: user.name || "",
+              name: slot.name && slot.name.trim() !== "" ? slot.name : user.name || "",
               email: user.email,
               slotId: slot.slotId,
             });
