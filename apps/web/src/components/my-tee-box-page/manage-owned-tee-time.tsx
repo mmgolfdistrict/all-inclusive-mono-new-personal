@@ -540,10 +540,10 @@ export const ManageOwnedTeeTime = ({
                         />
 
                         {/* Friend search dropdown */}
-                        {friendList.length > 0 && friend.slotId === newFriend.slotId && (
+                        {friendList.length > 0 && friend.slotId === newFriend.slotId && newFriend.email?.trim() !== "" && (
                           <ul className="absolute z-10 w-full bg-white shadow-md rounded-lg mt-1">
                             {friendList.map((frnd, idx) => (
-                              <li key={idx}>
+                              <li key={idx} className={`border-b last:border-b-0`}>
                                 <div
                                   className="cursor-pointer p-3 hover:bg-gray-100"
                                   onClick={() =>
