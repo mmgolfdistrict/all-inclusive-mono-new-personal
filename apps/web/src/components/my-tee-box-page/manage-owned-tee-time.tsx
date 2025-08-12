@@ -24,6 +24,7 @@ import { type OwnedTeeTime } from "./owned";
 import Flyout from "../modal/flyout";
 import { Modal } from "../modal/modal";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useUserContext } from "~/contexts/UserContext";
 
 type SideBarProps = {
   isManageOwnedTeeTimeOpen: boolean;
@@ -48,10 +49,12 @@ export const ManageOwnedTeeTime = ({
   }: Omit<SideBarProps, "isManageOwnedTeeTimeOpen">) => {
 
     const { course } = useCourseContext();
+    const { user } = useUserContext();
+    console.log("course", user);
     const [minimumOfferPrice, setMinimumOfferPrice] = useState<number>(0);
     const [friends, setFriends] = useState<InviteFriend[]>([]);
     const [friendLists, setFriendList] = useState<InviteFriend[]>([]);
-    const [isInviteVisible, setIsInviteVisible] = useState(false);
+    // const [isInviteVisible, setIsInviteVisible] = useState(false);
     const [newFriend, setNewFriend] = useState<InviteFriend>({
       id: "",
       handle: "",
@@ -225,17 +228,29 @@ export const ManageOwnedTeeTime = ({
       if (updateNames.isLoading || updateMinimumOfferPrice.isLoading) return;
 
       // Prepare friends list
-      selectedTeeTime.golfers.map((el) => {
+      selectedTeeTime.golfers.map((el, index) => {
         friends.forEach((fd) => {
           if (!fd.slotId) {
             fd.slotId = el.slotId;
-            fd.name = fd.name === "" ? "Guest" : fd.name;
+
+            if (index === 0) {
+              // First slot — use logged in user's name
+              fd.name = user?.name || "Guest";
+            } else {
+              fd.name = fd.name === "" ? "Guest" : fd.name;
+            }
           }
+
           fd.bookingId = selectedTeeTime.bookingIds[0] || "";
           fd.handle = fd.handle || "";
-          fd.name = fd.name === "" ? "Guest" : fd.name;
+
+          // Reapply default name if still blank
+          if (fd.name === "") {
+            fd.name = "Guest";
+          }
         });
       });
+
 
       selectedTeeTime.golfers = friends;
 
@@ -498,7 +513,7 @@ export const ManageOwnedTeeTime = ({
                         {/* Editable field */}
                         <input
                           type="text"
-                          value={friend.name || friend.emailOrPhoneNumber || ""}
+                          value={index === 0 ? "You" : (friend.name || friend.emailOrPhoneNumber || "")}
                           onFocus={(e: ChangeEvent<HTMLInputElement>) => {
                             const value = e.target.value;
                             setFriends(prev =>
@@ -537,6 +552,7 @@ export const ManageOwnedTeeTime = ({
                           placeholder="Enter username, email, or phone"
                           className="mx-auto w-full max-w-[25rem] rounded-lg bg-secondary-white px-4 py-2 text-sm font-semibold outline-none"
                           data-testid={`search-friend-${friend.slotId}`}
+                          disabled={index === 0}
                         />
 
                         {/* Friend search dropdown */}
