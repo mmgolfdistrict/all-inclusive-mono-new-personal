@@ -381,7 +381,10 @@ export const ManageOwnedTeeTime = ({
 
                         {/* Friend search dropdown */}
                         {friendList.length > 0 && friend.slotId === newFriend.slotId && newFriend.email?.trim() !== "" && (
-                          <ul className="absolute z-10 w-full bg-white shadow-md rounded-lg mt-1" onMouseDown={(e) => e.stopPropagation()}>
+                          <ul className="absolute z-10 w-full bg-white shadow-md rounded-lg mt-1"
+                            role="listbox"
+                            tabIndex={0}
+                            onMouseDown={(e) => e.stopPropagation()}>
                             {friendList.map((frnd, idx) => (
                               <li key={idx} className={`border-b last:border-b-0`}>
                                 <div
@@ -487,7 +490,10 @@ export const ManageOwnedTeeTime = ({
                       {friendList.length > 0 &&
                         friend.slotId === newFriend.slotId &&
                         newFriend.email?.trim() !== "" && (
-                          <ul className="absolute z-10 w-full bg-white shadow-md rounded-lg mt-1" onMouseDown={(e) => e.stopPropagation()}>
+                          <ul className="absolute z-10 w-full bg-white shadow-md rounded-lg mt-1"
+                            role="listbox"
+                            tabIndex={0}
+                            onMouseDown={(e) => e.stopPropagation()}>
                             {friendList.map((frnd, idx) => (
                               <li key={idx} className="border-b last:border-b-0">
                                 <div
