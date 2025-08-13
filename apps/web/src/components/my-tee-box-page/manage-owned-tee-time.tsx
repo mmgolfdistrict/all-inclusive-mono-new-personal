@@ -51,7 +51,6 @@ export const ManageOwnedTeeTime = ({
     const { user } = useUserContext();
     const [minimumOfferPrice, setMinimumOfferPrice] = useState<number>(0);
     const [friends, setFriends] = useState<InviteFriend[]>([]);
-    const [friendLists, setFriendList] = useState<InviteFriend[]>([]);
     const [newFriend, setNewFriend] = useState<InviteFriend>({
       id: "",
       handle: "",
@@ -348,7 +347,7 @@ export const ManageOwnedTeeTime = ({
                                 f.slotId === friend.slotId
                                   ? {
                                     ...f,
-                                    email: value, // update email since that's what the input is bound to
+                                    email: value,
                                     emailOrPhoneNumber: value,
                                     name: value
                                   }
@@ -362,7 +361,16 @@ export const ManageOwnedTeeTime = ({
                                 slotId: friend.slotId,
                               });
                             } else {
-                              setFriendList([]);
+                              setNewFriend({
+                                id: "",
+                                handle: "",
+                                name: "",
+                                email: "",
+                                slotId: "",
+                                bookingId: "",
+                                currentlyEditing: false,
+                                emailOrPhoneNumber: "",
+                              });
                             }
                           }}
                           placeholder="Enter username, email, or phone"
@@ -457,7 +465,16 @@ export const ManageOwnedTeeTime = ({
                               slotId: friend.slotId,
                             });
                           } else {
-                            setFriendList([]);
+                            setNewFriend({
+                              id: "",
+                              handle: "",
+                              name: "",
+                              email: "",
+                              slotId: "",
+                              bookingId: "",
+                              currentlyEditing: false,
+                              emailOrPhoneNumber: "",
+                            });
                           }
                         }}
                         placeholder="Enter username, email, or phone"

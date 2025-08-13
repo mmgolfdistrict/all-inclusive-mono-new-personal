@@ -21,7 +21,6 @@ export const InviteFriends = ({
   isConfirmationPage?: boolean;
   groupId?: string;
 }) => {
-  console.log("teeTimeId", teeTimeId);
   const isGroupBooking = teeTimeId?.includes(",");
   const router = useRouter();
 
@@ -46,7 +45,6 @@ export const InviteFriends = ({
   const { user } = useUserContext();
   const { course } = useCourseContext();
 
-  // const [friendLists, setFriendList] = useState<InviteFriend[]>([]);
   const selectedTeeTime: InviteFriend[] = bookingData?.bookings || [];
   const href = window.location.href;
   const match = href.match(/^(https?:\/\/[^/]+\/[0-9A-Fa-f-]+)/) || "";
@@ -76,7 +74,6 @@ export const InviteFriends = ({
     if (!data) return [];
     return data as InviteFriend[];
   }, [data]);
-  console.log("friendList", { newFriend, friendList, friends, visibleFriends });
 
   useEffect(() => {
     if (!bookingData?.bookings || isLoadingBookingData) return;
