@@ -241,7 +241,7 @@ export const ManageOwnedTeeTime = ({
       }
     };
 
-    const addFriendUpdated = async (
+    const addFriendUpdated = (
       friendToFind: InviteFriend
     ) => {
       const friendsCopy = [...friends];

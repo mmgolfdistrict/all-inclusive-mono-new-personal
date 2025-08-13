@@ -1105,7 +1105,7 @@ export class BookingService {
         finaldata.push({
           id: "",
           handle: "",
-          name: slot.name,
+          name: slot.name || "Guest",
           email: "",
           slotId: slot.slotId,
         });

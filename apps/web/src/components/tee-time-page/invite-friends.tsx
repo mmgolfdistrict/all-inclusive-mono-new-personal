@@ -46,7 +46,7 @@ export const InviteFriends = ({
   const { user } = useUserContext();
   const { course } = useCourseContext();
 
-  const [friendLists, setFriendList] = useState<InviteFriend[]>([]);
+  // const [friendLists, setFriendList] = useState<InviteFriend[]>([]);
   const selectedTeeTime: InviteFriend[] = bookingData?.bookings || [];
   const href = window.location.href;
   const match = href.match(/^(https?:\/\/[^/]+\/[0-9A-Fa-f-]+)/) || "";
@@ -58,6 +58,7 @@ export const InviteFriends = ({
     email: "",
     slotId: "",
     bookingId: "",
+    emailOrPhoneNumber: "",
     currentlyEditing: false,
   });
   const debouncedValue = useDebounce<InviteFriend>(newFriend, 500);
@@ -75,6 +76,7 @@ export const InviteFriends = ({
     if (!data) return [];
     return data as InviteFriend[];
   }, [data]);
+  console.log("friendList", { newFriend, friendList, friends, visibleFriends });
 
   useEffect(() => {
     if (!bookingData?.bookings || isLoadingBookingData) return;
@@ -82,7 +84,7 @@ export const InviteFriends = ({
     setFriends(() => bookingData?.bookings as InviteFriend[]);
   }, [bookingData, isLoadingBookingData]);
 
-  const addFriendUpdated = async (
+  const addFriendUpdated = (
     friendToFind: InviteFriend
   ) => {
     const friendsCopy = [...friends];
@@ -118,23 +120,29 @@ export const InviteFriends = ({
     if (updateNames.isLoading) return;
     let resultantData: InviteFriend[] = [];
 
-    selectedTeeTime.map((el, index) => {
+    selectedTeeTime.forEach((el, index) => {
       friends.forEach((fd) => {
         if (!fd.slotId) {
           fd.slotId = el.slotId;
 
           if (index === 0) {
-            // First slot → logged-in user's name
             fd.name = user?.name || "Guest";
           } else {
             fd.name = fd.name === "" ? "Guest" : fd.name;
           }
         }
 
-        fd.bookingId = bookingData?.bookingIds?.[0] || "";
-        fd.handle = fd.handle || "";
+        // Detect if it's a manually typed entry (no id/handle originally)
+        const isTypedEntry = !fd.id && !fd.handle;
 
-        // Final fallback for blank name
+        if (isTypedEntry) {
+          fd.id = "";
+          fd.handle = "";
+        } else {
+          fd.bookingId = bookingData?.bookingIds?.[0] || "";
+          fd.handle = fd.handle || "";
+        }
+
         if (fd.name === "") {
           fd.name = "Guest";
         }
@@ -149,7 +157,7 @@ export const InviteFriends = ({
       const invitesPayload = friends
         .filter((f) => f.emailOrPhoneNumber && f.slotId) // only send valid invites
         .map((f) => ({
-          emailOrPhoneNumber: f.emailOrPhoneNumber!,
+          emailOrPhoneNumber: f.email,
           teeTimeId: teeTimeId,
           bookingSlotId: f.slotId,
           slotPosition: parseInt(f.slotId?.match(/\d(?=\D*$)/)?.[0] || "0", 10),
@@ -253,8 +261,18 @@ export const InviteFriends = ({
                             ...friend,
                             slotId: friend.slotId,
                           });
-                        } else {
-                          setFriendList([]);
+                        }
+                        else {
+                          setNewFriend({
+                            id: "",
+                            handle: "",
+                            name: "",
+                            email: "",
+                            slotId: "",
+                            bookingId: "",
+                            currentlyEditing: false,
+                            emailOrPhoneNumber: "",
+                          });
                         }
                       }}
                       placeholder="Enter username, email, or phone"
