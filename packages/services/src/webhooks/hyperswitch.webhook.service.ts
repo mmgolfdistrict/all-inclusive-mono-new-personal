@@ -1867,7 +1867,8 @@ export class HyperSwitchWebhookService {
         await this.bookingService.addListingForRemainingSlotsOnGroupBooking(
           firstBooking.groupId,
           listedSlotsCount,
-          firstBooking.ownerId
+          firstBooking.ownerId,
+          color1
         );
       }
     } catch (err: any) {

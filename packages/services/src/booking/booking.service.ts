@@ -1461,7 +1461,8 @@ export class BookingService {
       formattedTime,
       courseId,
       userId,
-      toCreate.id
+      toCreate.id,
+      color1
     );
     // console.log("CREATING LISTING FOR DATE:", date, formattedTime);
     return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };
@@ -6223,7 +6224,8 @@ export class BookingService {
       formattedTime,
       courseId,
       userId,
-      toCreate.id
+      toCreate.id,
+      color1
     );
     return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };
   };
@@ -6448,7 +6450,8 @@ export class BookingService {
   addListingForRemainingSlotsOnGroupBooking = async (
     groupId: string,
     listedSlotsCount = 0,
-    ownerId: string
+    ownerId: string,
+    color1?: string
   ) => {
     try {
       if (listedSlotsCount === 0) {
@@ -6647,7 +6650,8 @@ export class BookingService {
           formattedTime,
           groupBooking.courseId,
           ownerId,
-          toCreate.id
+          toCreate.id,
+          color1
         );
       } else {
         // update the group to be unlisted
@@ -6854,7 +6858,8 @@ export class BookingService {
         formattedTime,
         previousBooking.courseId,
         ownerId,
-        toCreate.id
+        toCreate.id,
+        color1
       );
     } catch (error: any) {
       this.logger.error(`Error adding listing for remaining slots, ${JSON.stringify(error)}`);
