@@ -5782,6 +5782,7 @@ export class BookingService {
           isFirstHandGroupBooking: true,
           providerBookings,
           purchasedMerchandise,
+          color1: color1,
         })
         .catch(async (err) => {
           this.logger.error(`Error creating booking, ${err}`);
@@ -6680,7 +6681,8 @@ export class BookingService {
     providerBookingId: string,
     previousListid: string,
     slotsToList = 0,
-    ownerId: string
+    ownerId: string,
+    color1?: string
   ) => {
     try {
       if (slotsToList === 0) {
@@ -6822,6 +6824,7 @@ export class BookingService {
               ),
               PlayerCount: slotsToList ?? 0,
               ListedPricePerPlayer: previousListing.listPrice ? `${previousListing.listPrice}` : "-",
+              color1: color1,
             },
             []
           )
