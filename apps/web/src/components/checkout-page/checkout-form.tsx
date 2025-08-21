@@ -1543,7 +1543,6 @@ export const CheckoutForm = ({
                         }
 
                         const strippedLeadingZeros = value.replace(/^0+/, "");
-                        console.log("CHARITY_AMOUNT_INPUT")
                         handleSelectedCharityAmount(Number(strippedLeadingZeros));
                       }}
                       placeholder="Enter charitable donation amount."
