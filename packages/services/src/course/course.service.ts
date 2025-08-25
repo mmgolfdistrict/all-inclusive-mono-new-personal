@@ -347,6 +347,43 @@ export class CourseService extends DomainService {
 
     const supportsPlayerNameChange = provider.supportsPlayerNameChange() ?? false;
 
+    const courseSettings = await this.database
+      .select({
+        id: courseSetting.id,
+        internalName: courseSetting.internalName,
+        value: courseSetting.value,
+        datatype: courseSetting.datatype,
+      })
+      .from(courseSetting)
+      .where(eq(courseSetting.courseId, courseId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error getting course settings for course: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/getCourseById",
+          userAgent: "",
+          message: "ERROR_GETTING_COURSE_SETTINGS_FOR_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          }),
+        });
+        throw new Error("Error getting course settings");
+      });
+
+    const isAllowSpecialRequest = courseSettings.find(
+      (setting) => setting.internalName === "ALLOW_SPECIAL_REQUEST"
+    );
+
+    const isAllowClubRental = courseSettings.find(
+      (setting) => setting.internalName === "ALLOW_CLUB_RENTAL"
+    );
+
+    const isAllowCourseSwitching = courseSettings.find(
+      (setting) => setting.internalName === "ALLOW_COURSE_SWITCHING"
+    );
+
     let res = {
       ...result,
       highestListedTeeTime: ((result.highestListedTeeTime as number) ?? 0) / 100,
@@ -354,6 +391,18 @@ export class CourseService extends DomainService {
       highestPrimarySaleTeeTime: ((result.highestPrimarySaleTeeTime as number) ?? 0) / 100,
       lowestPrimarySaleTeeTime: ((result.lowestPrimarySaleTeeTime as number) ?? 0) / 100,
       supportsPlayerNameChange,
+      isAllowSpecialRequest: parseSettingValue(
+        isAllowSpecialRequest?.value ?? "",
+        isAllowSpecialRequest?.datatype ?? "string"
+      ),
+      isAllowClubRental: parseSettingValue(
+        isAllowClubRental?.value ?? "",
+        isAllowClubRental?.datatype ?? "string"
+      ),
+      isAllowCourseSwitching: parseSettingValue(
+        isAllowCourseSwitching?.value ?? "",
+        isAllowCourseSwitching?.datatype ?? "boolean"
+      ),
     };
 
     if (result.supportCharity) {
@@ -395,31 +444,6 @@ export class CourseService extends DomainService {
     }
 
     if (result.supportsGroupBooking) {
-      const courseSettings = await this.database
-        .select({
-          id: courseSetting.id,
-          internalName: courseSetting.internalName,
-          value: courseSetting.value,
-          datatype: courseSetting.datatype,
-        })
-        .from(courseSetting)
-        .where(eq(courseSetting.courseId, courseId))
-        .execute()
-        .catch((err) => {
-          this.logger.error(`Error getting course settings for course: ${err}`);
-          loggerService.errorLog({
-            userId: "",
-            url: "/CourseService/getCourseById",
-            userAgent: "",
-            message: "ERROR_GETTING_COURSE_SETTINGS_FOR_COURSE",
-            stackTrace: `${err.stack}`,
-            additionalDetailsJSON: JSON.stringify({
-              courseId,
-            }),
-          });
-          throw new Error("Error getting course settings");
-        });
-
       let groupBookingMinSize = Number(
         courseSettings.find((setting) => setting.internalName === "GROUP_BOOKING_MIN_SIZE")?.value
       );
@@ -432,18 +456,6 @@ export class CourseService extends DomainService {
           courseSettings.find((setting) => setting.internalName === "GROUP_BOOKING_ALLOW_SIZE_ONLY_IN_4")
             ?.value
         ) ?? 0) === 1;
-
-      const isAllowSpecialRequest = courseSettings.find(
-        (setting) => setting.internalName === "ALLOW_SPECIAL_REQUEST"
-      );
-
-      const isAllowClubRental = courseSettings.find(
-        (setting) => setting.internalName === "ALLOW_CLUB_RENTAL"
-      );
-
-      const isAllowCourseSwitching = courseSettings.find(
-        (setting) => setting.internalName === "ALLOW_COURSE_SWITCHING"
-      );
 
       if (isOnlyGroupOfFourAllowed) {
         let sliderMin = groupBookingMinSize;
@@ -463,18 +475,6 @@ export class CourseService extends DomainService {
         groupBookingMinSize,
         groupBookingMaxSize,
         isOnlyGroupOfFourAllowed,
-        isAllowSpecialRequest: parseSettingValue(
-          isAllowSpecialRequest?.value ?? "",
-          isAllowSpecialRequest?.datatype ?? "string"
-        ),
-        isAllowClubRental: parseSettingValue(
-          isAllowClubRental?.value ?? "",
-          isAllowClubRental?.datatype ?? "string"
-        ),
-        isAllowCourseSwitching: parseSettingValue(
-          isAllowCourseSwitching?.value ?? "",
-          isAllowCourseSwitching?.datatype ?? "boolean"
-        ),
       };
     }
     return res;
