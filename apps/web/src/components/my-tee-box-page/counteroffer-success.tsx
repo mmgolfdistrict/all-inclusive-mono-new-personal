@@ -10,6 +10,7 @@ import { Close } from "../icons/close";
 import { Info } from "../icons/info";
 import { Tooltip } from "../tooltip";
 import { type OfferType } from "./offers-received";
+import { useAppContext } from "~/contexts/AppContext";
 
 type SideBarProps = {
   isCounterofferSuccessOpen: boolean;
@@ -26,6 +27,7 @@ export const CounterofferSuccess = ({
     isOpen: isCounterofferSuccessOpen,
     setIsOpen: setIsCounterofferSuccessOpen,
   });
+  const { entity } = useAppContext();
 
   const { timeTillEnd, count } = useExpiration({
     expirationDate: selectedOffer?.offer.expiresAt,
@@ -33,7 +35,11 @@ export const CounterofferSuccess = ({
   });
 
   const cancelCounteroffer = () => {
-    toast.success("Counteroffer cancelled successfully");
+    toast.success("Counteroffer cancelled successfully", {
+      progressStyle: {
+        background: entity?.color1,
+      },
+    });
     setIsCounterofferSuccessOpen(false);
   };
 

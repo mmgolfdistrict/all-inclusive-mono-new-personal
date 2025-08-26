@@ -7,6 +7,9 @@ import "react-toastify/dist/ReactToastify.css";
 import { SessionProvider } from "@golf-district/auth/nextjs-exports";
 import { type EntityType } from "@golf-district/shared";
 import { AppWrapper } from "~/contexts/AppContext";
+import { CircleChecked } from "~/components/icons/CircleChecked";
+import { ErrorIcon } from "~/components/icons/ErrorIcon";
+import { InfoIcon } from "~/components/icons/InfoIcon";
 
 function TRPCReactProvider(props: {
   children: React.ReactNode;
@@ -29,6 +32,18 @@ function TRPCReactProvider(props: {
             draggable
             pauseOnHover
             theme="light"
+            icon={({ type }) => {
+              switch (type) {
+                case "success":
+                  return <CircleChecked fill={props.entityData?.color1} />;
+                case "error":
+                  return <ErrorIcon />;
+                case "info":
+                  return <InfoIcon />;
+                default:
+                  return null;
+              }
+            }}
           />
         </UserWrapper>
       </AppWrapper>

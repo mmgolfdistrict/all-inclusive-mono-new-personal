@@ -23,6 +23,7 @@ import { type OwnedTeeTime } from "./owned";
 import Flyout from "../modal/flyout";
 import { Modal } from "../modal/modal";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAppContext } from "~/contexts/AppContext";
 
 type SideBarProps = {
   isManageOwnedTeeTimeOpen: boolean;
@@ -47,6 +48,7 @@ export const ManageOwnedTeeTime = ({
   }: Omit<SideBarProps, "isManageOwnedTeeTimeOpen">) => {
 
     const { course } = useCourseContext();
+    const { entity } = useAppContext();
     const [minimumOfferPrice, setMinimumOfferPrice] = useState<number>(0);
     const [friends, setFriends] = useState<InviteFriend[]>([]);
     const [isInviteVisible, setIsInviteVisible] = useState(false);
@@ -100,7 +102,11 @@ export const ManageOwnedTeeTime = ({
         // await refetch();
         setInviteSuccess((prev) => ({ ...prev, [friend.slotId]: true }));
         setIsInviteVisible(false);
-        toast.success("Invitation sent successfully.");
+        toast.success("Invitation sent successfully.", {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
       } catch (error) {
         // Remove the friend from UI on failure
         setFriends((prev) =>
@@ -235,7 +241,11 @@ export const ManageOwnedTeeTime = ({
           teeTimeId: selectedTeeTime?.teeTimeId,
           minimumOfferPrice,
         });
-        toast.success("Tee time listing updated successfully");
+        toast.success("Tee time listing updated successfully", {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         if (params.get("groupId")) {
           router.replace(`/${course?.id}/my-tee-box?section=owned`);
         }
@@ -324,7 +334,11 @@ export const ManageOwnedTeeTime = ({
           redirectHref: redirectHref,
         });
         setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
-        toast.success("Invitation sent successfully.");
+        toast.success("Invitation sent successfully.", {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
       } catch (error) {
         // Remove the friend from UI on failure
         setFriends((prev) =>

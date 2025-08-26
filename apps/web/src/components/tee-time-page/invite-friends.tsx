@@ -12,6 +12,8 @@ import { FilledButton } from "../buttons/filled-button";
 import { Edit } from "../icons/edit";
 import { useRouter } from "next/navigation";
 import { OutlineButton } from "../buttons/outline-button";
+import { progress } from "framer-motion";
+import { useAppContext } from "~/contexts/AppContext";
 
 export const InviteFriends = ({
   teeTimeId,
@@ -24,7 +26,7 @@ export const InviteFriends = ({
 }) => {
   const isGroupBooking = teeTimeId.includes(",");
   const router = useRouter();
-
+  const { entity } = useAppContext();
   const {
     data: bookingData,
     isLoading: isLoadingBookingData,
@@ -98,7 +100,11 @@ export const InviteFriends = ({
       });
       setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
       setIsInviteVisible(false);
-      toast.success("Invitation sent successfully.");
+      toast.success("Invitation sent successfully.", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
     } catch (error) {
       // Remove the friend from UI on failure
       setFriends((prev) =>
@@ -190,7 +196,11 @@ export const InviteFriends = ({
         redirectHref: match[0],
       });
       setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
-      toast.success("Invitation sent successfully.");
+      toast.success("Invitation sent successfully.", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
     } catch (error) {
       // Remove the friend from UI on failure
       setFriends((prev) =>
@@ -295,7 +305,13 @@ export const InviteFriends = ({
         usersToUpdate: resultantData,
         bookingId: bookingData?.bookingIds?.[0] || "",
       });
-      toast.success("Tee time listing updated successfully");
+      toast.success("Tee time listing updated successfully"
+        , {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        }
+      );
       // await refetch();
     } catch (error) {
       toast.error(

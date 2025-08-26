@@ -446,7 +446,11 @@ export const EditProfileForm = () => {
       }
       await refetchMe();
       await refetch();
-      toast.success("Profile updated successfully");
+      toast.success("Profile updated successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
     } catch (error) {
       if (error?.message === "Handle already exists") {
         setError("handle", {

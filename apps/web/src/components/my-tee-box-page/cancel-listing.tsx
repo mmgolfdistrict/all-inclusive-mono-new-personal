@@ -103,7 +103,11 @@ export const CancelListing = ({
         });
       }
       await refetch?.();
-      toast.success("Listing cancelled successfully");
+      toast.success("Listing cancelled successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
       setIsCancelListingOpen(false);
       void logAudit();
       if (needRedirect) {

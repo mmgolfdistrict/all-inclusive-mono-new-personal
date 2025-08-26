@@ -65,7 +65,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [displayDates, setDisplayDates] = useState<string>("");
   const [players, setPlayers] = useState(SLIDER_MIN);
-  const { setActivePage } = useAppContext();
+  const { setActivePage, entity } = useAppContext();
   setActivePage("group-booking")
   const [startTime, setStartTime] = useState<[number, number]>([
     courseStartTimeNumber,
@@ -237,7 +237,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
           <div className="mt-4 w-full">
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <PlaylistAddCheck width={isMobile ? "1.5625rem" : "1.875rem"} />
+                <PlaylistAddCheck fill={entity?.color1} width={isMobile ? "1.5625rem" : "1.875rem"} />
               </div>
               <div>
                 <h2 className="text-[0.875rem] md:text-[1.125rem] font-semibold">
@@ -253,7 +253,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
 
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <Campaign width={isMobile ? "1.5625rem" : "1.875rem"} />
+                <Campaign fill={entity?.color1} width={isMobile ? "1.5625rem" : "1.875rem"} />
               </div>
               <div>
                 <h2 className="text-[0.875rem] md:text-[1.125rem] font-semibold">
@@ -268,7 +268,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
 
             <div className="flex items-start mb-6">
               <div className="flex-shrink-0 mr-4">
-                <Timer width={isMobile ? "1.5625rem" : "1.875rem"} />
+                <Timer fill={entity?.color1} width={isMobile ? "1.5625rem" : "1.875rem"} />
               </div>
               <div>
                 <h2 className="text-[0.875rem] md:text-[1.125rem] font-semibold">
@@ -283,7 +283,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
 
             <div className="flex items-start">
               <div className="flex-shrink-0 mr-4">
-                <GolfCourse width={isMobile ? "1.5625rem" : "1.875rem"} />
+                <GolfCourse fill={entity?.color1} width={isMobile ? "1.5625rem" : "1.875rem"} />
               </div>
               <div>
                 <h2 className="text-[0.875rem] md:text-[1.125rem] font-semibold">

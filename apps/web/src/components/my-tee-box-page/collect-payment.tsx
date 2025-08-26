@@ -323,7 +323,11 @@ export const CollectPayment = ({
           return newLoadingStates;
         });
       } else {
-        toast.success(result?.message);
+        toast.success(result?.message, {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         setCollectPaymentInput((prevInputs) =>
           prevInputs.map((input) =>
             input.index === index
@@ -391,7 +395,11 @@ export const CollectPayment = ({
           return newLoadingStates;
         });
       } else {
-        toast.success(result?.message);
+        toast.success(result?.message, {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         setSendTrigger((prev) => prev + 1);
         setLoadingStates((prev) => {
           const newLoadingStates = [...prev];

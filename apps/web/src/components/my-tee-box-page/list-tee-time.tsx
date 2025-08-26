@@ -344,7 +344,11 @@ const ListTeeTimeDetail = ({
             <DownChevron fill={"#40942A"} className="w-[0.875rem] -rotate-90" />
           </Link>
         </div>
-      );
+        , {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
       if (needsRedirect) {
         return router.push(
           `/${selectedTeeTime?.courseId}/my-tee-box?section=my-listed-tee-times`
