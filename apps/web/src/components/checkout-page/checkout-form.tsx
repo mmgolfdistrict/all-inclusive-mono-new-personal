@@ -1869,7 +1869,7 @@ export const CheckoutForm = ({
             id="terms-of-service-checkbox"
             name="terms-of-service-checkbox"
             data-testid="terms-of-service-checkbox-id"
-            className={`cursor-pointer ${isMobile ? "w-12 h-6" : "w-12 h-6"}  `}
+            className={`cursor-pointer ${isMobile ? "w-12 h-6" : "w-16 h-6"}  `}
             type="checkbox"
             checked={isChecked}
             onChange={() => setIsChecked(!isChecked)}
