@@ -936,7 +936,8 @@ export class HyperSwitchService {
                 ADDITIONAL_MESSAGE: additonalMessge,
                 color1: color1,
               },
-              []
+              [],
+              parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
             );
             console.log("Email Send successFully");
           } else {
@@ -1051,7 +1052,8 @@ Thank you for choosing us.`;
                 ADDITIONAL_MESSAGE: additonalMessge,
                 color1: color1,
               },
-              []
+              [],
+              parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
             );
             console.log("Email Send successFully");
           } else {
@@ -1259,7 +1261,8 @@ Thank you for choosing us.`;
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
             color1: color1,
           },
-          []
+          [],
+          parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
         );
         // email send the admins after payment completed of the user
         console.log("emailSend", emailSend);
@@ -1440,7 +1443,8 @@ Thank you for choosing us.`;
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
             color1: color1,
           },
-          []
+          [],
+          parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
         );
         // email send the admins after payment completed of the user
 

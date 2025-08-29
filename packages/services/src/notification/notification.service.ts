@@ -155,6 +155,9 @@ export class NotificationService {
 
     const bccEmailsList = process.env.BCC_CUSTOMER_EMAIL_LIST ? process.env.BCC_CUSTOMER_EMAIL_LIST : "";
     const bccEmails = bccEmailsList.split(",");
+    const asm = {
+      groupId: parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID || "0"),
+    };
 
     //if (process.env.NODE_ENV === "production") {
     const response = await this.sendGridClient
@@ -164,7 +167,7 @@ export class NotificationService {
         subject: subject,
         html: body,
         bcc: bccEmails,
-        trackingSettings: { subscriptionTracking: { enable: false } },
+        asm,
       })
       .catch((err) => {
         this.logger.error(err);
@@ -196,7 +199,8 @@ export class NotificationService {
     subject: string,
     templateId: string,
     template: EmailParams,
-    attachments: Attachment[]
+    attachments: Attachment[],
+    groupId?: number
   ) => {
     let emailList = email;
     if (email instanceof Array) {
@@ -212,6 +216,7 @@ export class NotificationService {
     );
     const bccEmailsList = process.env.BCC_CUSTOMER_EMAIL_LIST ? process.env.BCC_CUSTOMER_EMAIL_LIST : "";
     const bccEmails = bccEmailsList.split(",");
+    const asm = groupId ? { groupId } : undefined;
 
     const appSettings = await appSettingService.getMultiple("ENABLE_ICS_ATTACHMENT");
     if (appSettings?.ENABLE_ICS_ATTACHMENT === "false") {
@@ -223,7 +228,7 @@ export class NotificationService {
           templateId,
           dynamicTemplateData: { ...template },
           bcc: bccEmails,
-          trackingSettings: { subscriptionTracking: { enable: false } },
+          asm,
         })
         .catch((err) => {
           this.logger.error(err);
@@ -255,7 +260,7 @@ export class NotificationService {
           dynamicTemplateData: { ...template },
           attachments,
           bcc: bccEmails,
-          trackingSettings: { subscriptionTracking: { enable: false } },
+          asm,
         })
         .catch((err) => {
           this.logger.error(err);

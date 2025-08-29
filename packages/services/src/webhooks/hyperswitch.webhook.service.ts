@@ -1261,7 +1261,8 @@ export class HyperSwitchWebhookService {
                   CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
                   color1: color1,
                 },
-                []
+                [],
+                parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
               );
             }
           }
