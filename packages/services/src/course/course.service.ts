@@ -158,6 +158,7 @@ export class CourseService extends DomainService {
   getCourseById = async (courseId: string) => {
     const cacheKey = `courseDetails:${courseId}`;
     const cacheTTL = 600; // Cache TTL in seconds
+    console.log('Getting course details for courseId: ', courseId);
 
     let courseDetailsQuery: any = await cacheManager.get(cacheKey);
     if (!courseDetailsQuery) {
@@ -320,6 +321,8 @@ export class CourseService extends DomainService {
       courseAllowedTimeToSellQuery
     ]);
 
+    console.log('courseDetailsArray: ', courseDetailsArray);
+
     // Destructure the first element from each resulting array
     const course = courseDetailsArray[0];
     const listTeeTimePrices = listTeeTimePricesArray[0];
@@ -336,6 +339,8 @@ export class CourseService extends DomainService {
       ...primarySaleTeeTimePrices,
       courseAllowedTimeToSellSlots
     };
+
+    console.log('result: ', result);
 
     if (!result) return null;
 
