@@ -217,22 +217,18 @@ export const BookingDetails = ({
             </table>
           )}
           <div className="flex flex-col gap-2">
-            {selectedReceipt?.status === "PURCHASED" ? (
-              <PDFDownloadLink
-                className="w-full"
-                document={
-                  <BookingReceipt selectedReceipt={selectedReceipt} />
-                }
-                fileName="booking_receipt.pdf"
-              >
-                <OutlineButton
+            {(selectedReceipt?.status === "PURCHASED" ||
+              selectedReceipt?.status === "SOLD") && (
+                <PDFDownloadLink
                   className="w-full"
-                  data-testid="cancel-button-id"
+                  document={<BookingReceipt selectedReceipt={selectedReceipt} />}
+                  fileName="booking_receipt.pdf"
                 >
-                  Download
-                </OutlineButton>
-              </PDFDownloadLink>
-            ) : null}
+                  <OutlineButton className="w-full" data-testid="download-button-id">
+                    Download
+                  </OutlineButton>
+                </PDFDownloadLink>
+              )}
 
             <OutlineButton
               onClick={() => setIsReceiptOpen(false)}
@@ -358,6 +354,7 @@ const BookingReceipt = ({
             </View>
           </View>
           <Text style={styles.title}>Booking Receipt</Text>
+          {/* Common Details */}
           <View style={styles.table}>
             <View style={styles.tableRow}>
               <Text style={[styles.tableCell, styles.headerCell]}>
@@ -393,6 +390,7 @@ const BookingReceipt = ({
                   : "-"}
               </Text>
             </View>
+            {/* PURCHASED Receipt */}
             {selectedReceipt?.status === "PURCHASED" && (
               <>
                 <View style={styles.tableRow}>
@@ -416,6 +414,41 @@ const BookingReceipt = ({
                   <Text style={[styles.tableCell, styles.valueCell]}>
                     {selectedReceipt?.pricePerGolfer[0]
                       ? formatMoney(selectedReceipt?.pricePerGolfer[0])
+                      : "-"}
+                  </Text>
+                </View>
+              </>
+            )}
+            {/* SOLD Receipt */}
+            {selectedReceipt?.status === "SOLD" && (
+              <>
+                <View style={styles.tableRow}>
+                  <Text style={[styles.tableCell, styles.headerCell]}>
+                    Your Listing Price:
+                  </Text>
+                  <Text style={[styles.tableCell, styles.valueCell]}>
+                    {selectedReceipt?.firstHandPrice
+                      ? formatMoney(selectedReceipt?.firstHandPrice)
+                      : "-"}
+                  </Text>
+                </View>
+                <View style={styles.tableRow}>
+                  <Text style={[styles.tableCell, styles.headerCell]}>
+                    Service Fee:
+                  </Text>
+                  <Text style={[styles.tableCell, styles.valueCell]}>
+                    {selectedReceipt?.sellerServiceFee
+                      ? formatMoney(selectedReceipt?.sellerServiceFee)
+                      : "-"}
+                  </Text>
+                </View>
+                <View style={styles.tableRow}>
+                  <Text style={[styles.tableCell, styles.headerCell]}>
+                    You Receive after Sale:
+                  </Text>
+                  <Text style={[styles.tableCell, styles.valueCell]}>
+                    {selectedReceipt?.receiveAfterSale
+                      ? formatMoney(selectedReceipt?.receiveAfterSale)
                       : "-"}
                   </Text>
                 </View>
