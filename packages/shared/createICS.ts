@@ -13,7 +13,7 @@ export interface Event {
   // location: string;
 }
 
-const createICS = (event: Event): string => {
+const createICS = (event: Event, sequence = 0): string => {
   const convertToUTCString = (dtStr: string, nextDay?: boolean): string => {
     const dt = new Date(dtStr);
     if (nextDay) {
@@ -32,32 +32,27 @@ const createICS = (event: Event): string => {
   };
 
   const content = `
-    BEGIN:VCALENDAR
-    PRODID:${new Date().getTime()}
-    VERSION:2.0
-    METHOD:REQUEST
-    BEGIN:VEVENT
-    UID:unique-id@example.com
-    DTSTAMP:${convertToUTCString(`${event.startDate}`)}
-    DTSTART:${convertToUTCString(`${event.startDate}`)}
-    DTEND:${convertToUTCString(`${event.startDate}`, true)}
-    SUMMARY:Golf Reservation at ${event.name}
-    LOCATION:${event.playTime} At ${event.address}
-    DESCRIPTION: GOLFdistrict Reservation : ${event.reservationId} , Course Reservation : ${
-    event.courseReservation
-  },  Number of Players :  ${event.numberOfPlayer}
-    ORGANIZER:mailto:${process.env.SENDGRID_EMAIL}
-    BEGIN:VALARM
-    ACTION:DISPLAY
-    TRIGGER:-PT18H
-    DESCRIPTION:Reminder
-    END:VALARM
-    ATTENDEE;RSVP=TRUE;PARTSTAT=NEEDS-ACTION;CN="Attendee Name":mailto:${event.email}
-    END:VEVENT
-    END:VCALENDAR  
-    `
-    .trim()
-    .replace(/\n\s*/g, "\n");
+  BEGIN:VCALENDAR
+  VERSION:2.0
+  PRODID:-//GolfDistrict//Booking//EN
+  CALSCALE:GREGORIAN
+  METHOD:REQUEST
+  BEGIN:VEVENT
+  UID:${event.reservationId}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}@golfdistrict.com
+  SEQUENCE:${sequence}
+  DTSTAMP:${convertToUTCString(`${event.startDate}`)}
+  DTSTART:${convertToUTCString(`${event.startDate}`)}
+  DTEND:${convertToUTCString(`${event.startDate}`, true)}
+  SUMMARY:${event.name}
+  LOCATION:${event.address}
+  DESCRIPTION:Reservation ID: ${event.reservationId}, Players: ${event.numberOfPlayer}
+  STATUS:CONFIRMED
+  TRANSP:OPAQUE
+  ORGANIZER;CN=Golf District:MAILTO:${process.env.FROM_EMAIL}
+  ATTENDEE;CN=Guest;RSVP=TRUE:MAILTO:${event.email}
+  END:VEVENT
+  END:VCALENDAR
+  `.trim()
   return content;
 };
 
