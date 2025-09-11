@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
 import { eq } from "@golf-district/database";
 import { appSettings } from "@golf-district/database/schema/appSetting";
+import { appSettingMetadata } from "@golf-district/database/schema/appSettingMetadata";
 import { createCache } from "cache-manager";
 import { CacheService } from "../infura/cache.service";
 import type { AppSetting, AppSettingsResponse } from "./types";
@@ -53,11 +54,15 @@ export class AppSettingsService {
             caption: appSettings.caption,
             description: appSettings.description,
             value: appSettings.value,
-            datatype: appSettings.datatype,
+            datatype: appSettingMetadata.datatype,
             createdDateTime: appSettings.createdDateTime,
             lastUpdatedDateTime: appSettings.lastUpdatedDateTime,
           })
           .from(appSettings)
+          .innerJoin(
+            appSettingMetadata,
+            eq(appSettings.internalName, appSettingMetadata.internalName)
+          )
           .where(eq(appSettings.internalName, internalName));
         const resultedAppSettingValue = await cache.get(internalName);
         console.log("settedData", resultedAppSettingValue);
