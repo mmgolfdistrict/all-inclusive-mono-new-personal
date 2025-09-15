@@ -1154,21 +1154,30 @@ export class UserService {
     let CourseName: string | undefined;
 
     if (courseProviderId) {
+      // First, fetch the course details
       const [course] = await this.database
         .select({
-          key: assets.key,
-          extension: assets.extension,
           websiteURL: courses.websiteURL,
           name: courses.name,
+          logoId: courses.logoId, // Fetch the logoId to use in the next query
         })
         .from(courses)
-        .leftJoin(assets, eq(assets.courseId, courseProviderId))
-        .where(eq(courses.logoId, assets.id));
+        .where(eq(courses.id, courseProviderId));
+      if (course) {
+        CourseURL = course.websiteURL || "";
+        CourseName = course.name || "";
+        // Now, fetch the asset details using the logoId
+        const [asset] = await this.database
+          .select({
+            key: assets.key,
+            extension: assets.extension,
+          })
+          .from(assets)
+          .where(eq(assets.id, course.logoId!));
 
-      if (course?.key) {
-        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
-        CourseURL = course?.websiteURL || "";
-        CourseName = course?.name || "";
+        if (asset?.key) {
+          CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${asset.key}.${asset.extension}`;
+        }
       }
     }
 
@@ -1828,15 +1837,15 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-          key: profileImage.assetKey,
-          extension: profileImage.assetExtension,
-        })
+        key: profileImage.assetKey,
+        extension: profileImage.assetExtension,
+      })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-          key: bannerImage.assetKey,
-          extension: bannerImage.assetExtension,
-        })
+        key: bannerImage.assetKey,
+        extension: bannerImage.assetExtension,
+      })
       : "/defaults/default-banner.webp";
     let res;
 
