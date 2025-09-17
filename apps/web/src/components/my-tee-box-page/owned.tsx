@@ -340,7 +340,7 @@ const TableRow = ({
       <td className="gap-2 px-4 py-3">
         {isGroupBooking ? (
           <div className="flex items-center gap-2">
-            <Avatar src={iconSrc} />
+            <Avatar src={iconSrc} isRounded={false} />
             <div className="flex flex-col">
               <div className="whitespace-nowrap text-secondary-black">
                 {course}
@@ -352,7 +352,7 @@ const TableRow = ({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Avatar src={iconSrc} />
+            <Avatar src={iconSrc} isRounded={false} />
             <div className="flex flex-col">
               <div className="whitespace-nowrap text-secondary-black">
                 {course}
