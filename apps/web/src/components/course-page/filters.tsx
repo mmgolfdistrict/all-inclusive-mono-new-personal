@@ -22,11 +22,11 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import type { DateType, GolferType, HoleType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
-import { debounceFunction } from "~/utils/debounce";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "usehooks-ts";
+import { OutlineButton } from "../buttons/outline-button";
 
 interface DayValue {
   year: number;
@@ -365,14 +365,11 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                       // disabledDays={blackOutDays}
                       />
                       <div
-                        className={`z-50 text-sm w-full flex justify-center flex-wrap p-0 px-4 pb-4 `}
+                        className={`z-50 text-sm w-full flex flex-col items-center p-0 px-4 pb-4`}
                       >
                         {specialEvents?.map((event, i) => (
                           <>
-                            <button
-                              key={i}
-                              className={`inline-block mt-1 ${isMobile ? "mx-4" : "mx-2"
-                                }`}
+                            <OutlineButton
                               onClick={() => {
                                 const startDate = new Date(event.startDate);
                                 const endDate = new Date(event.endDate);
@@ -381,9 +378,17 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                                   to: dateToDayValue(endDate),
                                 });
                               }}
-                            >
+                              key={i}
+                              className="mb-2 flex items-center justify-center w-full">
+                              <Image
+                                src={event?.iconUrl || ""}
+                                alt={event.eventName}
+                                width={22}
+                                height={22}
+                                className="mr-2 h-5 w-5"
+                              />
                               {event.eventName}
-                            </button>
+                            </OutlineButton>
                           </>
                         ))}
                       </div>
@@ -620,7 +625,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
             }
           />
         </section> */}
-      </div>
+      </div >
     );
   }
 );
