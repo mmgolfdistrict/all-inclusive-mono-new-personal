@@ -426,9 +426,7 @@ export const EditProfileForm = () => {
         courseId,
         color1: entity?.color1,
       });
-      console.log("response from update user --- ", response);
       // if (!response?.error) {
-      // await setSession({ name: data?.name });
       await update({ name: data?.name });
       // }
       if (response?.error) {
