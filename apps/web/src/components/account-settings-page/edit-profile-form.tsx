@@ -426,12 +426,16 @@ export const EditProfileForm = () => {
         courseId,
         color1: entity?.color1,
       });
-
+      console.log("response from update user --- ", response);
+      // if (!response?.error) {
+      // await setSession({ name: data?.name });
+      await update({ name: data?.name });
+      // }
       if (response?.error) {
         toast.error(response.message);
         return;
       }
-      if (profilePhoto && profilePhoto !== defaultProfilePhoto) {
+      if (profilePhoto && assetIds.profilePictureId && profilePhoto !== defaultProfilePhoto) {
         setProfilePhoto(null);
         await update({ image: assetIds.profilePictureId });
         setAssetIds((prev) => ({ ...prev, profilePictureId: "" }));
