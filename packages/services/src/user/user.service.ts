@@ -1828,15 +1828,15 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-          key: profileImage.assetKey,
-          extension: profileImage.assetExtension,
-        })
+        key: profileImage.assetKey,
+        extension: profileImage.assetExtension,
+      })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-          key: bannerImage.assetKey,
-          extension: bannerImage.assetExtension,
-        })
+        key: bannerImage.assetKey,
+        extension: bannerImage.assetExtension,
+      })
       : "/defaults/default-banner.webp";
     let res;
 
@@ -2132,7 +2132,7 @@ export class UserService {
     return Buffer.concat(chunks).toString("utf8");
   };
 
-  generateUsername = async (digit: number) => {
+  generateUsername = async (digit: number): Promise<string> => {
     // Generate a random buffer
     const buffer = randomBytes(3);
 
@@ -2151,7 +2151,7 @@ export class UserService {
     const isValid = await this.isValidHandle(handle);
 
     if (!isValid) {
-      this.generateUsername(digit);
+      return this.generateUsername(digit);  // ✅ must return here
     }
     return handle ? `golfdistrict${handle}` : "golfdistrict";
   };

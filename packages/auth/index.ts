@@ -26,10 +26,10 @@ export type { Session } from "next-auth";
 export const providers = ["google", "credentials"] as const;
 export type OAuthProviders = (typeof providers)[number];
 async function generateAppleClientSecret(): Promise<string> {
-  const teamId = process.env.APPLE_TEAM_ID as string;
-  const clientId = process.env.APPLE_CLIENT_ID as string;
-  const keyId = process.env.APPLE_KEY_ID as string;
-  const privateKey = process.env.APPLE_PRIVATE_KEY as string;
+  const teamId = process.env.APPLE_TEAM_ID!;
+  const clientId = process.env.APPLE_CLIENT_ID!;
+  const keyId = process.env.APPLE_KEY_ID!;
+  const privateKey = process.env.APPLE_PRIVATE_KEY!;
 
   const expirationTime = Math.floor(Date.now() / 1000) + 86400 * 180;
 
@@ -248,6 +248,17 @@ export const {
           process.env.REDIS_URL!,
           process.env.REDIS_TOKEN!
         );
+
+        const userService = new UserService(db, notificationService);
+        const existingUser = await userService.getUserById(user.id ?? "");
+
+        if (existingUser && !existingUser.handle) {
+          const username = await userService.generateUsername(6);
+          await userService.updateUser(user.id ?? "", {
+            handle: username,
+          });
+        }
+
         // const isUserBlocked = await authService.isUserBlocked(user.email ?? "");
         // if (isUserBlocked) {
         //   return false;
@@ -618,4 +629,3 @@ export const {
   handlers: { GET, POST },
   auth,
 } = NextAuth(authConfig);*/
- 
