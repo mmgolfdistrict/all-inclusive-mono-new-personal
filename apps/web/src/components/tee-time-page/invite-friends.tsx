@@ -17,10 +17,12 @@ export const InviteFriends = ({
   teeTimeId,
   isConfirmationPage,
   groupId,
+  bookingId,
 }: {
   teeTimeId: string;
   isConfirmationPage?: boolean;
   groupId?: string;
+  bookingId?: string,
 }) => {
   const isGroupBooking = teeTimeId.includes(",");
   const router = useRouter();
@@ -30,7 +32,7 @@ export const InviteFriends = ({
     isLoading: isLoadingBookingData,
     refetch,
   } = api.user.getBookingsOwnedForTeeTime.useQuery(
-    { teeTimeId },
+    { teeTimeId, bookingId },
     {
       enabled: !!teeTimeId,
       refetchOnMount: false,
@@ -343,6 +345,7 @@ export const InviteFriends = ({
             >
               Add/edit invited friends
             </label>
+            <p>{friends.length}</p>
             {friends.length
               ? friends
                 .slice(0, isGroupBooking && isConfirmationPage ? 4 : friends.length)
