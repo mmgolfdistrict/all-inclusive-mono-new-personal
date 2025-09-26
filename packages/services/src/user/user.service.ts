@@ -426,7 +426,6 @@ export class UserService {
       slotPosition: bookingSlot.slotPosition,
     });
 
-    // Build course details if needed for template
     let CourseLogoURL: string | undefined;
     let CourseURL: string | undefined;
     let CourseName: string | undefined;
@@ -457,7 +456,7 @@ export class UserService {
         await this.notificationsService.sendEmailByTemplate(
           emailOrPhoneNumber,
           "You've been invited to Golf District",
-          process.env.SENDGRID_INVITE_USER_TEMPLATE_ID!, // <-- you’ll need to create/plug correct template ID
+          process.env.SENDGRID_INVITE_USER_TEMPLATE_ID!,
           {
             CustomerName: user?.name ?? "User",
             CourseLogoURL,
