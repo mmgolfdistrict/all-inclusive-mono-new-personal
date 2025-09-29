@@ -86,6 +86,14 @@ export default function RegisterPage() {
     libraries,
   });
 
+  useEffect(() => {
+    // Clear potentially autofilled fields when component mounts
+    setValue("email", "");
+    setValue("password", "");
+    setValue("confirmPassword", "");
+    setValue("username", "");
+  }, [setValue]);
+
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -393,6 +401,7 @@ export default function RegisterPage() {
                 name="email"
                 error={errors.email?.message}
                 data-testid="register-email-id"
+                autoComplete="off"
                 inputRef={(e) => {
                   field.ref(e);
                 }}
@@ -465,6 +474,7 @@ export default function RegisterPage() {
                   data-testid="register-user-name-id"
                   showInfoTooltip={true}
                   content="Handle must all be in lower case or numeric and must contain a minimum of 6 characters and maximum of 64 characters. Handle cannot contain special characters other than dot(.) and underscore(_) and any form of profanity or racism related content. Golf District reserves the right to change your handle to a random handle at any time if it violates our terms of service."
+                  autoComplete="off"
                   inputRef={(e) => {
                     field.ref(e);
                   }}
@@ -762,6 +772,7 @@ export default function RegisterPage() {
                   name="password"
                   error={errors.password?.message}
                   data-testid="register-password-id"
+                  autoComplete="new-password"
                   inputRef={(e) => {
                     field.ref(e);
                   }}
@@ -810,6 +821,7 @@ export default function RegisterPage() {
                   name="confirmPassword"
                   error={errors.confirmPassword?.message}
                   data-testid="register-confirm-password-id"
+                  autoComplete="new-password"
                   inputRef={(e) => {
                     field.ref(e);
                   }}
