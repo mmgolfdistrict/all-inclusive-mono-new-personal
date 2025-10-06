@@ -711,13 +711,20 @@ export const CheckoutForm = ({
           : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}&need_rentals=${needRentals}`,
       },
       redirect: "if_required",
-    }) as { status: string; payment_id?: string; error_code?: string };
+    }) as { status: string; payment_id?: string; error_code?: string; error?: { type: string } };
 
     try {
       if (greenFeeChargePerPlayer * (Number(blockCheckoutValue)) <= markupFee) {
         toast.error("Price too low to sell.");
       } else {
         if (response) {
+          if (response?.error) {
+            if (response?.error?.type === 'invalid_request') {
+              setMessage("This payment session is already failed. Please reload the page.");
+            }
+            setIsLoading(false);
+            return
+          }
           if (response?.status === "processing") {
             void sendEmailForFailedPayment.mutateAsync({
               paymentId: response?.payment_id ?? "",
