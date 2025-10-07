@@ -12,6 +12,7 @@ import { FilledButton } from "../buttons/filled-button";
 import { Edit } from "../icons/edit";
 import { useRouter } from "next/navigation";
 import { OutlineButton } from "../buttons/outline-button";
+import { useAppContext } from "~/contexts/AppContext";
 
 export const InviteFriends = ({
   teeTimeId,
@@ -47,6 +48,7 @@ export const InviteFriends = ({
 
   const { user } = useUserContext();
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
   const [isInviteVisible, setIsInviteVisible] = useState(false);
   console.log(
     "bookingData", bookingData
@@ -97,6 +99,8 @@ export const InviteFriends = ({
         bookingSlotId,
         slotPosition: lastDigit ? parseInt(lastDigit, 10) : 0,
         redirectHref: match[0],
+        courseId: course?.id,
+        color1: entity?.color1
       });
       setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
       setIsInviteVisible(false);
@@ -190,6 +194,8 @@ export const InviteFriends = ({
         bookingSlotId, // Ensure a string is passed
         slotPosition: lastDigit ? parseInt(lastDigit, 10) : 0,
         redirectHref: match[0],
+        courseId: course?.id,
+        color1: entity?.color1
       });
       setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
       toast.success("Invitation sent successfully.");

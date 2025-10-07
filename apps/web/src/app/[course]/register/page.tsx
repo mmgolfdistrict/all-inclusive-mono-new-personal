@@ -68,7 +68,10 @@ export default function RegisterPage() {
   const debouncedLocation = useDebounce<string>(city, 500);
   const recaptchaRef = createRef<ReCAPTCHA>();
   const registerUser = api.register.register.useMutation();
-  const { data: uName } = api.register.generateUsername.useQuery(6);
+  const {
+    data: uName,
+    refetch: refetchUsername,
+  } = api.register.generateUsername.useQuery(6);
   const [rotate, setRotate] = useState<boolean>(false);
   const [password] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -486,11 +489,11 @@ export default function RegisterPage() {
                 e.preventDefault();
                 genUsername();
                 setRotate(true);
-                setTimeout(() => {
-                  setRotate(false);
-                }, 1000);
+                setTimeout(() => setRotate(false), 1000);
+                void refetchUsername();
               }}
-              className={`mb-1  ${rotate ? "animate-spin" : ""}`}
+              className={`${rotate ? "animate-spin" : ""} ${errors.username?.message ? "mb-[1.625rem]" : "mb-1"
+                }`}
               data-testid="register-user-name-refresh-id"
             >
               <Refresh className="h-[0.875rem] w-[0.875rem]" />
