@@ -43,7 +43,7 @@ export const OrderSummary = ({
         />
       </div>
       <h2 className="italic">
-        This purchase in non-refundable. All fees are included. Please send your
+        This purchase is non-refundable. All fees are included. Please send your
         feedback to{" "}
         <a href="mailto:support@golfdistrict.com">support@golfdistrict.com</a>.
       </h2>
