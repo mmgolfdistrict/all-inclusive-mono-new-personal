@@ -1876,13 +1876,14 @@ export const CheckoutForm = ({
             id="terms-of-service-checkbox"
             name="terms-of-service-checkbox"
             data-testid="terms-of-service-checkbox-id"
-            className={`cursor-pointer ${isMobile ? "w-12 h-6" : "w-6 h-6"}  `}
+            className={`cursor-pointer ${isMobile ? "w-12 h-6" : "w-16 h-6"}  `}
             type="checkbox"
             checked={isChecked}
             onChange={() => setIsChecked(!isChecked)}
           />
-          <div className="cursor-pointer ml-2 text-[0.875rem] font-bold">
-            By checking the box and completing this reservation, I agree to the
+          <div className="cursor-pointer ml-2 text-[0.875rem] font-bold text-justify">
+            I understand and agree that I am purchasing a non-refundable, non-cancellable and non-changeable tee time.
+            By checking the box and completing this reservation, I agree to the{" "}
             <Link
               href="/terms-of-service"
               className="text-blue-600 underline"
