@@ -114,12 +114,13 @@ export const userRouter = createTRPCRouter({
     .input(
       z.object({
         teeTimeId: z.string(),
+        bookingId: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getUserService()
-        .getBookingsOwnedForTeeTime(input.teeTimeId, ctx?.session?.user?.id);
+        .getBookingsOwnedForTeeTime(input.teeTimeId, ctx?.session?.user?.id, input.bookingId);
     }),
   forgotPasswordRequest: publicProcedure.input(forgotPasswordSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory

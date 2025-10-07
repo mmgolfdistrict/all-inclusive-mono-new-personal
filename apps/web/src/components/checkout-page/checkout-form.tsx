@@ -711,13 +711,20 @@ export const CheckoutForm = ({
           : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}&need_rentals=${needRentals}`,
       },
       redirect: "if_required",
-    }) as { status: string; payment_id?: string; error_code?: string };
+    }) as { status: string; payment_id?: string; error_code?: string; error?: { type: string } };
 
     try {
       if (greenFeeChargePerPlayer * (Number(blockCheckoutValue)) <= markupFee) {
         toast.error("Price too low to sell.");
       } else {
         if (response) {
+          if (response?.error) {
+            if (response?.error?.type === 'invalid_request') {
+              setMessage("This payment session is already failed. Please reload the page.");
+            }
+            setIsLoading(false);
+            return
+          }
           if (response?.status === "processing") {
             void sendEmailForFailedPayment.mutateAsync({
               paymentId: response?.payment_id ?? "",
@@ -1869,13 +1876,14 @@ export const CheckoutForm = ({
             id="terms-of-service-checkbox"
             name="terms-of-service-checkbox"
             data-testid="terms-of-service-checkbox-id"
-            className={`cursor-pointer ${isMobile ? "w-12 h-6" : "w-6 h-6"}  `}
+            className={`cursor-pointer ${isMobile ? "w-12 h-6" : "w-16 h-6"}  `}
             type="checkbox"
             checked={isChecked}
             onChange={() => setIsChecked(!isChecked)}
           />
-          <div className="cursor-pointer ml-2 text-[0.875rem] font-bold">
-            By checking the box and completing this reservation, I agree to the
+          <div className="cursor-pointer ml-2 text-[0.875rem] font-bold text-justify">
+            I understand and agree that I am purchasing a non-refundable, non-cancellable and non-changeable tee time.
+            By checking the box and completing this reservation, I agree to the{" "}
             <Link
               href="/terms-of-service"
               className="text-blue-600 underline"

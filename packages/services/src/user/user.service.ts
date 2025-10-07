@@ -496,7 +496,7 @@ export class UserService {
    * const result = await getBookingsOwnedForTeeTime(teeTimeId, userId);
    * // result: { connectedUserIsOwner: true, bookings: ["bookingId1", "bookingId2"] }
    */
-  getBookingsOwnedForTeeTime = async (teeTimeId: string, userId?: string) => {
+  getBookingsOwnedForTeeTime = async (teeTimeId: string, userId?: string, bookingId?: string) => {
     if (!userId) {
       return {
         connectedUserIsOwner: false,
@@ -519,7 +519,8 @@ export class UserService {
         and(
           inArray(bookings.teeTimeId, teeTimeIds),
           eq(bookings.ownerId, userId),
-          eq(bookings.isActive, true)
+          eq(bookings.isActive, true),
+          ...(bookingId ? [eq(bookings.id, bookingId)] : [])
         )
       )
       .orderBy(asc(bookingslots.slotPosition))
