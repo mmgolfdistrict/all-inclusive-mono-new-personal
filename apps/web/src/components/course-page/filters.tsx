@@ -251,11 +251,11 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
       const defaultDateOptions = [
         "All",
         "Today",
-        "This Week",
+        // "This Week",
         "This Weekend",
-        "This Month",
+        // "This Month",
         "Furthest Day Out To Book",
-        "Custom",
+        "Select Dates",
       ];
 
       const specialEventOptions: string[] =
@@ -306,12 +306,12 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                       ?.iconUrl || "no-icon"
                   }
                   label={
-                    value === "Custom" ? (
+                    value === "Select Dates" ? (
                       <div className="w-full flex justify-between">
                         <span>{value}</span>
                         <span>
                           {isMobile
-                            ? dateTypeMobile === "Custom" && (
+                            ? dateTypeMobile === "Select Dates" && (
                               <>
                                 {selectedDayMobile.from
                                   ? formatDate(selectedDayMobile.from)
@@ -321,7 +321,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                                   : ""}
                               </>
                             )
-                            : dateType === "Custom" && (
+                            : dateType === "Select Dates" && (
                               <>
                                 {selectedDay.from
                                   ? formatDate(selectedDay.from)
@@ -342,15 +342,15 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                   className={`${index === 0
                     ? "rounded-t-2xl border border-stroke"
                     : index === DateOptions.length - 1 &&
-                      dateType === "Custom"
+                      dateType === "Select Dates"
                       ? "border-l border-r border-stroke"
                       : index === DateOptions.length - 1
                         ? "rounded-b-2xl border-b border-l border-r border-stroke"
                         : "border-b border-l border-r border-stroke"
                     }`}
                 />
-                {(dateTypeMobile === "Custom" || dateType === "Custom") &&
-                  value === "Custom" ? (
+                {(dateTypeMobile === "Select Dates" || dateType === "Select Dates") &&
+                  value === "Select Dates" ? (
                   <>
                     <div className="custom_calendar unmask-time">
                       <Calendar
