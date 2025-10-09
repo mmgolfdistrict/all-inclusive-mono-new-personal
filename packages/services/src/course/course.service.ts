@@ -397,11 +397,11 @@ export class CourseService extends DomainService {
       lowestPrimarySaleTeeTime: ((result.lowestPrimarySaleTeeTime as number) ?? 0) / 100,
       supportsPlayerNameChange,
       isAllowSpecialRequest: parseSettingValue(
-        isAllowSpecialRequest?.value ?? "",
+        isAllowSpecialRequest?.value ?? "true",
         isAllowSpecialRequest?.datatype ?? "string"
       ),
       isAllowClubRental: parseSettingValue(
-        isAllowClubRental?.value ?? "",
+        isAllowClubRental?.value ?? "true",
         isAllowClubRental?.datatype ?? "string"
       ),
       isAllowCourseSwitching: parseSettingValue(
