@@ -711,7 +711,7 @@ export const CheckoutForm = ({
           : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}&need_rentals=${needRentals}`,
       },
       redirect: "if_required",
-    }) as { status: string; payment_id?: string; error_code?: string; error?: { type: string } };
+    }) as { status: string; payment_id?: string; error_code?: string; error?: { type: string, message: string } };
 
     try {
       if (greenFeeChargePerPlayer * (Number(blockCheckoutValue)) <= markupFee) {
@@ -721,6 +721,12 @@ export const CheckoutForm = ({
           if (response?.error) {
             if (response?.error?.type === 'invalid_request') {
               setMessage("This payment session is already failed. Please reload the page.");
+            }
+            if (response?.error?.type === "validation_error") {
+              setMessage(response?.error?.message ?? "Some fields are invalid, please try again.");
+            }
+            else {
+              setMessage(response?.error?.message);
             }
             setIsLoading(false);
             return
