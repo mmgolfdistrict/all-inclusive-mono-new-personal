@@ -26,10 +26,10 @@ export type { Session } from "next-auth";
 export const providers = ["google", "credentials"] as const;
 export type OAuthProviders = (typeof providers)[number];
 async function generateAppleClientSecret(): Promise<string> {
-  const teamId = process.env.APPLE_TEAM_ID as string;
-  const clientId = process.env.APPLE_CLIENT_ID as string;
-  const keyId = process.env.APPLE_KEY_ID as string;
-  const privateKey = process.env.APPLE_PRIVATE_KEY as string;
+  const teamId = process.env.APPLE_TEAM_ID!;
+  const clientId = process.env.APPLE_CLIENT_ID!;
+  const keyId = process.env.APPLE_KEY_ID!;
+  const privateKey = process.env.APPLE_PRIVATE_KEY!;
 
   const expirationTime = Math.floor(Date.now() / 1000) + 86400 * 180;
 
@@ -221,9 +221,6 @@ export const {
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async signIn({ user, account }) {
-      console.log("user", user);
-      console.log("provider", account);
-
       if ("error" in user && "message" in user) {
         return `/login?error=${user.message}`;
       }
@@ -304,6 +301,11 @@ export const {
         token.picture = session.image;
         token.image = session.image;
         (token.user as User).image = session.image;
+      }
+
+      if (trigger === "update" && session?.name !== undefined && token) {
+        token.name = session.name;
+        (token.user as User).name = session.name;
       }
 
       const userInfo = token.user as User;
@@ -618,4 +620,3 @@ export const {
   handlers: { GET, POST },
   auth,
 } = NextAuth(authConfig);*/
- 
