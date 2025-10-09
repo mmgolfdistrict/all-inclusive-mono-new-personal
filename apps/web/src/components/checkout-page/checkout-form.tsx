@@ -723,7 +723,7 @@ export const CheckoutForm = ({
               setMessage("This payment session is already failed. Please reload the page.");
             }
             if (response?.error?.type === "validation_error") {
-              setMessage(response?.error?.message ?? "Some fields are invalid, please try again.");
+              setMessage("Please complete all required fields in the payment and billing sections.");
             }
             else {
               setMessage(response?.error?.message);
