@@ -1194,21 +1194,30 @@ export class UserService {
     let CourseName: string | undefined;
 
     if (courseProviderId) {
+      // First, fetch the course details
       const [course] = await this.database
         .select({
-          key: assets.key,
-          extension: assets.extension,
           websiteURL: courses.websiteURL,
           name: courses.name,
+          logoId: courses.logoId, // Fetch the logoId to use in the next query
         })
         .from(courses)
-        .leftJoin(assets, eq(assets.courseId, courseProviderId))
-        .where(eq(courses.logoId, assets.id));
+        .where(eq(courses.id, courseProviderId));
+      if (course) {
+        CourseURL = course.websiteURL || "";
+        CourseName = course.name || "";
+        // Now, fetch the asset details using the logoId
+        const [asset] = await this.database
+          .select({
+            key: assets.key,
+            extension: assets.extension,
+          })
+          .from(assets)
+          .where(eq(assets.id, course.logoId!));
 
-      if (course?.key) {
-        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
-        CourseURL = course?.websiteURL || "";
-        CourseName = course?.name || "";
+        if (asset?.key) {
+          CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${asset.key}.${asset.extension}`;
+        }
       }
     }
 
@@ -1486,34 +1495,30 @@ export class UserService {
     if (courseId) {
       const [course] = await this.database
         .select({
-          key: assets.key,
-          extension: assets.extension,
           websiteURL: courses.websiteURL,
           name: courses.name,
+          logoId: courses.logoId,
         })
         .from(courses)
-        .where(eq(courses.id, courseId))
-        .leftJoin(assets, eq(assets.id, courses.logoId))
-        .execute()
-        .catch((err) => {
-          this.logger.error(err);
-          loggerService.errorLog({
-            userId: userId,
-            url: `/UserService/executeForgotPassword`,
-            userAgent: "",
-            message: "ERROR_GETTING_COURSE",
-            stackTrace: `${err.stack}`,
-            additionalDetailsJSON: JSON.stringify({
-              courseId,
-            }),
-          });
-          return [];
-        });
+        .where(eq(courses.id, courseId));
 
-      if (course?.key) {
-        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
-        CourseURL = course?.websiteURL || "";
-        CourseName = course?.name || "";
+      if (course) {
+        CourseURL = course.websiteURL || "";
+        CourseName = course.name || "";
+
+        if (course.logoId) {
+          const [asset] = await this.database
+            .select({
+              key: assets.key,
+              extension: assets.extension,
+            })
+            .from(assets)
+            .where(eq(assets.id, course.logoId));
+
+          if (asset?.key) {
+            CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${asset.key}.${asset.extension}`;
+          }
+        }
       }
     }
 
