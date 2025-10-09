@@ -162,7 +162,7 @@ export default function CheckoutProcessing() {
           courseId: course!.id,
         });
         setMessage(
-          getErrorMessageById("Error Processing Payment with unknown error")
+          getErrorMessageById("It seems that the payment has failed for some unknown reasons. Please reload the page.")
         );
       } else if (paymentIntent!.status === "succeeded") {
         let bookingResponse = {
@@ -209,7 +209,7 @@ export default function CheckoutProcessing() {
         );
       } else {
         setMessage(
-          getErrorMessageById("Error Processing Payment with unknown error")
+          getErrorMessageById("It seems that the payment has failed for some unknown reasons. Please reload the page.")
         );
       }
     } catch (error) {

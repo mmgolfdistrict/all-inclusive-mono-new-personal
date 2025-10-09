@@ -361,7 +361,9 @@ export class UserService {
     teeTimeId: string,
     bookingSlotId: string,
     slotPosition: number,
-    redirectHref: string
+    redirectHref: string,
+    courseId?: string,
+    color1?: string
   ) => {
     // Fetch user details
     const [user] = await this.database
@@ -424,16 +426,53 @@ export class UserService {
       slotPosition: bookingSlot.slotPosition,
     });
 
+    // Build course details if needed for template
+    let CourseLogoURL: string | undefined;
+    let CourseURL: string | undefined;
+    let CourseName: string | undefined;
+
+    if (courseId) {
+      const [course] = await this.database
+        .select({
+          key: assets.key,
+          extension: assets.extension,
+          websiteURL: courses.websiteURL,
+          name: courses.name,
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .leftJoin(assets, eq(assets.id, courses.logoId));
+
+      if (course?.key) {
+        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
+        CourseURL = course?.websiteURL || "";
+        CourseName = course.name;
+      }
+    }
+
     // Determine invite method (email or phone)
     const phoneRegex = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/;
     if (isValidEmail(emailOrPhoneNumber)) {
-      await this.notificationsService.sendEmail(
-        emailOrPhoneNumber,
-        "You've been invited to Golf District",
-        `<p>${user?.name?.split(
-          " "
-        )[0]} has invited you to Golf District. <a href="${redirectHref}/register" target="_blank">Create a new account</a>  or <a href="${redirectHref}/login" target="_blank">login with your existing account</a> to see the tee times you are part of.</p>`
-      );
+      try {
+        await this.notificationsService.sendEmailByTemplate(
+          emailOrPhoneNumber,
+          "You've been invited to Golf District",
+          process.env.SENDGRID_INVITE_USER_TEMPLATE_ID!, // <-- you’ll need to create/plug correct template ID
+          {
+            CustomerName: user?.name ?? "User",
+            CourseLogoURL,
+            CourseURL,
+            CourseName,
+            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            InviteRegisterURL: encodeURI(`${redirectHref}/register`),
+            InviteLoginURL: encodeURI(`${redirectHref}/login`),
+            color1: color1,
+          },
+          []
+        );
+      } catch (error) {
+        throw new Error("Error sending invite email");
+      }
     } else if (phoneRegex.test(emailOrPhoneNumber)) {
       await this.notificationsService.sendSMS(
         emailOrPhoneNumber,
@@ -457,7 +496,7 @@ export class UserService {
    * const result = await getBookingsOwnedForTeeTime(teeTimeId, userId);
    * // result: { connectedUserIsOwner: true, bookings: ["bookingId1", "bookingId2"] }
    */
-  getBookingsOwnedForTeeTime = async (teeTimeId: string, userId?: string) => {
+  getBookingsOwnedForTeeTime = async (teeTimeId: string, userId?: string, bookingId?: string) => {
     if (!userId) {
       return {
         connectedUserIsOwner: false,
@@ -480,7 +519,8 @@ export class UserService {
         and(
           inArray(bookings.teeTimeId, teeTimeIds),
           eq(bookings.ownerId, userId),
-          eq(bookings.isActive, true)
+          eq(bookings.isActive, true),
+          ...(bookingId ? [eq(bookings.id, bookingId)] : [])
         )
       )
       .orderBy(asc(bookingslots.slotPosition))
@@ -1828,15 +1868,15 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-          key: profileImage.assetKey,
-          extension: profileImage.assetExtension,
-        })
+        key: profileImage.assetKey,
+        extension: profileImage.assetExtension,
+      })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-          key: bannerImage.assetKey,
-          extension: bannerImage.assetExtension,
-        })
+        key: bannerImage.assetKey,
+        extension: bannerImage.assetExtension,
+      })
       : "/defaults/default-banner.webp";
     let res;
 

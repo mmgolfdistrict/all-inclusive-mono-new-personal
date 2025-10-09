@@ -71,6 +71,8 @@ interface EmailParams {
     qty: number;
   }[];
   color1?: string;
+  InviteRegisterURL?: string;
+  InviteLoginURL?: string;
 }
 
 interface Attachment {
