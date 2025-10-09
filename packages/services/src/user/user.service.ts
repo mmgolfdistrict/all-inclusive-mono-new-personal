@@ -2172,7 +2172,7 @@ export class UserService {
     return Buffer.concat(chunks).toString("utf8");
   };
 
-  generateUsername = async (digit: number) => {
+  generateUsername = async (digit: number): Promise<string> => {
     // Generate a random buffer
     const buffer = randomBytes(3);
 
@@ -2191,7 +2191,7 @@ export class UserService {
     const isValid = await this.isValidHandle(handle);
 
     if (!isValid) {
-      this.generateUsername(digit);
+      return this.generateUsername(digit);  // ✅ must return here
     }
     return handle ? `golfdistrict${handle}` : "golfdistrict";
   };
