@@ -50,6 +50,14 @@ import { courseMerchandise } from "@golf-district/database/schema/courseMerchand
 dayjs.extend(UTC);
 dayjs.extend(timezone);
 
+function escapeForHandlebars(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 interface TeeTimeData {
   courseId: string;
   courseName: string;
@@ -4062,7 +4070,7 @@ export class BookingService {
         }
 
         if (additionalNoteFromUser) {
-          details = `${details}\n${additionalNoteFromUser}`;
+          details = `${details}\n${escapeForHandlebars(additionalNoteFromUser)}`;
         } else {
           details = `${details}`;
         }
@@ -4246,7 +4254,7 @@ export class BookingService {
                 {
                   EMail: user?.email ?? "",
                   CustomerName: user?.name ?? "",
-                  NoteFromUser: additionalNoteFromUser || "-",
+                  NoteFromUser: additionalNoteFromUser ? escapeForHandlebars(additionalNoteFromUser) : "-",
                   NeedRentals: needRentals ? "Yes" : "No",
                   PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
                   HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
@@ -5491,7 +5499,7 @@ export class BookingService {
           }
 
           if (additionalNoteFromUser) {
-            details = `${details}\n${additionalNoteFromUser}`;
+            details = `${details}\n${escapeForHandlebars(additionalNoteFromUser)}`;
           } else {
             details = `${details}`;
           }
@@ -5662,7 +5670,7 @@ export class BookingService {
                   {
                     EMail: user?.email ?? "",
                     CustomerName: user?.name ?? "",
-                    NoteFromUser: additionalNoteFromUser || "-",
+                    NoteFromUser: additionalNoteFromUser ? escapeForHandlebars(additionalNoteFromUser) : "-",
                     NeedRentals: needRentals ? "Yes" : "No",
                     PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
                     HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
