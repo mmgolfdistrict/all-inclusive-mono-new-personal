@@ -1,7 +1,8 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Item } from "../course-page/filters";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { useFiltersContext } from "~/contexts/FiltersContext";
 
 export const ChoosePlayers = ({
   players,
@@ -34,6 +35,16 @@ export const ChoosePlayers = ({
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { golfers } = useFiltersContext();
+
+  useEffect(() => {
+    if (golfers && golfers !== "Any") {
+      const golfersStr = golfers.toString();
+      if (players !== golfersStr) {
+        setPlayers(golfersStr);
+      }
+    }
+  }, [golfers, players, setPlayers]);
 
   const urlWithCourse = useMemo(() => {
     const splitUrl = window.location.href.split("/");
