@@ -1444,7 +1444,8 @@ export class BookingService {
             PayableAmount: formatMoney(payable / 100 ?? 0),
             ListType: allowSplit ? "Split" : "Whole",
           },
-          []
+          [],
+          parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
@@ -1702,7 +1703,8 @@ export class BookingService {
           NewListType: allowSplit ? "Split" : "Whole",
           PayableAmount: formatMoney(payable / 100),
         },
-        []
+        [],
+        parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
       )
       .catch((err) => {
         this.logger.error(`Error sending email: ${err}`);
@@ -1908,7 +1910,8 @@ export class BookingService {
           CustomerFirstName: user?.name?.split(" ")[0],
           color1: color1,
         },
-        []
+        [],
+        parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
       );
     }
   };
@@ -4288,7 +4291,8 @@ export class BookingService {
                   MerchandiseDetails: merchandiseDetails,
                   color1: color1,
                 },
-                []
+                [],
+                parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
               );
             });
             console.log("emailList", emailList);
@@ -5704,7 +5708,8 @@ export class BookingService {
                     MerchandiseDetails: merchandiseDetails,
                     color1: color1,
                   },
-                  []
+                  [],
+                  parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
                 );
               });
             }
@@ -6218,7 +6223,8 @@ export class BookingService {
             TotalAmount: formatMoney(lastBooking.totalAmount / 100 ?? 0),
             color1: color1,
           },
-          []
+          [],
+          parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
@@ -6483,7 +6489,8 @@ export class BookingService {
           CustomerFirstName: user?.name?.split(" ")[0],
           color1: color1,
         },
-        []
+        [],
+        parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
       );
     }
   };
@@ -6871,7 +6878,8 @@ export class BookingService {
               ListedPricePerPlayer: previousListing.listPrice ? `${previousListing.listPrice}` : "-",
               color1: color1,
             },
-            []
+            [],
+            parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
           )
           .catch((err) => {
             this.logger.error(`Error sending email: ${err}`);
