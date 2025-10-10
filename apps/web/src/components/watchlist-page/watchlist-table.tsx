@@ -13,7 +13,6 @@ import { toast } from "react-toastify";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
-import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
 import { SkeletonRow } from "../my-tee-box-page/skeleton-row";
 import { MakeAnOffer } from "./make-an-offer";
@@ -325,12 +324,13 @@ const TableRow = ({
               Make an Offer
             </FilledButton>
           )}
-          <button
+          <OutlineButton
+            className="min-w-[9.6875rem]"
             onClick={() => void removeFromWatchlist(teeTimeId)}
             data-testid="remove-watch-list-button-id"
           >
-            <Trashcan className="w-[1.5625rem] max-w-[1.5625rem]" />
-          </button>
+            Delete
+          </OutlineButton>
         </div>
       </td>
     </tr>
