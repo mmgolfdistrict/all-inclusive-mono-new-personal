@@ -18,7 +18,7 @@ import Link from "next/link";
 import { CollectPayment } from "../collect-payment";
 import dayjs from "dayjs";
 
-export const MobileOwned = () => {
+const MobileOwned = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isListTeeTimeOpen, setIsListTeeTimeOpen] = useState<boolean>(false);
@@ -369,3 +369,5 @@ const TableCard = ({
     </div>
   );
 };
+
+export default MobileOwned;

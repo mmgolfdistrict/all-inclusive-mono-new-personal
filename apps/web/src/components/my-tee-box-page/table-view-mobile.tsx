@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
@@ -9,17 +10,37 @@ import { OpenSection } from "~/utils/tee-box-helper";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Badge } from "../badge";
-import { OffersReceived } from "./offers-received";
-import { OffersSent } from "./offers-sent";
 import { MobileCashouts } from "./mobile/mobile-cashouts";
 import MobileInvitedTeeTime from "./mobile/mobile-invited-tee-time";
-import { MobileMyListedTeeTimes } from "./mobile/mobile-my-listed-tee-times";
-import { MobileOwned } from "./mobile/mobile-owned";
-import { MobileTransactionHistory } from "./mobile/mobile-transaction-history";
 import Link from "next/link";
 import { FilledButton } from "../buttons/filled-button";
 
-export const TableViewMobile = () => {
+const OffersReceived = dynamic(
+  () => import("./offers-received").then((mod) => mod.default),
+  { ssr: false }
+);
+
+const OffersSent = dynamic(
+  () => import("./offers-sent").then((mod) => mod.default),
+  { ssr: false }
+);
+
+const MobileOwned = dynamic(
+  () => import("./mobile/mobile-owned").then((mod) => mod.default),
+  { ssr: false }
+);
+
+const MobileMyListedTeeTimes = dynamic(
+  () => import("./mobile/mobile-my-listed-tee-times").then((mod) => mod.default),
+  { ssr: false }
+);
+
+const MobileTransactionHistory = dynamic(
+  () => import("./mobile/mobile-transaction-history").then((mod) => mod.default),
+  { ssr: false }
+);
+
+export default function TableViewMobile() {
   const { course } = useCourseContext();
   const { data: session, status } = useSession();
   const courseId = course?.id;

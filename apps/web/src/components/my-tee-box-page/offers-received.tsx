@@ -44,7 +44,7 @@ export type OfferType = {
   };
 };
 
-export const OffersReceived = () => {
+const OffersReceived = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isViewOfferOpen, setIsViewOfferOpen] = useState<boolean>(false);
@@ -403,3 +403,5 @@ const TableRow = ({
     </tr>
   );
 };
+
+export default OffersReceived;

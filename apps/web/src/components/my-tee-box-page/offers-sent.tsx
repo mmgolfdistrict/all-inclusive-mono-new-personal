@@ -43,7 +43,7 @@ export type OfferSentType = {
   };
 };
 
-export const OffersSent = () => {
+const OffersSent = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isCancelOfferOpen, setIsCancelOfferOpen] = useState<boolean>(false);
@@ -259,3 +259,5 @@ const TableRow = ({
     </tr>
   );
 };
+
+export default OffersSent;
