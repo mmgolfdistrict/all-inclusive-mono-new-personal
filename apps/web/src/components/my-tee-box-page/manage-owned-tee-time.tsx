@@ -92,6 +92,8 @@ export const ManageOwnedTeeTime = ({
           bookingSlotId,
           slotPosition: lastDigit ? parseInt(lastDigit, 10) : 0,
           redirectHref: redirectHref,
+          courseId: course?.id,
+          color1: entity?.color1
         });
 
         setFriends((prevFriends) =>
