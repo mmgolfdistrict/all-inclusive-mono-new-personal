@@ -355,17 +355,19 @@ export class UserService {
     return invitedUsers;
   };
 
-  inviteUser = async (
+  inviteUsers = async (
     userId: string,
-    emailOrPhoneNumber: string,
-    teeTimeId: string,
-    bookingSlotId: string,
-    slotPosition: number,
+    invites: {
+      emailOrPhoneNumber: string;
+      teeTimeId: string;
+      bookingSlotId: string;
+      slotPosition: number;
+    }[],
     redirectHref: string,
     courseId?: string,
     color1?: string
   ) => {
-    // Fetch user details
+    // Fetch user details once
     const [user] = await this.database
       .select({ handle: users.handle, name: users.name, email: users.email })
       .from(users)
@@ -376,111 +378,117 @@ export class UserService {
       throw new Error("User not found");
     }
 
-    // Prevent self-invite
-    if (user.email === emailOrPhoneNumber) {
-      throw new Error("You cannot invite yourself.");
-    }
-
-    // Fetch slot details to check availability
-    const [bookingSlot] = await this.database
-      .select({
-        bookingId: bookingslots.bookingId,
-        slotPosition: bookingslots.slotPosition,
-        externalSlotId: bookingslots.slotnumber,
-      })
-      .from(bookingslots)
-      .where(and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.slotnumber, bookingSlotId)));
-
-    if (!bookingSlot) {
-      throw new Error("Booking slot not available");
-    }
-
-    // Check if an invite with the same email already exists for the same teeTimeId
-    const [existingEmailInvite] = await this.database
-      .select({ id: invitedTeeTime.id })
-      .from(invitedTeeTime)
-      .where(and(eq(invitedTeeTime.email, emailOrPhoneNumber), eq(invitedTeeTime.teeTimeId, teeTimeId)));
-
-    if (existingEmailInvite) {
-      throw new Error("This email ID is already invited for this tee time for another slot.");
-    }
-
-    // Check if invite already exists and delete it if present
-    const [existingInvite] = await this.database
-      .select({ id: invitedTeeTime.id })
-      .from(invitedTeeTime)
-      .where(and(eq(invitedTeeTime.bookingSlotId, bookingSlotId), eq(invitedTeeTime.teeTimeId, teeTimeId)));
-
-    if (existingInvite) {
-      // Delete the existing invite before sending a new one
-      await this.database.delete(invitedTeeTime).where(eq(invitedTeeTime.id, existingInvite.id));
-    }
-
-    // Save new invitation
-    await this.database.insert(invitedTeeTime).values({
-      id: randomUUID(),
-      email: emailOrPhoneNumber,
-      teeTimeId: teeTimeId,
-      bookingId: bookingSlot.bookingId,
-      bookingSlotId: bookingSlot.externalSlotId,
-      slotPosition: bookingSlot.slotPosition,
-    });
-
-    let CourseLogoURL: string | undefined;
-    let CourseURL: string | undefined;
-    let CourseName: string | undefined;
-
-    if (courseId) {
-      const [course] = await this.database
-        .select({
-          key: assets.key,
-          extension: assets.extension,
-          websiteURL: courses.websiteURL,
-          name: courses.name,
-        })
-        .from(courses)
-        .where(eq(courses.id, courseId))
-        .leftJoin(assets, eq(assets.id, courses.logoId));
-
-      if (course?.key) {
-        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
-        CourseURL = course?.websiteURL || "";
-        CourseName = course.name;
-      }
-    }
-
-    // Determine invite method (email or phone)
     const phoneRegex = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/;
-    if (isValidEmail(emailOrPhoneNumber)) {
+    const results: { recipient: string; status: string; message?: string }[] = [];
+
+    // ✅ For loop starts here
+    for (const invite of invites) {
+      const { emailOrPhoneNumber, teeTimeId, bookingSlotId, slotPosition } = invite;
+
       try {
-        await this.notificationsService.sendEmailByTemplate(
-          emailOrPhoneNumber,
-          "You've been invited to Golf District",
-          process.env.SENDGRID_INVITE_USER_TEMPLATE_ID!,
-          {
-            CustomerName: user?.name ?? "User",
-            CourseLogoURL,
-            CourseURL,
-            CourseName,
-            HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-            InviteRegisterURL: encodeURI(`${redirectHref}/register`),
-            InviteLoginURL: encodeURI(`${redirectHref}/login`),
-            color1: color1,
-          },
-          []
-        );
-      } catch (error) {
-        throw new Error("Error sending invite email");
+        // Prevent self-invite
+        if (user.email === emailOrPhoneNumber) {
+          throw new Error("You cannot invite yourself.");
+        }
+
+        // Fetch slot details
+        const [bookingSlot] = await this.database
+          .select({
+            bookingId: bookingslots.bookingId,
+            slotPosition: bookingslots.slotPosition,
+            externalSlotId: bookingslots.slotnumber,
+          })
+          .from(bookingslots)
+          .where(
+            and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.slotnumber, bookingSlotId))
+          );
+
+        if (!bookingSlot) throw new Error("Booking slot not available");
+
+        // Check if email already invited for this tee time
+        const [existingEmailInvite] = await this.database
+          .select({ id: invitedTeeTime.id })
+          .from(invitedTeeTime)
+          .where(and(eq(invitedTeeTime.email, emailOrPhoneNumber), eq(invitedTeeTime.teeTimeId, teeTimeId)));
+
+        if (existingEmailInvite) {
+          throw new Error("This email/phone is already invited for this tee time for another slot.");
+        }
+
+        // ✅ Insert new invitation (missing in your version)
+        await this.database.insert(invitedTeeTime).values({
+          id: randomUUID(),
+          email: emailOrPhoneNumber,
+          teeTimeId: teeTimeId,
+          bookingId: bookingSlot.bookingId,
+          bookingSlotId: bookingSlot.externalSlotId,
+          slotPosition: bookingSlot.slotPosition,
+        });
+
+        // Fetch course info if available
+        let CourseLogoURL: string | undefined;
+        let CourseURL: string | undefined;
+        let CourseName: string | undefined;
+
+        if (courseId) {
+          const [course] = await this.database
+            .select({
+              key: assets.key,
+              extension: assets.extension,
+              websiteURL: courses.websiteURL,
+              name: courses.name,
+            })
+            .from(courses)
+            .where(eq(courses.id, courseId))
+            .leftJoin(assets, eq(assets.id, courses.logoId));
+
+          if (course?.key) {
+            CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course.key}.${course.extension}`;
+            CourseURL = course.websiteURL || "";
+            CourseName = course.name;
+          }
+        }
+
+        // Determine invite method
+        if (isValidEmail(emailOrPhoneNumber)) {
+          try {
+            await this.notificationsService.sendEmailByTemplate(
+              emailOrPhoneNumber,
+              "You've been invited to Golf District",
+              process.env.SENDGRID_INVITE_USER_TEMPLATE_ID!,
+              {
+                CustomerName: user?.name ?? "User",
+                CourseLogoURL,
+                CourseURL,
+                CourseName,
+                HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+                InviteRegisterURL: encodeURI(`${redirectHref}/register`),
+                InviteLoginURL: encodeURI(`${redirectHref}/login`),
+                color1: color1,
+              },
+              []
+            );
+          } catch (error) {
+            throw new Error("Error sending invite email");
+          }
+        } else if (phoneRegex.test(emailOrPhoneNumber)) {
+          await this.notificationsService.sendSMS(
+            emailOrPhoneNumber,
+            `${user?.name?.split(" ")[0]} has invited you to Golf District.`
+          );
+        } else {
+          throw new Error("Invalid email or phone number");
+        }
+
+        results.push({ recipient: emailOrPhoneNumber, status: "success" });
+      } catch (err: any) {
+        results.push({ recipient: emailOrPhoneNumber, status: "failed", message: err.message });
       }
-    } else if (phoneRegex.test(emailOrPhoneNumber)) {
-      await this.notificationsService.sendSMS(
-        emailOrPhoneNumber,
-        `${user?.name?.split(" ")[0]} has invited you to Golf District.`
-      );
-    } else {
-      throw new Error("Invalid email or phone number");
     }
+
+    return results;
   };
+
 
   /**
    * Retrieves bookings owned by a user for a specific tee time.
