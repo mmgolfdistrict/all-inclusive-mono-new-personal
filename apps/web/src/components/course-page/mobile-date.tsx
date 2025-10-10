@@ -54,10 +54,10 @@ export const MobileDates = ({
 
   const DateOptions = useMemo(() => {
     const defaultDateOptions = [
-      "Custom",
-      "This Week",
+      "Select Dates",
+      // "This Week",
       "This Weekend",
-      "This Month",
+      // "This Month",
       "Furthest Day Out To Book",
     ];
 
@@ -116,14 +116,14 @@ export const MobileDates = ({
                   className={`${index === 0
                     ? "rounded-t-2xl border border-stroke"
                     : index === DateOptions.length - 1 &&
-                      dateType === "Custom"
+                      dateType === "Select Dates"
                       ? "border-l border-r border-stroke"
                       : index === DateOptions.length - 1
                         ? "rounded-b-2xl border-b border-l border-r border-stroke"
                         : "border-b border-l border-r border-stroke"
                     }`}
                 />
-                {dateType === "Custom" && value === "Custom" ? (
+                {dateType === "Select Dates" && value === "Select Dates" ? (
                   <>
                     <div className="custom_calendar">
                       <Calendar

@@ -111,7 +111,7 @@ export const BookingDetails = ({
                 : "-"}
             </TableCell>
           </TableRow>
-          {selectedReceipt?.status === "PURCHASED" && (
+          {selectedReceipt?.status === "CONFIRMED" && (
             <>
               <TableRow>
                 <TableCell
@@ -217,7 +217,7 @@ export const BookingDetails = ({
             </table>
           )}
           <div className="flex flex-col gap-2">
-            {selectedReceipt?.status === "PURCHASED" ? (
+            {selectedReceipt?.status === "CONFIRMED" || selectedReceipt?.status === "CANCELLED" ? (
               <PDFDownloadLink
                 className="w-full"
                 document={
@@ -393,7 +393,7 @@ const BookingReceipt = ({
                   : "-"}
               </Text>
             </View>
-            {selectedReceipt?.status === "PURCHASED" && (
+            {selectedReceipt?.status === "CONFIRMED" && (
               <>
                 <View style={styles.tableRow}>
                   <Text style={[styles.tableCell, styles.headerCell]}>
