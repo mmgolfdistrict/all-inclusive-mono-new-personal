@@ -324,6 +324,13 @@ export const CollectPayment = ({
         });
       } else {
         toast.success(result?.message);
+        setCollectPaymentInput((prevInputs) =>
+          prevInputs.map((input) =>
+            input.index === index
+              ? { ...input, isActive: 1 }
+              : input
+          )
+        );
         setSendTrigger((prev) => prev + 1);
       }
     } catch (error: any) {
@@ -616,7 +623,10 @@ export const CollectPayment = ({
                     {(player.isPaid === 1) ? (
                       <input
                         className="outline-none bg-secondary-white px-3 py-1 rounded-md cursor-default text-black w-[17rem]"
-                        type="text"
+                        name={`player-${index}-email`}
+                        id={`player-${index}-email`}
+                        autoComplete={`section-player-${index} email`}
+                        type="email"
                         value={player.email}
                         readOnly
                         disabled // optional if you want to gray it out
@@ -625,7 +635,10 @@ export const CollectPayment = ({
                     ) : (
                       <input
                         className="outline-none bg-secondary-white focus:outline-white px-3 py-1 rounded-md w-[17rem]"
-                        type="text"
+                        name={`player-${index}-email`}
+                        id={`player-${index}-email`}
+                        autoComplete={`section-player-${index} email`}
+                        type="email"
                         placeholder="Enter the email"
                         onChange={(e) => handleEmailChange(index, e.target.value)}
                         value={player.email}
@@ -680,7 +693,7 @@ export const CollectPayment = ({
                     ) : (
                       <FilledButton
                         onClick={() => handleEmailSendOnHyperSwitchPaymentLink(index)}
-                        className={`text-sm flex justify-center items-center ${!isValidEmail(player.email ?? "") ? "text-white/50 cursor-not-allowed" : "text-white"} ${isMobile ? "" : "mr-16"}`}
+                        className={`text-sm flex justify-center items-center ${isValidEmail(player.email ?? "") && player.isActive !== 1 ? "text-white" : "text-white/50 cursor-not-allowed"} ${isMobile ? "" : "mr-16"}`}
                         disabled={loadingStates[index] || !isValidEmail(player.email ?? "")}
                       >
                         {loadingStates[index] ? (

@@ -363,7 +363,9 @@ export class UserService {
       bookingSlotId: string;
       slotPosition: number;
     }[],
-    redirectHref: string
+    redirectHref: string,
+    courseId?: string,
+    color1?: string
   ) => {
     // Fetch user details once
     const [user] = await this.database
@@ -379,6 +381,7 @@ export class UserService {
     const phoneRegex = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/;
     const results: { recipient: string; status: string; message?: string }[] = [];
 
+    // ✅ For loop starts here
     for (const invite of invites) {
       const { emailOrPhoneNumber, teeTimeId, bookingSlotId, slotPosition } = invite;
 
@@ -400,9 +403,7 @@ export class UserService {
             and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.slotnumber, bookingSlotId))
           );
 
-        if (!bookingSlot) {
-          throw new Error("Booking slot not available");
-        }
+        if (!bookingSlot) throw new Error("Booking slot not available");
 
         // Check if email already invited for this tee time
         const [existingEmailInvite] = await this.database
@@ -414,19 +415,7 @@ export class UserService {
           throw new Error("This email/phone is already invited for this tee time for another slot.");
         }
 
-        // Check if invite exists for this slot and delete it
-        const [existingInvite] = await this.database
-          .select({ id: invitedTeeTime.id })
-          .from(invitedTeeTime)
-          .where(
-            and(eq(invitedTeeTime.bookingSlotId, bookingSlotId), eq(invitedTeeTime.teeTimeId, teeTimeId))
-          );
-
-        if (existingInvite) {
-          await this.database.delete(invitedTeeTime).where(eq(invitedTeeTime.id, existingInvite.id));
-        }
-
-        // Save new invitation
+        // ✅ Insert new invitation (missing in your version)
         await this.database.insert(invitedTeeTime).values({
           id: randomUUID(),
           email: emailOrPhoneNumber,
@@ -436,16 +425,52 @@ export class UserService {
           slotPosition: bookingSlot.slotPosition,
         });
 
-        // Send notification
+        // Fetch course info if available
+        let CourseLogoURL: string | undefined;
+        let CourseURL: string | undefined;
+        let CourseName: string | undefined;
+
+        if (courseId) {
+          const [course] = await this.database
+            .select({
+              key: assets.key,
+              extension: assets.extension,
+              websiteURL: courses.websiteURL,
+              name: courses.name,
+            })
+            .from(courses)
+            .where(eq(courses.id, courseId))
+            .leftJoin(assets, eq(assets.id, courses.logoId));
+
+          if (course?.key) {
+            CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course.key}.${course.extension}`;
+            CourseURL = course.websiteURL || "";
+            CourseName = course.name;
+          }
+        }
+
+        // Determine invite method
         if (isValidEmail(emailOrPhoneNumber)) {
-          await this.notificationsService.sendEmail(
-            emailOrPhoneNumber,
-            "You've been invited to Golf District",
-            `<p>${user?.name?.split(" ")[0]} has invited you to Golf District.
-            <a href="${redirectHref}/register" target="_blank">Create a new account</a>
-            or <a href="${redirectHref}/login" target="_blank">login with your existing account</a> 
-            to see the tee times you are part of.</p>`
-          );
+          try {
+            await this.notificationsService.sendEmailByTemplate(
+              emailOrPhoneNumber,
+              "You've been invited to Golf District",
+              process.env.SENDGRID_INVITE_USER_TEMPLATE_ID!,
+              {
+                CustomerName: user?.name ?? "User",
+                CourseLogoURL,
+                CourseURL,
+                CourseName,
+                HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+                InviteRegisterURL: encodeURI(`${redirectHref}/register`),
+                InviteLoginURL: encodeURI(`${redirectHref}/login`),
+                color1: color1,
+              },
+              []
+            );
+          } catch (error) {
+            throw new Error("Error sending invite email");
+          }
         } else if (phoneRegex.test(emailOrPhoneNumber)) {
           await this.notificationsService.sendSMS(
             emailOrPhoneNumber,
@@ -457,16 +482,13 @@ export class UserService {
 
         results.push({ recipient: emailOrPhoneNumber, status: "success" });
       } catch (err: any) {
-        results.push({
-          recipient: emailOrPhoneNumber,
-          status: "failed",
-          message: err.message,
-        });
+        results.push({ recipient: emailOrPhoneNumber, status: "failed", message: err.message });
       }
     }
 
     return results;
   };
+
 
   /**
    * Retrieves bookings owned by a user for a specific tee time.
@@ -481,7 +503,7 @@ export class UserService {
    * const result = await getBookingsOwnedForTeeTime(teeTimeId, userId);
    * // result: { connectedUserIsOwner: true, bookings: ["bookingId1", "bookingId2"] }
    */
-  getBookingsOwnedForTeeTime = async (teeTimeId: string, userId?: string) => {
+  getBookingsOwnedForTeeTime = async (teeTimeId: string, userId?: string, bookingId?: string) => {
     if (!userId) {
       return {
         connectedUserIsOwner: false,
@@ -504,7 +526,8 @@ export class UserService {
         and(
           inArray(bookings.teeTimeId, teeTimeIds),
           eq(bookings.ownerId, userId),
-          eq(bookings.isActive, true)
+          eq(bookings.isActive, true),
+          ...(bookingId ? [eq(bookings.id, bookingId)] : [])
         )
       )
       .orderBy(asc(bookingslots.slotPosition))
@@ -1178,21 +1201,30 @@ export class UserService {
     let CourseName: string | undefined;
 
     if (courseProviderId) {
+      // First, fetch the course details
       const [course] = await this.database
         .select({
-          key: assets.key,
-          extension: assets.extension,
           websiteURL: courses.websiteURL,
           name: courses.name,
+          logoId: courses.logoId, // Fetch the logoId to use in the next query
         })
         .from(courses)
-        .leftJoin(assets, eq(assets.courseId, courseProviderId))
-        .where(eq(courses.logoId, assets.id));
+        .where(eq(courses.id, courseProviderId));
+      if (course) {
+        CourseURL = course.websiteURL || "";
+        CourseName = course.name || "";
+        // Now, fetch the asset details using the logoId
+        const [asset] = await this.database
+          .select({
+            key: assets.key,
+            extension: assets.extension,
+          })
+          .from(assets)
+          .where(eq(assets.id, course.logoId!));
 
-      if (course?.key) {
-        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
-        CourseURL = course?.websiteURL || "";
-        CourseName = course?.name || "";
+        if (asset?.key) {
+          CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${asset.key}.${asset.extension}`;
+        }
       }
     }
 
@@ -1470,34 +1502,30 @@ export class UserService {
     if (courseId) {
       const [course] = await this.database
         .select({
-          key: assets.key,
-          extension: assets.extension,
           websiteURL: courses.websiteURL,
           name: courses.name,
+          logoId: courses.logoId,
         })
         .from(courses)
-        .where(eq(courses.id, courseId))
-        .leftJoin(assets, eq(assets.id, courses.logoId))
-        .execute()
-        .catch((err) => {
-          this.logger.error(err);
-          loggerService.errorLog({
-            userId: userId,
-            url: `/UserService/executeForgotPassword`,
-            userAgent: "",
-            message: "ERROR_GETTING_COURSE",
-            stackTrace: `${err.stack}`,
-            additionalDetailsJSON: JSON.stringify({
-              courseId,
-            }),
-          });
-          return [];
-        });
+        .where(eq(courses.id, courseId));
 
-      if (course?.key) {
-        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
-        CourseURL = course?.websiteURL || "";
-        CourseName = course?.name || "";
+      if (course) {
+        CourseURL = course.websiteURL || "";
+        CourseName = course.name || "";
+
+        if (course.logoId) {
+          const [asset] = await this.database
+            .select({
+              key: assets.key,
+              extension: assets.extension,
+            })
+            .from(assets)
+            .where(eq(assets.id, course.logoId));
+
+          if (asset?.key) {
+            CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${asset.key}.${asset.extension}`;
+          }
+        }
       }
     }
 
@@ -1852,15 +1880,15 @@ export class UserService {
     const { user, profileImage, bannerImage } = data;
     const profilePicture = profileImage
       ? assetToURL({
-          key: profileImage.assetKey,
-          extension: profileImage.assetExtension,
-        })
+        key: profileImage.assetKey,
+        extension: profileImage.assetExtension,
+      })
       : "/defaults/default-profile.webp";
     const bannerPicture = bannerImage
       ? assetToURL({
-          key: bannerImage.assetKey,
-          extension: bannerImage.assetExtension,
-        })
+        key: bannerImage.assetKey,
+        extension: bannerImage.assetExtension,
+      })
       : "/defaults/default-banner.webp";
     let res;
 
@@ -2156,7 +2184,7 @@ export class UserService {
     return Buffer.concat(chunks).toString("utf8");
   };
 
-  generateUsername = async (digit: number) => {
+  generateUsername = async (digit: number): Promise<string> => {
     // Generate a random buffer
     const buffer = randomBytes(3);
 
@@ -2175,7 +2203,7 @@ export class UserService {
     const isValid = await this.isValidHandle(handle);
 
     if (!isValid) {
-      this.generateUsername(digit);
+      return this.generateUsername(digit);  // ✅ must return here
     }
     return handle ? `golfdistrict${handle}` : "golfdistrict";
   };

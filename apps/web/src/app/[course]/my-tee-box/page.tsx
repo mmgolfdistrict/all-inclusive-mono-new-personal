@@ -33,10 +33,10 @@ export default function MyTeeBox({
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
-      <div className="mx-auto flex items-center justify-between px-[1rem] md:max-w-[1360px] md:px-[1.5rem]">
+      <div className="mx-auto flex items-center justify-between px-[1rem] md:max-w-[1600px] md:px-[1.5rem]">
         <GoBack href={`/${courseId}`} text={`Back to tee times`} />
       </div>
-      <section className="mx-auto flex w-full flex-col gap-4 pt-[1rem] md:max-w-[1360px] md:px-[1.5rem]">
+      <section className="mx-auto flex w-full flex-col gap-4 pt-[1rem] md:max-w-[1600px] md:px-[1.5rem]">
         <div className="flex flex-col gap-4 px-[1rem] md:px-0">
           <div>
             <h1 className="flex items-center gap-2 text-xl capitalize text-secondary-black md:text-4xl">

@@ -16,11 +16,11 @@ import { useCourseContext } from "./CourseContext";
 export type DateType =
   | "All"
   | "Today"
-  | "This Week"
+  // | "This Week"
   | "This Weekend"
-  | "This Month"
+  // | "This Month"
   | "Furthest Day Out To Book"
-  | "Custom";
+  | "Select Dates";
 
 export type GolferType = "Any" | 1 | 2 | 3 | 4 | -1;
 
@@ -169,7 +169,7 @@ export const FiltersWrapper = ({ children }: { children: ReactNode }) => {
   }, [course]);
 
   useEffect(() => {
-    if (dateType !== "Custom") {
+    if (dateType !== "Select Dates") {
       setSelectedDay(startingSelectedDayRange); //reset range if not custom
     }
   }, [dateType]);

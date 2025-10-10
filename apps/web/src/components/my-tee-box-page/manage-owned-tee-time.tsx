@@ -24,6 +24,7 @@ import Flyout from "../modal/flyout";
 import { Modal } from "../modal/modal";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUserContext } from "~/contexts/UserContext";
+import { useAppContext } from "~/contexts/AppContext";
 
 type SideBarProps = {
   isManageOwnedTeeTimeOpen: boolean;
@@ -47,6 +48,7 @@ export const ManageOwnedTeeTime = ({
     refetch
   }: Omit<SideBarProps, "isManageOwnedTeeTimeOpen">) => {
 
+    const { entity } = useAppContext();
     const { course } = useCourseContext();
     const { user } = useUserContext();
     const [minimumOfferPrice, setMinimumOfferPrice] = useState<number>(0);
@@ -211,6 +213,8 @@ export const ManageOwnedTeeTime = ({
           await invite.mutateAsync({
             invites: invitesPayload,
             redirectHref: redirectHref,
+            courseId: course?.id,
+            color1: entity?.color1
           });
         }
 
