@@ -155,11 +155,9 @@ export const BookingDetails = ({
               </TableRow>
             </>
           )}
-        </table>
-        {/* </div> */}
-        <div className="flex flex-col gap-4">
+
           {selectedReceipt?.status === "SOLD" && (
-            <table border={0} cellPadding={0} cellSpacing={0} width="100%">
+            <>
               <TableRow>
                 <TableCell
                   sx={{ borderBottom: "none" }}
@@ -214,8 +212,11 @@ export const BookingDetails = ({
                     : "-"}
                 </TableCell>
               </TableRow>
-            </table>
+            </>
           )}
+        </table>
+
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             {(selectedReceipt?.status === "PURCHASED" ||
               selectedReceipt?.status === "SOLD") && (
