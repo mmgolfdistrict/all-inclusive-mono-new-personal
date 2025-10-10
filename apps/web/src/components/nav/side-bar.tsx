@@ -85,29 +85,39 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
       logAudit(async () => {
         localStorage.clear();
         sessionStorage.clear();
-        session.data = null;
-        session.status = "unauthenticated";
-        await session.update(null);
+        try {
+          const cacheKeys = await caches.keys();
+          await Promise.all(cacheKeys.map((key) => caches.delete(key)));
+          console.log("All caches cleared.");
+        } catch (error) {
+          console.error("Error clearing caches:", error);
+        }
+        if (document.cookie) {
+          document.cookie.split(";").forEach((cookie) => {
+            const cookieName = cookie.split("=")[0]?.trim();
+            if (cookieName) {
+              document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
+            }
+          });
+        }
         if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
           const data = await signOut({
-            callbackUrl: `/${courseId}/login`,
-            //callbackUrl:pathname,
+            callbackUrl: `/${courseId}`,
             redirect: false,
           });
           router.push(data.url);
           return;
+        } else {
+          await signOut();
         }
-        const data = await signOut({
-          callbackUrl: `/${courseId}/login`,
-          redirect: false,
-        });
-        router.push(data.url);
       });
       localStorage.removeItem("googlestate");
+      localStorage.removeItem("linkedinstate");
     } catch (error) {
       console.log(error);
     } finally {
       localStorage.removeItem("googlestate");
+      toggleSidebar();
     }
   };
   return (
@@ -277,7 +287,6 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                   data-test={courseId}
                 />
                 <NavItem
-                  href="/"
                   text="Log Out"
                   className="border-b border-t border-stroke-secondary p-4"
                   onClick={logOutUser}
