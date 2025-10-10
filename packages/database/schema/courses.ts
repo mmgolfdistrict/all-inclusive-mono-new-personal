@@ -21,6 +21,7 @@ export const courses = mySqlTable(
     name: varchar("name", { length: 191 }).notNull(),
     address: text("address"),
     description: text("description"),
+    courseCancellationPolicy: text("courseCancellationPolicy"),
     longitude: double("longitude"),
     latitude: double("latitude"),
     forecastApi: text("forecastApi"),

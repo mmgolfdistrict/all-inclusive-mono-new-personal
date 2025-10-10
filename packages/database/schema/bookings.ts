@@ -57,6 +57,7 @@ export const bookings = mySqlTable(
     groupId: varchar("groupId", { length: 36 }),
     totalMerchandiseAmount: int("totalMerchandiseAmount").default(0),
     totalMerchandiseTaxAmount: int("totalMerchandiseTaxAmount").default(0),
+    cancelledByAdminUserId: varchar("cancelledByAdminUserId", { length: 36 }),
   },
   (table) => {
     return {

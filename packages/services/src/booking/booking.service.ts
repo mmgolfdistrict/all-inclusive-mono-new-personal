@@ -50,6 +50,14 @@ import { courseMerchandise } from "@golf-district/database/schema/courseMerchand
 dayjs.extend(UTC);
 dayjs.extend(timezone);
 
+function escapeForHandlebars(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 interface TeeTimeData {
   courseId: string;
   courseName: string;
@@ -304,6 +312,7 @@ export class BookingService {
         markupFees: bookings.markupFees,
         splitPaymentsAmount: bookingSplitPayment.payoutAmount,
         isPaidSplitAmount: bookingSplitPayment.isPaid,
+        bookingStatus: bookings.status
       })
       .from(transfers)
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
@@ -363,6 +372,15 @@ export class BookingService {
           receiveAfterSaleAmount = Math.abs(totalPayoutForAllGolfers);
         }
 
+        let status: string;
+        if (teeTime.bookingStatus === "CANCELLED") {
+          status = "CANCELLED";
+        } else if (teeTime.from === userId) {
+          status = "SOLD";
+        } else {
+          status = "CONFIRMED";
+        }
+
         combinedData[teeTime.transferId] = {
           courseId,
           courseName: teeTime.courseName,
@@ -377,7 +395,7 @@ export class BookingService {
               ? [(teeTime.greenFee * teeTime.players) / 100]
               : [teeTime.purchasedPrice / 100],
           bookingIds: [teeTime.bookingId],
-          status: teeTime.from === userId ? "SOLD" : "PURCHASED",
+          status,
           playerCount: teeTime.players,
           sellerServiceFee: teeTime.from === userId ? sellerServiceFee : 0,
           receiveAfterSale: teeTime.from === userId ? receiveAfterSaleAmount : 0,
@@ -754,10 +772,10 @@ export class BookingService {
       if (!combinedData[teeTime.providerBookingId]) {
         const slotData = !teeTime.providerBookingId
           ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
-              name: "",
-              slotId: "",
-              customerId: "",
-            }))
+            name: "",
+            slotId: "",
+            customerId: "",
+          }))
           : [];
 
         combinedData[teeTime.providerBookingId] = {
@@ -1025,10 +1043,10 @@ export class BookingService {
       if (!combinedGroupData[teeTime.groupId!]) {
         const slotData = !teeTime.providerBookingId
           ? Array.from({ length: teeTime.playerCount - 1 }, (_, i) => ({
-              name: "",
-              slotId: "",
-              customerId: "",
-            }))
+            name: "",
+            slotId: "",
+            customerId: "",
+          }))
           : [];
 
         combinedGroupData[teeTime.groupId!] = {
@@ -3580,13 +3598,13 @@ export class BookingService {
     const primaryData = {
       primaryGreenFeeCharge: isNaN(
         slotInfo[0].price -
-          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
-          markupCharge1
+        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings || 0) -
+        markupCharge1
       )
         ? slotInfo[0].price - markupCharge1
         : slotInfo[0].price -
-          cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
-          markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
+        cartFeeCharge * (slotInfo[0]?.product_data?.metadata?.number_of_bookings ?? 0) -
+        markupCharge1, //slotInfo[0].price- cartFeeCharge*slotInfo[0]?.product_data?.metadata?.number_of_bookings,
       teeTimeId: slotInfo[0].product_data.metadata.tee_time_id,
       playerCount:
         slotInfo[0].product_data.metadata.number_of_bookings === undefined
@@ -4052,7 +4070,7 @@ export class BookingService {
         }
 
         if (additionalNoteFromUser) {
-          details = `${details}\n${additionalNoteFromUser}`;
+          details = `${details}\n${escapeForHandlebars(additionalNoteFromUser)}`;
         } else {
           details = `${details}`;
         }
@@ -4236,7 +4254,7 @@ export class BookingService {
                 {
                   EMail: user?.email ?? "",
                   CustomerName: user?.name ?? "",
-                  NoteFromUser: additionalNoteFromUser || "-",
+                  NoteFromUser: additionalNoteFromUser ? escapeForHandlebars(additionalNoteFromUser) : "-",
                   NeedRentals: needRentals ? "Yes" : "No",
                   PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
                   HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
@@ -4487,9 +4505,8 @@ export class BookingService {
               url: "/confirmBooking",
               userAgent: "",
               message: "ERROR CONFIRMING BOOKING",
-              stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${
-                booking?.teeTimeId ?? ""
-              }`,
+              stackTrace: `error confirming booking id ${booking?.bookingId ?? ""} teetime ${booking?.teeTimeId ?? ""
+                }`,
               additionalDetailsJSON: err,
             });
           });
@@ -5482,7 +5499,7 @@ export class BookingService {
           }
 
           if (additionalNoteFromUser) {
-            details = `${details}\n${additionalNoteFromUser}`;
+            details = `${details}\n${escapeForHandlebars(additionalNoteFromUser)}`;
           } else {
             details = `${details}`;
           }
@@ -5653,7 +5670,7 @@ export class BookingService {
                   {
                     EMail: user?.email ?? "",
                     CustomerName: user?.name ?? "",
-                    NoteFromUser: additionalNoteFromUser || "-",
+                    NoteFromUser: additionalNoteFromUser ? escapeForHandlebars(additionalNoteFromUser) : "-",
                     NeedRentals: needRentals ? "Yes" : "No",
                     PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
                     HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,

@@ -123,16 +123,25 @@ export const fullDate = (timestamp: string, utcOffset = 0): string => {
 };
 
 export const dayMonthDate = (date: string): string => {
-  const cleanTimeString = !date.includes("T")
+  let cleanTimeString = !date.includes("T")
     ? date.replace(" ", "T") + "Z"
     : date;
+
+  if (/^\d{4}-\d{2}-\d{2}Z$/.test(cleanTimeString)) {
+    cleanTimeString = cleanTimeString.replace("Z", "T00:00:00Z");
+  }
+
   return dayjs.utc(cleanTimeString).format("dddd, MMM D");
 };
 
 export const dayMonthDateV2 = (date: string): string => {
-  const cleanTimeString = !date.includes("T")
+  let cleanTimeString = !date.includes("T")
     ? date.replace(" ", "T") + "Z"
     : date;
+
+  if (/^\d{4}-\d{2}-\d{2}Z$/.test(cleanTimeString)) {
+    cleanTimeString = cleanTimeString.replace("Z", "T00:00:00Z");
+  }
   return dayjs.utc(cleanTimeString).format("ddd, MMM D");
 };
 

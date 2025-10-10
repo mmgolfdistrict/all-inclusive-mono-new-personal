@@ -34,12 +34,12 @@ export default function TermsOfService({
       <LoadingContainer isLoading={isLoading}>
         <div></div>
       </LoadingContainer>
-      <div style={{ marginTop }} className="mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6">
+      <div style={{ marginTop }} className="mx-auto flex items-center justify-between px-4 max-w-[1560px] md:px-6">
         <GoBack href="" usePrevRoute={true} text={`Back`} />
       </div>
       {termsOfServices && (
         <main className="bg-secondary-white py-4 md:py-6 ">
-          <section className="mx-auto flex w-full flex-col pt-4 md:max-w-[1360px] md:gap-4 md:px-6">
+          <section className="mx-auto flex w-full flex-col px-4 max-w-[1560px] md:gap-4 md:px-6">
             <div dangerouslySetInnerHTML={{ __html: termsOfServices }}></div>
           </section>
         </main>
