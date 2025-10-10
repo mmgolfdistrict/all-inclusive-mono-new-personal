@@ -1163,7 +1163,7 @@ export const CheckoutForm = ({
 
   useEffect(() => {
     if (roundUpCharityId) handleRoundOff(donateValue, roundOffStatus);
-  }, [TaxCharge, roundUpCharityId, roundOffStatus]);
+  }, [TaxCharge, roundUpCharityId, roundOffStatus, donateValue]);
 
   useEffect(() => {
     if (!hasUserSelectedDonation) {
@@ -1194,7 +1194,7 @@ export const CheckoutForm = ({
         setRoundOffStatus("fiveDollars");
       }
     }
-  }, [totalBeforeRoundOff]);
+  }, []);
 
   useEffect(() => {
     setHasUserSelectedDonation(true);
@@ -1218,34 +1218,51 @@ export const CheckoutForm = ({
   }, [TotalAmt]);
 
   // Add state to track if payment intent needs updating
-  const [lastUpdatedAmount, setLastUpdatedAmount] = useState<string>();
+  const [_lastUpdatedAmount, setLastUpdatedAmount] = useState<string>();
   const [isUpdatingPaymentIntent, setIsUpdatingPaymentIntent] = useState(false);
 
+  const updatePaymentIntentPromiseRef = useRef<Promise<void> | null>(null);
   const updatePaymentIntent = async () => {
-    setIsUpdatingPaymentIntent(true);
-    let clientSecretId = '';
+    if (updatePaymentIntentPromiseRef.current) {
+      return updatePaymentIntentPromiseRef.current;
+    }
+    const promise = (async () => {
+      setIsUpdatingPaymentIntent(true);
+      let clientSecretId = '';
+      try {
+        await hyper.initiateUpdateIntent();
+        setLastUpdatedAmount(TotalAmt);
+        clientSecretId = await updateBuildSession?.() ?? '';
+      } catch (error) {
+        setMessage(error.message);
+      } finally {
+        await hyper.completeUpdateIntent(clientSecretId);
+        setTimeout(() => {
+          setIsUpdatingPaymentIntent(false);
+        }, 10);
+      }
+    })();
+    updatePaymentIntentPromiseRef.current = promise;
     try {
-      await hyper.initiateUpdateIntent();
-      setLastUpdatedAmount(TotalAmt);
-      clientSecretId = await updateBuildSession?.() ?? '';
-    } catch (error) {
-      setMessage(error.message);
+      return await promise;
     } finally {
-      await hyper.completeUpdateIntent(clientSecretId);
-      setTimeout(() => {
-        setIsUpdatingPaymentIntent(false);
-      }, 10);
+      updatePaymentIntentPromiseRef.current = null;
     }
   };
 
   // Update payment intent when total amount changes
+  // Debounce updates to avoid rapid successive updates causing multiple sessions
+  const updateDebounceRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
-    if (hyper && widgets && Total > 0) {
-      if (Number(playerCount) !== Number(amountOfPlayers)) {
-        return; // Skip if already updating with the same amount
-      }
+    if (!(hyper && widgets && Total > 0)) return;
+    if (Number(playerCount) !== Number(amountOfPlayers)) return;
+    if (updateDebounceRef.current) clearTimeout(updateDebounceRef.current);
+    updateDebounceRef.current = setTimeout(() => {
       void updatePaymentIntent();
-    }
+    }, 350);
+    return () => {
+      if (updateDebounceRef.current) clearTimeout(updateDebounceRef.current);
+    };
   }, [TotalAmt, playerCount, amountOfPlayers, cartData, donateValue]);
 
   return (
@@ -1539,7 +1556,6 @@ export const CheckoutForm = ({
                         }
 
                         const strippedLeadingZeros = value.replace(/^0+/, "");
-
                         handleSelectedCharityAmount(Number(strippedLeadingZeros));
                       }}
                       placeholder="Enter charitable donation amount."
