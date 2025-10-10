@@ -75,6 +75,8 @@ interface EmailParams {
   NewListType?: string;
   PayableAmount?: string;
   ListType?: string;
+  InviteRegisterURL?: string;
+  InviteLoginURL?: string;
 }
 
 interface Attachment {

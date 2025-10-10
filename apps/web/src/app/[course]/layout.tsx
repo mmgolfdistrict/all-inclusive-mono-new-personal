@@ -43,6 +43,7 @@ export default async function CoursePageLayout({
   const courseId = params.course;
 
   const courseData = (await getCourseById(courseId)) as FullCourseType;
+  console.log("courseData", courseData);
 
   const courseImages = await getCourseImages(courseId);
 

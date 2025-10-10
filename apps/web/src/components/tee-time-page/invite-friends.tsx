@@ -12,15 +12,18 @@ import { FilledButton } from "../buttons/filled-button";
 import { Edit } from "../icons/edit";
 import { useRouter } from "next/navigation";
 import { OutlineButton } from "../buttons/outline-button";
+import { useAppContext } from "~/contexts/AppContext";
 
 export const InviteFriends = ({
   teeTimeId,
   isConfirmationPage,
   groupId,
+  bookingId,
 }: {
   teeTimeId: string;
   isConfirmationPage?: boolean;
   groupId?: string;
+  bookingId?: string,
 }) => {
   const isGroupBooking = teeTimeId.includes(",");
   const router = useRouter();
@@ -30,7 +33,7 @@ export const InviteFriends = ({
     isLoading: isLoadingBookingData,
     refetch,
   } = api.user.getBookingsOwnedForTeeTime.useQuery(
-    { teeTimeId },
+    { teeTimeId, bookingId },
     {
       enabled: !!teeTimeId,
       refetchOnMount: false,
@@ -45,6 +48,7 @@ export const InviteFriends = ({
 
   const { user } = useUserContext();
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
   const [isInviteVisible, setIsInviteVisible] = useState(false);
   console.log(
     "bookingData", bookingData
@@ -95,6 +99,8 @@ export const InviteFriends = ({
         bookingSlotId,
         slotPosition: lastDigit ? parseInt(lastDigit, 10) : 0,
         redirectHref: match[0],
+        courseId: course?.id,
+        color1: entity?.color1
       });
       setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
       setIsInviteVisible(false);
@@ -188,6 +194,8 @@ export const InviteFriends = ({
         bookingSlotId, // Ensure a string is passed
         slotPosition: lastDigit ? parseInt(lastDigit, 10) : 0,
         redirectHref: match[0],
+        courseId: course?.id,
+        color1: entity?.color1
       });
       setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
       toast.success("Invitation sent successfully.");
@@ -343,6 +351,7 @@ export const InviteFriends = ({
             >
               Add/edit invited friends
             </label>
+            <p>{friends.length}</p>
             {friends.length
               ? friends
                 .slice(0, isGroupBooking && isConfirmationPage ? 4 : friends.length)

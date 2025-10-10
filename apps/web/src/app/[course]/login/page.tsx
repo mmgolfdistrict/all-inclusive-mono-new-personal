@@ -16,6 +16,7 @@ import { Input } from "~/components/input/input";
 import { Spinner } from "~/components/loading/spinner";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";
+import { useUserContext } from "~/contexts/UserContext";
 import { usePreviousPath } from "~/hooks/usePreviousPath";
 import { loginSchema, type LoginSchemaType } from "~/schema/login-schema";
 import { api } from "~/utils/api";
@@ -60,6 +61,7 @@ export default function Login() {
   const addUserSession = api.user.addUserSession.useMutation();
   const addCourseUser = api.user.addCourseUser.useMutation();
   const { data: sessionData, status } = useSession();
+  const { refetchMe } = useUserContext();
   const errorKey = searchParams.get("error");
   const router = useRouter();
   const event = ({
@@ -110,19 +112,11 @@ export default function Login() {
     if (sessionData?.user?.id && course?.id && status === "authenticated") {
       addCourseToUser();
       addLoginSession();
-      logAudit(sessionData.user.id, course.id, () => {
-        window.location.reload();
-        window.location.href = `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
-          ? prevPath?.path
-            ? prevPath.path
-            : "/"
-          : "/"
-          }`;
-      });
+      logAudit(sessionData.user.id, course.id);
     }
   }, [sessionData, course, status]);
 
-  const logAudit = (userId: string, courseId: string, func: () => void) => {
+  const logAudit = (userId: string, courseId: string, func?: () => void) => {
     auditLog
       .mutateAsync({
         userId: userId,
@@ -134,7 +128,7 @@ export default function Login() {
         json: `user logged in `,
       })
       .then((res) => {
-        if (res) {
+        if (res && func) {
           func();
         }
       })
@@ -249,6 +243,7 @@ export default function Login() {
         }
         setValue("password", "");
       } else {
+        void refetchMe();
         router.push(String(res?.url));
         localStorage.setItem("loginMethod", "EMAIL_PASSWORD");
         localStorage.setItem("showBalanceToast", "true");
