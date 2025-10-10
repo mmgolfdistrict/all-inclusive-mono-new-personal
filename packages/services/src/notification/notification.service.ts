@@ -51,8 +51,8 @@ interface EmailParams {
   GroupReservationID?: string;
   PreviousPlayerCount?: number;
   NewPlayerCount?: number;
-  PreviousListedPrice?: number;
-  NewListedPrice?: number;
+  PreviousListedPrice?: string;
+  NewListedPrice?: string;
   USERNAME?: string;
   PAYMENT_URL?: string;
   COURSE_NAME?: string;
@@ -71,6 +71,10 @@ interface EmailParams {
     qty: number;
   }[];
   color1?: string;
+  PreviousListType?: string;
+  NewListType?: string;
+  PayableAmount?: string;
+  ListType?: string;
   InviteRegisterURL?: string;
   InviteLoginURL?: string;
 }

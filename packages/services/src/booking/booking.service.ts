@@ -1194,6 +1194,9 @@ export class BookingService {
         totalAmount: bookings.totalAmount,
         timezoneCorrection: courses.timezoneCorrection,
         providerBookingId: bookings.providerBookingId,
+        sellerFees: courses.sellerFee,
+        weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
+        merchandiseAmount: bookings.totalMerchandiseAmount
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -1409,6 +1412,13 @@ export class BookingService {
       return;
     }
 
+    const amount = (listPrice * 100) ?? 1;
+    const serviceCharge = amount * ((firstBooking.sellerFees ?? 0) / 100);
+    const payable =
+      (amount - serviceCharge) * (slots) +
+      (firstBooking.weatherGuaranteeAmount ?? 0) +
+      (firstBooking.merchandiseAmount ?? 0);
+
     if (user.email && user.name) {
       await this.notificationService
         .sendEmailByTemplate(
@@ -1428,9 +1438,11 @@ export class BookingService {
               firstBooking.timezoneCorrection ?? 0
             ),
             PlayerCount: slots ?? 0,
-            ListedPricePerPlayer: listPrice ? `${listPrice}` : "-",
+            ListedPricePerPlayer: formatMoney(listPrice ?? 0),
             TotalAmount: formatMoney(firstBooking.totalAmount / 100 ?? 0),
             color1: color1,
+            PayableAmount: formatMoney(payable / 100 ?? 0),
+            ListType: allowSplit ? "Split" : "Whole",
           },
           []
         )
@@ -1564,6 +1576,9 @@ export class BookingService {
         totalAmount: bookings.totalAmount,
         timezoneCorrection: courses.timezoneCorrection,
         providerBookingId: bookings.providerBookingId,
+        sellerFees: courses.sellerFee,
+        weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
+        merchandiseAmount: bookings.totalMerchandiseAmount
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -1653,6 +1668,12 @@ export class BookingService {
         this.logger.error(`Error updating listing: ${err}`);
         throw new Error("Error updating listing");
       });
+    const amount = (updatedPrice * 100) ?? 1;
+    const serviceCharge = amount * ((firstBooking.sellerFees ?? 0) / 100);
+    const payable =
+      (amount - serviceCharge) * (updatedSlots || 1) +
+      (firstBooking.weatherGuaranteeAmount ?? 0) +
+      (firstBooking.merchandiseAmount ?? 0);
 
     // Send email notification about the listing update
     await this.notificationService
@@ -1673,10 +1694,13 @@ export class BookingService {
           ),
           PreviousPlayerCount: previousListing.slots,
           NewPlayerCount: updatedSlots,
-          PreviousListedPrice: previousListing.listPrice / 100,
-          NewListedPrice: updatedPrice,
+          PreviousListedPrice: formatMoney(previousListing.listPrice / 100),
+          NewListedPrice: formatMoney(updatedPrice),
           CustomerFirstName: user?.name?.split(" ")[0],
           color1: color1,
+          PreviousListType: previousListing.allowSplit ? "Split" : "Whole",
+          NewListType: allowSplit ? "Split" : "Whole",
+          PayableAmount: formatMoney(payable / 100),
         },
         []
       )
