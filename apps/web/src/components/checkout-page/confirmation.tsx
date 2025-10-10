@@ -39,20 +39,6 @@ export const Confirmation = ({
   const router = useRouter();
   const courseId = course?.id;
   useEffect(() => {
-    // const handlePopState = () => {
-    //   // console.log(params.course);
-    //   // void router.replace(`/${params.course}`);
-    //   // console.log("button pressed");
-    //      router.push(`/${params.course}`);
-    //   if (typeof params.course === 'string') {
-    //   console.log(params.course);
-    //   void router.replace(`/${params.course}`);
-    //   console.log("button pressed");
-    // } else {
-    //   console.log("Course param missing or invalid");
-    //   void router.replace('/');
-    // }
-    // };
     const handlePopState = () => {
       console.log("Back button pressed>>>>>>", courseId);
       router.push(`/${courseId}`);
@@ -119,13 +105,6 @@ export const Confirmation = ({
                 </div>
                 {bookingData && (bookingData?.playerCount ?? 0) > 1 ? (
                   <div className="flex  flex-col items-center justify-center gap-2 md:flex-row">
-                    {/* <Link
-                      href={`/${course?.id}/my-tee-box/?bookingId=${bookingId}&collectPayment=${isValidForCollectPayment}`}
-                      className="w-full md:w-fit md:min-w-[250px]"
-                      data-testid="go-to-my-tee-box-button-id"
-                    >
-                      <FilledButton className="w-full">Collect Payment</FilledButton>
-                    </Link> */}
                     <div className="w-full md:w-fit md:min-w-[15.625rem] ">
                       <FilledButton
                         onClick={handleNavigationForCollectPayment}
@@ -181,7 +160,12 @@ export const Confirmation = ({
       </div>
       {course?.supportsPlayerNameChange && (
         <div>
-          <InviteFriends teeTimeId={teeTimeId} groupId={bookingData?.groupId ?? undefined} isConfirmationPage />
+          <InviteFriends
+            teeTimeId={teeTimeId}
+            groupId={bookingData?.groupId ?? undefined}
+            isConfirmationPage
+            bookingId={bookingId}
+          />
         </div>
       )}
       <div>
@@ -201,13 +185,6 @@ export const Confirmation = ({
         </div>
         <div className="flex gap-2 justify-center" >
           <div className="flex flex-col items-center justify-center gap-2 md:flex-row">
-            {/* <Link
-              href={`/${course?.id}/my-tee-box`}
-              className="w-full md:w-fit md:min-w-[250px]"
-              data-testid="go-to-my-tee-box-button-id"
-            >
-              <FilledButton className="w-full">Go To My Tee Box</FilledButton>
-            </Link> */}
           </div>
         </div>
       </div>

@@ -111,7 +111,7 @@ export const BookingDetails = ({
                 : "-"}
             </TableCell>
           </TableRow>
-          {selectedReceipt?.status === "PURCHASED" && (
+          {selectedReceipt?.status === "CONFIRMED" && (
             <>
               <TableRow>
                 <TableCell
@@ -221,6 +221,7 @@ export const BookingDetails = ({
               selectedReceipt?.status === "SOLD") && (
                 <PDFDownloadLink
                   className="w-full"
+                  data-testid="cancel-button-id"
                   document={<BookingReceipt selectedReceipt={selectedReceipt} />}
                   fileName="booking_receipt.pdf"
                 >
@@ -229,16 +230,15 @@ export const BookingDetails = ({
                   </OutlineButton>
                 </PDFDownloadLink>
               )}
-
             <OutlineButton
               onClick={() => setIsReceiptOpen(false)}
               data-testid="cancel-button-id"
             >
               Cancel
             </OutlineButton>
-          </div>
-        </div>
-      </div>
+          </div >
+        </div >
+      </div >
     );
   };
 
@@ -390,8 +390,7 @@ const BookingReceipt = ({
                   : "-"}
               </Text>
             </View>
-            {/* PURCHASED Receipt */}
-            {selectedReceipt?.status === "PURCHASED" && (
+            {selectedReceipt?.status === "CONFIRMED" && (
               <>
                 <View style={styles.tableRow}>
                   <Text style={[styles.tableCell, styles.headerCell]}>

@@ -711,13 +711,26 @@ export const CheckoutForm = ({
           : `${window.location.origin}/${course?.id}/checkout/processing?teeTimeId=${teeTimeId}&cart_id=${cartId}&listing_id=${listingId}&need_rentals=${needRentals}`,
       },
       redirect: "if_required",
-    }) as { status: string; payment_id?: string; error_code?: string };
+    }) as { status: string; payment_id?: string; error_code?: string; error?: { type: string, message: string } };
 
     try {
       if (greenFeeChargePerPlayer * (Number(blockCheckoutValue)) <= markupFee) {
         toast.error("Price too low to sell.");
       } else {
         if (response) {
+          if (response?.error) {
+            if (response?.error?.type === 'invalid_request') {
+              setMessage("This payment session is already failed. Please reload the page.");
+            }
+            if (response?.error?.type === "validation_error") {
+              setMessage("Please complete all required fields in the payment and billing sections.");
+            }
+            else {
+              setMessage(response?.error?.message);
+            }
+            setIsLoading(false);
+            return
+          }
           if (response?.status === "processing") {
             void sendEmailForFailedPayment.mutateAsync({
               paymentId: response?.payment_id ?? "",
@@ -1150,7 +1163,7 @@ export const CheckoutForm = ({
 
   useEffect(() => {
     if (roundUpCharityId) handleRoundOff(donateValue, roundOffStatus);
-  }, [TaxCharge, roundUpCharityId, roundOffStatus]);
+  }, [TaxCharge, roundUpCharityId, roundOffStatus, donateValue]);
 
   useEffect(() => {
     if (!hasUserSelectedDonation) {
@@ -1181,7 +1194,7 @@ export const CheckoutForm = ({
         setRoundOffStatus("fiveDollars");
       }
     }
-  }, [totalBeforeRoundOff]);
+  }, []);
 
   useEffect(() => {
     setHasUserSelectedDonation(true);
@@ -1205,34 +1218,51 @@ export const CheckoutForm = ({
   }, [TotalAmt]);
 
   // Add state to track if payment intent needs updating
-  const [lastUpdatedAmount, setLastUpdatedAmount] = useState<string>();
+  const [_lastUpdatedAmount, setLastUpdatedAmount] = useState<string>();
   const [isUpdatingPaymentIntent, setIsUpdatingPaymentIntent] = useState(false);
 
+  const updatePaymentIntentPromiseRef = useRef<Promise<void> | null>(null);
   const updatePaymentIntent = async () => {
-    setIsUpdatingPaymentIntent(true);
-    let clientSecretId = '';
+    if (updatePaymentIntentPromiseRef.current) {
+      return updatePaymentIntentPromiseRef.current;
+    }
+    const promise = (async () => {
+      setIsUpdatingPaymentIntent(true);
+      let clientSecretId = '';
+      try {
+        await hyper.initiateUpdateIntent();
+        setLastUpdatedAmount(TotalAmt);
+        clientSecretId = await updateBuildSession?.() ?? '';
+      } catch (error) {
+        setMessage(error.message);
+      } finally {
+        await hyper.completeUpdateIntent(clientSecretId);
+        setTimeout(() => {
+          setIsUpdatingPaymentIntent(false);
+        }, 10);
+      }
+    })();
+    updatePaymentIntentPromiseRef.current = promise;
     try {
-      await hyper.initiateUpdateIntent();
-      setLastUpdatedAmount(TotalAmt);
-      clientSecretId = await updateBuildSession?.() ?? '';
-    } catch (error) {
-      setMessage(error.message);
+      return await promise;
     } finally {
-      await hyper.completeUpdateIntent(clientSecretId);
-      setTimeout(() => {
-        setIsUpdatingPaymentIntent(false);
-      }, 10);
+      updatePaymentIntentPromiseRef.current = null;
     }
   };
 
   // Update payment intent when total amount changes
+  // Debounce updates to avoid rapid successive updates causing multiple sessions
+  const updateDebounceRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
-    if (hyper && widgets && Total > 0) {
-      if (Number(playerCount) !== Number(amountOfPlayers)) {
-        return; // Skip if already updating with the same amount
-      }
+    if (!(hyper && widgets && Total > 0)) return;
+    if (Number(playerCount) !== Number(amountOfPlayers)) return;
+    if (updateDebounceRef.current) clearTimeout(updateDebounceRef.current);
+    updateDebounceRef.current = setTimeout(() => {
       void updatePaymentIntent();
-    }
+    }, 350);
+    return () => {
+      if (updateDebounceRef.current) clearTimeout(updateDebounceRef.current);
+    };
   }, [TotalAmt, playerCount, amountOfPlayers, cartData, donateValue]);
 
   return (
@@ -1526,7 +1556,6 @@ export const CheckoutForm = ({
                         }
 
                         const strippedLeadingZeros = value.replace(/^0+/, "");
-
                         handleSelectedCharityAmount(Number(strippedLeadingZeros));
                       }}
                       placeholder="Enter charitable donation amount."
@@ -1869,13 +1898,14 @@ export const CheckoutForm = ({
             id="terms-of-service-checkbox"
             name="terms-of-service-checkbox"
             data-testid="terms-of-service-checkbox-id"
-            className={`cursor-pointer ${isMobile ? "w-12 h-6" : "w-6 h-6"}  `}
+            className={`cursor-pointer ${isMobile ? "w-12 h-6" : "w-16 h-6"}  `}
             type="checkbox"
             checked={isChecked}
             onChange={() => setIsChecked(!isChecked)}
           />
-          <div className="cursor-pointer ml-2 text-[0.875rem] font-bold">
-            By checking the box and completing this reservation, I agree to the
+          <div className="cursor-pointer ml-2 text-[0.875rem] font-bold text-justify">
+            I understand and agree that I am purchasing a non-refundable, non-cancellable and non-changeable tee time.
+            By checking the box and completing this reservation, I agree to the{" "}
             <Link
               href="/terms-of-service"
               className="text-blue-600 underline"

@@ -347,7 +347,7 @@ const TableRow = ({
           data-test={teeTimeId}
           data-qa={courseId}
         >
-          <Avatar src={iconSrc} />
+          <Avatar src={iconSrc} isRounded={false} />
           <div className="flex flex-col">
             <div className="whitespace-nowrap underline text-secondary-black">
               {course}
@@ -368,7 +368,7 @@ const TableRow = ({
           data-test={offeredById}
           data-qa={courseId}
         >
-          <Avatar src={offeredByImage} />
+          <Avatar src={offeredByImage} isRounded={false} />
           <div className="text-primary-gray">{offeredBy}</div>
         </Link>
       </td>

@@ -220,7 +220,7 @@ const TableRow = ({
     <tr className="w-full border-b border-stroke text-primary-gray">
       <td className="gap-2 px-4 py-3">
         <div className="flex items-center gap-2">
-          <Avatar src={iconSrc} />
+          <Avatar src={iconSrc} isRounded={false} />
           <div className="flex flex-col">
             <div className="whitespace-nowrap text-secondary-black">
               {course}

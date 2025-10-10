@@ -35,12 +35,16 @@ import type {
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "usehooks-ts";
 import { useAppContext } from "~/contexts/AppContext";
 
+dayjs.extend(customParseFormat)
+
 const currentDate = formatQueryDate(new Date());
+const DEFAULT_TEE_TIME_EXPIRATION_TIME = 30;
 
 export default function Checkout({
   params,
@@ -641,6 +645,21 @@ export default function Checkout({
   const marginTop =
     notificationsCount > 0 ? `${notificationsCount * 10}px` : "0";
 
+  const isTeeTimeExpired = useMemo(() => {
+    if (data) {
+      const currentTime = dayjs.utc(dayjs().format("YYYY-MM-DD HH:mm:ss"), "YYYY-MM-DD HH:mm:ss");
+      const teeTimeDate = dayjs.utc(data.date, "YYYY-MM-DD HH:mm:ss");
+      return teeTimeDate.diff(currentTime, "minutes") < DEFAULT_TEE_TIME_EXPIRATION_TIME;
+    }
+  }, [data])
+
+  useEffect(() => {
+    if (isTeeTimeExpired && !isErrorBookingCancelled && !errorMessage) {
+      setErrorMessage("This tee time has expired and is no longer for sale. Play has already started.");
+      setIsErrorBookingCancelled(true);
+    }
+  }, [isTeeTimeExpired]);
+
   if (isError && error) {
     return (
       <div
@@ -648,7 +667,7 @@ export default function Checkout({
         style={{ height }}
       >
         <div className="text-center">Error: {error?.message}</div>
-        <Link href="/" className="underline">
+        <Link href={`/${course?.id}`} className="underline">
           Return to home
         </Link>
       </div>
@@ -662,7 +681,7 @@ export default function Checkout({
         style={{ height }}
       >
         <div className="text-center">Error: {errorMessage}</div>
-        <Link href="/" className="underline">
+        <Link href={`/${course?.id}`} className="underline">
           Return to home
         </Link>
       </div>

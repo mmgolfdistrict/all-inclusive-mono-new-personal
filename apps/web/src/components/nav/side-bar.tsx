@@ -235,26 +235,23 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
             </div>
             {user && session.status === "authenticated" ? (
               <div className="flex flex-col">
-                <NavItem
-                  href={`/${courseId}/profile/${user?.id}`}
-                  text={
-                    <div className="flex items-center gap-2">
-                      <Avatar
-                        src={imageUrl ?? "/defaults/default-profile.webp"}
-                        name={user?.name}
-                      />
-                      <div className="flex flex-col">
-                        <p className="font-bold">{user?.name}</p>
-                        <p>{user?.email}</p>
-                        <div className="text-primary-gray">@{user?.name}</div>
-                      </div>
-                    </div>
-                  }
-                  className="border-t border-stroke-secondary p-4"
-                  onClick={toggleSidebar}
+                <div
+                  className="border-t border-stroke-secondary p-4 cursor-default"
                   data-testid="user-name-id"
                   data-test={user?.id}
-                />
+                >
+                  <div className="flex items-center gap-2">
+                    <Avatar
+                      src={imageUrl ?? "/defaults/default-profile.webp"}
+                      name={user?.name}
+                    />
+                    <div className="flex flex-col text-xs">
+                      <p className="font-bold text-center">{user?.name}</p>
+                      <p className="text-center">{user?.email}</p>
+                      <div className="text-primary-gray text-center">@{user?.name}</div>
+                    </div>
+                  </div>
+                </div>
                 <NavItem
                   href={`/${courseId}/account-settings/${user?.id}`}
                   text="Account Settings"

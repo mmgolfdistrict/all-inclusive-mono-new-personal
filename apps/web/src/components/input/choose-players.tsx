@@ -41,25 +41,27 @@ export const ChoosePlayers = ({
     return courseUrl;
   }, []);
 
+  // Determine if second hand with no split is active
+  const isSecondHandNoSplit = status === "SECOND_HAND" && !allowSplit;
+  const selectedPlayerStr = String(players);
+
   const handlePlayerChange = (value: string) => {
     if (isDisabled) return;
     if (availableSlots < parseInt(value)) return;
-    if (!numberOfPlayers?.includes(value) || (status === "SECOND_HAND" && !allowSplit)) {
-      return;
-    }
+
+    // Enforce disabled options for second hand no split - only allow changing to fixed count
+    if (isSecondHandNoSplit && value !== selectedPlayerStr) return;
+
+    if (!numberOfPlayers?.includes(value)) return;
+
     if (value) {
       setPlayers(value);
 
-      // Check if playerCount is already present in the query
+      // Update URL with playerCount param if present
       const newSearchParams = new URLSearchParams(searchParams.toString());
       if (newSearchParams.has("playerCount")) {
-        // If playerCount is present, update the URL with the new playerCount value
         newSearchParams.set("playerCount", value);
-
-        // Push the updated URL
-        router.push(
-          `${window.location.pathname}?${newSearchParams.toString()}`
-        );
+        router.push(`${window.location.pathname}?${newSearchParams.toString()}`);
       }
     }
   };
@@ -67,7 +69,7 @@ export const ChoosePlayers = ({
   return (
     <ToggleGroup.Root
       type="single"
-      value={players as string}
+      value={selectedPlayerStr}
       onValueChange={handlePlayerChange}
       orientation="horizontal"
       className={`flex ${className}`}
@@ -77,28 +79,35 @@ export const ChoosePlayers = ({
       data-cy={players}
       id={id}
     >
-      {playersOptions.map((value, index) => (
-        <Item
-          key={index}
-          value={value}
-          label={value}
-          dataTestId="tee-time-player-id"
-          dataTest={teeTimeId}
-          dataQa={value}
-          className={`${index === 0
-            ? "rounded-l-full border border-stroke"
-            : index === playersOptions.length - 1
-              ? "rounded-r-full border-b border-t border-r border-stroke"
-              : "border-b border-r border-t border-stroke"
-            } px-[1rem] py-[.25rem] z-[1] ${availableSlots < index + 1 ? "opacity-50 cursor-not-allowed" : ""
-            } ${isDisabled || !numberOfPlayers?.includes(value)
-              ? "opacity-50 cursor-not-allowed"
-              : ""
-            } ${className ?? ""}`}
-        />
-      ))}
-      {supportsGroupBooking
-        ? <button
+      {playersOptions.map((value, index) => {
+        // Disable all options except currently selected one if second hand no split
+        const isOptionDisabled =
+          isDisabled ||
+          (availableSlots < index + 1) || // disable if slot not available
+          (isSecondHandNoSplit && value !== selectedPlayerStr) || // disable others if second hand no split
+          !numberOfPlayers?.includes(value); // disable if not allowed per numberOfPlayers
+
+        return (
+          <Item
+            key={index}
+            value={value}
+            label={value}
+            dataTestId="tee-time-player-id"
+            dataTest={teeTimeId}
+            dataQa={value}
+            className={`${index === 0
+              ? "rounded-l-full border border-stroke"
+              : index === playersOptions.length - 1
+                ? "rounded-r-full border-b border-t border-r border-stroke"
+                : "border-b border-r border-t border-stroke"
+              } px-[1rem] py-[.25rem] z-[1]
+              ${isOptionDisabled ? "opacity-50 cursor-not-allowed" : ""}
+              ${className ?? ""}`}
+          />
+        );
+      })}
+      {supportsGroupBooking && (
+        <button
           className={`!text-primary rounded-full border border-primary
           px-[0.75rem] py-[0.25rem] ml-[0.25rem] bg-white cursor-pointer
           ${className ?? ""}
@@ -106,11 +115,13 @@ export const ChoosePlayers = ({
           onClick={() => {
             router.push(
               `${urlWithCourse}/group-booking?${groupBookingParams ?? ""}`
-            )
+            );
           }}
           data-testid="group-booking-button-id"
-        >5+</button>
-        : null}
+        >
+          5+
+        </button>
+      )}
     </ToggleGroup.Root>
   );
 };
