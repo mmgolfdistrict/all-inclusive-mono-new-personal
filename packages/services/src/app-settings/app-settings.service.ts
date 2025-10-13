@@ -59,7 +59,7 @@ export class AppSettingsService {
             lastUpdatedDateTime: appSettings.lastUpdatedDateTime,
           })
           .from(appSettings)
-          .innerJoin(
+          .leftJoin(
             appSettingMetadata,
             eq(appSettings.internalName, appSettingMetadata.internalName)
           )
