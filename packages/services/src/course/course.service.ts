@@ -203,7 +203,7 @@ export class CourseService extends DomainService {
           groupEndTime: courses.groupEndTime,
           supportsSellingMerchandise: courses.supportsSellingMerchandise,
           primaryMarketAllowedPlayers: courses.primaryMarketAllowedPlayers,
-          primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer
+          primaryMarketSellLeftoverSinglePlayer: courses.primaryMarketSellLeftoverSinglePlayer,
         })
         .from(courses)
         .innerJoin(providerCourseLink, eq(providerCourseLink.courseId, courses.id))
@@ -253,8 +253,7 @@ export class CourseService extends DomainService {
     //Cache if possible
     const primarySaleTeeTimePriceQuery = this.database
       .select({
-        highestPrimarySaleTeeTime:
-          sql`max(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + 
+        highestPrimarySaleTeeTime: sql`max(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + 
           CASE 
             WHEN ${courseMarkup.fromDay} IS NOT NULL 
               AND ${courseMarkup.toDay} IS NOT NULL 
@@ -271,8 +270,7 @@ export class CourseService extends DomainService {
               ELSE 0
             END, 0)
           )`,
-        lowestPrimarySaleTeeTime:
-          sql`min(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + 
+        lowestPrimarySaleTeeTime: sql`min(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + 
           CASE 
             WHEN ${courseMarkup.fromDay} IS NOT NULL 
               AND ${courseMarkup.toDay} IS NOT NULL 
@@ -294,12 +292,7 @@ export class CourseService extends DomainService {
       .innerJoin(courses, eq(courses.id, teeTimes.courseId))
       .leftJoin(courseMarkup, eq(courseMarkup.courseId, teeTimes.courseId))
       .leftJoin(courseAdvancedBookingFee, eq(courseAdvancedBookingFee.courseId, teeTimes.courseId))
-      .where(
-        and(
-          eq(teeTimes.courseId, courseId),
-          gte(teeTimes.providerDate, currentUtcTimestamp())
-        )
-      )
+      .where(and(eq(teeTimes.courseId, courseId), gte(teeTimes.providerDate, currentUtcTimestamp())))
       .limit(1)
       .execute();
 
@@ -309,17 +302,22 @@ export class CourseService extends DomainService {
         fromTime: courseAllowedTimeToSell.fromTime,
         toTime: courseAllowedTimeToSell.toTime,
         primaryMarketAllowedPlayers: courseAllowedTimeToSell.primaryMarketAllowedPlayers,
-        primaryMarketSellLeftoverSinglePlayer: courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer
+        primaryMarketSellLeftoverSinglePlayer: courseAllowedTimeToSell.primaryMarketSellLeftoverSinglePlayer,
       })
       .from(courseAllowedTimeToSell)
       .where(eq(courseAllowedTimeToSell.courseId, courseId))
       .execute();
 
-    const [courseDetailsArray, listTeeTimePricesArray, primarySaleTeeTimePricesArray, courseAllowedTimeToSellArray] = await Promise.all([
+    const [
+      courseDetailsArray,
+      listTeeTimePricesArray,
+      primarySaleTeeTimePricesArray,
+      courseAllowedTimeToSellArray,
+    ] = await Promise.all([
       courseDetailsQuery,
       listTeeTimePriceQuery,
       primarySaleTeeTimePriceQuery,
-      courseAllowedTimeToSellQuery
+      courseAllowedTimeToSellQuery,
     ]);
 
     console.log('courseDetailsArray: ', courseDetailsArray);
@@ -328,7 +326,8 @@ export class CourseService extends DomainService {
     const course = courseDetailsArray[0];
     const listTeeTimePrices = listTeeTimePricesArray[0];
     const primarySaleTeeTimePrices = primarySaleTeeTimePricesArray[0];
-    const courseAllowedTimeToSellSlots = courseAllowedTimeToSellArray.length > 0 ? courseAllowedTimeToSellArray : null;
+    const courseAllowedTimeToSellSlots =
+      courseAllowedTimeToSellArray.length > 0 ? courseAllowedTimeToSellArray : null;
 
     if (!course) return null;
     const { providerConfiguration, ...courseDetails } = course;
@@ -338,7 +337,7 @@ export class CourseService extends DomainService {
       ...courseDetails,
       ...listTeeTimePrices,
       ...primarySaleTeeTimePrices,
-      courseAllowedTimeToSellSlots
+      courseAllowedTimeToSellSlots,
     };
 
     console.log('result: ', result);
@@ -353,6 +352,43 @@ export class CourseService extends DomainService {
 
     const supportsPlayerNameChange = provider.supportsPlayerNameChange() ?? false;
 
+    const courseSettings = await this.database
+      .select({
+        id: courseSetting.id,
+        internalName: courseSetting.internalName,
+        value: courseSetting.value,
+        datatype: courseSetting.datatype,
+      })
+      .from(courseSetting)
+      .where(eq(courseSetting.courseId, courseId))
+      .execute()
+      .catch((err) => {
+        this.logger.error(`Error getting course settings for course: ${err}`);
+        loggerService.errorLog({
+          userId: "",
+          url: "/CourseService/getCourseById",
+          userAgent: "",
+          message: "ERROR_GETTING_COURSE_SETTINGS_FOR_COURSE",
+          stackTrace: `${err.stack}`,
+          additionalDetailsJSON: JSON.stringify({
+            courseId,
+          }),
+        });
+        throw new Error("Error getting course settings");
+      });
+
+    const isAllowSpecialRequest = courseSettings.find(
+      (setting) => setting.internalName === "ALLOW_SPECIAL_REQUEST"
+    );
+
+    const isAllowClubRental = courseSettings.find(
+      (setting) => setting.internalName === "ALLOW_CLUB_RENTAL"
+    );
+
+    const isAllowCourseSwitching = courseSettings.find(
+      (setting) => setting.internalName === "ALLOW_COURSE_SWITCHING"
+    );
+
     let res = {
       ...result,
       highestListedTeeTime: ((result.highestListedTeeTime as number) ?? 0) / 100,
@@ -360,6 +396,18 @@ export class CourseService extends DomainService {
       highestPrimarySaleTeeTime: ((result.highestPrimarySaleTeeTime as number) ?? 0) / 100,
       lowestPrimarySaleTeeTime: ((result.lowestPrimarySaleTeeTime as number) ?? 0) / 100,
       supportsPlayerNameChange,
+      isAllowSpecialRequest: parseSettingValue(
+        isAllowSpecialRequest?.value ?? "true",
+        isAllowSpecialRequest?.datatype ?? "string"
+      ),
+      isAllowClubRental: parseSettingValue(
+        isAllowClubRental?.value ?? "true",
+        isAllowClubRental?.datatype ?? "string"
+      ),
+      isAllowCourseSwitching: parseSettingValue(
+        isAllowCourseSwitching?.value ?? "",
+        isAllowCourseSwitching?.datatype ?? "boolean"
+      ),
     };
 
     if (result.supportCharity) {
@@ -430,30 +478,18 @@ export class CourseService extends DomainService {
           throw new Error("Error getting course settings");
         });
 
-      let groupBookingMinSize = Number(
-        courseSettings.find((setting) => setting.internalName === "GROUP_BOOKING_MIN_SIZE")?.value
-      );
-      let groupBookingMaxSize = Number(
-        courseSettings.find((setting) => setting.internalName === "GROUP_BOOKING_MAX_SIZE")?.value
-      );
+      let groupBookingMinSize =
+        Number(courseSettings.find((setting) => setting.internalName === "GROUP_BOOKING_MIN_SIZE")?.value) ||
+        5;
+      let groupBookingMaxSize =
+        Number(courseSettings.find((setting) => setting.internalName === "GROUP_BOOKING_MAX_SIZE")?.value) ||
+        18;
 
       const isOnlyGroupOfFourAllowed =
         (Number(
           courseSettings.find((setting) => setting.internalName === "GROUP_BOOKING_ALLOW_SIZE_ONLY_IN_4")
             ?.value
         ) ?? 0) === 1;
-
-      const isAllowSpecialRequest = courseSettings.find(
-        (setting) => setting.internalName === "ALLOW_SPECIAL_REQUEST"
-      );
-
-      const isAllowClubRental = courseSettings.find(
-        (setting) => setting.internalName === "ALLOW_CLUB_RENTAL"
-      );
-
-      const isAllowCourseSwitching = courseSettings.find(
-        (setting) => setting.internalName === "ALLOW_COURSE_SWITCHING"
-      );
 
       if (isOnlyGroupOfFourAllowed) {
         let sliderMin = groupBookingMinSize;
@@ -473,18 +509,6 @@ export class CourseService extends DomainService {
         groupBookingMinSize,
         groupBookingMaxSize,
         isOnlyGroupOfFourAllowed,
-        isAllowSpecialRequest: parseSettingValue(
-          isAllowSpecialRequest?.value ?? "",
-          isAllowSpecialRequest?.datatype ?? "string"
-        ),
-        isAllowClubRental: parseSettingValue(
-          isAllowClubRental?.value ?? "",
-          isAllowClubRental?.datatype ?? "string"
-        ),
-        isAllowCourseSwitching: parseSettingValue(
-          isAllowCourseSwitching?.value ?? "",
-          isAllowCourseSwitching?.datatype ?? "boolean"
-        ),
       };
     }
     return res;
@@ -599,11 +623,7 @@ export class CourseService extends DomainService {
       // .innerJoin(courses, eq(assets.courseId, courses.id))
       // .where(and(eq(assets.courseId, courseId), eq(assets.courseAssetId, courseAssets.id)))
       .innerJoin(courses, eq(courseAssets.courseId, courses.id))
-      .where(and(
-        eq(courses.id, courseId),
-        eq(courseAssets.isDeleted, false),
-        eq(assets.isDeleted, false)
-      ))
+      .where(and(eq(courses.id, courseId), eq(courseAssets.isDeleted, false), eq(assets.isDeleted, false)))
       .orderBy(asc(courseAssets.order))
       .execute()
       .catch((err) => {

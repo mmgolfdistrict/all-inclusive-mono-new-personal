@@ -4,27 +4,27 @@ import { resetPasswordSchema } from "../../../shared/src/schema/reset-password-s
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
-  inviteUser: protectedProcedure
+  inviteUsers: protectedProcedure
     .input(
       z.object({
-        emailOrPhone: z.string(),
-        teeTimeId: z.string(),
-        bookingSlotId: z.string(),
-        slotPosition: z.number(),
+        invites: z.array(
+          z.object({
+            emailOrPhoneNumber: z.string(),
+            teeTimeId: z.string(),
+            bookingSlotId: z.string(),
+            slotPosition: z.number(),
+          })
+        ),
         redirectHref: z.string(),
+        courseId: z.string().optional(),
+        color1: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getUserService()
-        .inviteUser(
-          ctx.session.user.id,
-          input.emailOrPhone,
-          input.teeTimeId,
-          input.bookingSlotId,
-          input.slotPosition,
-          input.redirectHref
-        );
+        .inviteUsers(ctx.session.user.id, input.invites, input.redirectHref, input.courseId,
+          input.color1);
     }),
   getInvitedUsers: protectedProcedure
     .input(
@@ -110,12 +110,13 @@ export const userRouter = createTRPCRouter({
     .input(
       z.object({
         teeTimeId: z.string(),
+        bookingId: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getUserService()
-        .getBookingsOwnedForTeeTime(input.teeTimeId, ctx?.session?.user?.id);
+        .getBookingsOwnedForTeeTime(input.teeTimeId, ctx?.session?.user?.id, input.bookingId);
     }),
   forgotPasswordRequest: publicProcedure.input(forgotPasswordSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory

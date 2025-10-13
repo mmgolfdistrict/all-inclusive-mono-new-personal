@@ -1,10 +1,24 @@
 "use client";
+
+import dynamic from "next/dynamic";
 import { GoBack } from "~/components/buttons/go-back";
 import { DownChevron } from "~/components/icons/down-chevron";
-import { TableView } from "~/components/my-tee-box-page/table-view";
 import { OpenSection } from "~/utils/tee-box-helper";
 import { useMediaQuery } from "usehooks-ts";
-import { TableViewMobile } from "~/components/my-tee-box-page/table-view-mobile";
+
+const TableViewMobile = dynamic(
+  () => import("~/components/my-tee-box-page/table-view-mobile").then(
+    (mod) => mod.default
+  ),
+  { ssr: false }
+);
+
+const TableView = dynamic(
+  () => import("~/components/my-tee-box-page/table-view").then(
+    (mod) => mod.TableView
+  ),
+  { ssr: false }
+);
 
 type OpenSectionDescriptionType = Record<string, string>;
 
@@ -33,10 +47,10 @@ export default function MyTeeBox({
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
-      <div className="mx-auto flex items-center justify-between px-[1rem] md:max-w-[1360px] md:px-[1.5rem]">
+      <div className="mx-auto flex items-center justify-between px-[1rem] md:max-w-[1600px] md:px-[1.5rem]">
         <GoBack href={`/${courseId}`} text={`Back to tee times`} />
       </div>
-      <section className="mx-auto flex w-full flex-col gap-4 pt-[1rem] md:max-w-[1360px] md:px-[1.5rem]">
+      <section className="mx-auto flex w-full flex-col gap-4 pt-[1rem] md:max-w-[1600px] md:px-[1.5rem]">
         <div className="flex flex-col gap-4 px-[1rem] md:px-0">
           <div>
             <h1 className="flex items-center gap-2 text-xl capitalize text-secondary-black md:text-4xl">

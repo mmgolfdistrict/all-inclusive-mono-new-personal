@@ -1,6 +1,6 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { datetime, varchar } from "drizzle-orm/mysql-core";
+import { datetime, tinyint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const entityGlobalNotification = mySqlTable("entityGlobalNotification", {
@@ -13,6 +13,7 @@ export const entityGlobalNotification = mySqlTable("entityGlobalNotification", {
   displayType: varchar("displayType", { length: 36 }).notNull(),
   bgColor: varchar("bgColor", { length: 15 }).notNull().default("red"),
   color: varchar("color", { length: 15 }).notNull().default("white"),
+  sortOrder: tinyint("sortOrder").default(0).notNull(),
   createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
     .notNull()
     .default(sql`CURRENT_TIMESTAMP(3)`),

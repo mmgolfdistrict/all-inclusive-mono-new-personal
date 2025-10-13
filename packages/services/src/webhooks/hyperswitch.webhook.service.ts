@@ -1261,7 +1261,8 @@ export class HyperSwitchWebhookService {
                   CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
                   color1: color1,
                 },
-                []
+                [],
+                parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
               );
             }
           }
@@ -1687,6 +1688,7 @@ export class HyperSwitchWebhookService {
             TotalAmount: formatMoney(total / 100),
             SellTeeTImeURL: `${redirectHref}/my-tee-box`,
             ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
+            color1: color1,
           };
 
           await this.notificationService.createNotification(
@@ -1741,6 +1743,7 @@ export class HyperSwitchWebhookService {
               PurchasedFrom: existingTeeTime?.courseName || "-",
               BuyTeeTImeURL: `${redirectHref}`,
               CashOutURL: `${redirectHref}/account-settings/${firstBooking.ownerId}`,
+              color1: color1,
             };
             await this.notificationService.createNotification(
               firstBooking.ownerId || "",
@@ -1778,6 +1781,7 @@ export class HyperSwitchWebhookService {
             PurchasedFrom: existingTeeTime?.courseName || "-",
             BuyTeeTImeURL: `${redirectHref}`,
             CashOutURL: `${redirectHref}/account-settings/${firstBooking.ownerId}`,
+            color1: color1,
           };
           await this.notificationService.createNotification(
             firstBooking.ownerId || "",
@@ -1795,7 +1799,8 @@ export class HyperSwitchWebhookService {
               providerBookingId,
               listingId,
               remainingSlots,
-              firstBooking.ownerId
+              firstBooking.ownerId,
+              color1
             );
           }
         }
@@ -1863,7 +1868,8 @@ export class HyperSwitchWebhookService {
         await this.bookingService.addListingForRemainingSlotsOnGroupBooking(
           firstBooking.groupId,
           listedSlotsCount,
-          firstBooking.ownerId
+          firstBooking.ownerId,
+          color1
         );
       }
     } catch (err: any) {
