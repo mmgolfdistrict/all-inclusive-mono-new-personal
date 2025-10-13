@@ -9,7 +9,7 @@ import type { CartProduct, SearchObject } from "~/utils/types";
 import dayjs from "dayjs";
 import isequal from "lodash.isequal";
 // import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { Spinner } from "../loading/spinner";
 import { CheckoutForm } from "./checkout-form";
@@ -83,7 +83,9 @@ export const HyperSwitch = ({
     undefined
   );
   const [paymentId, setPaymentId] = useState<string | undefined>(undefined);
-  let initialLoad = true;
+  const initialLoadRef = useRef(true);
+  // Deduplicate concurrent buildSession calls and return the same promise to callers
+  const buildSessionPromiseRef = useRef<Promise<string | null> | null>(null);
 
   const convertDateFormat = (dateString: string, utcOffset = 0) => {
     const cleanTimeString = !dateString.includes("T")
@@ -98,78 +100,83 @@ export const HyperSwitch = ({
   };
 
   const buildSession = async () => {
-    initialLoad = false;
-    let clientSecret: string | null = null;
-    if (!user) return clientSecret;
-    try {
-      setError(undefined);
-
-      const data = (await checkout({
-        userId: user.id,
-        customerId: user.id,
-        courseId: course?.id ?? "",
-        name: user?.name ?? "",
-        email: user.email ?? "",
-        phone: user.phone ?? "",
-        phone_country_code: "1",
-        paymentId: options?.paymentId
-          ? options.paymentId
-          : paymentId
-            ? paymentId
-            : null,
-        //@ts-ignore
-        cart: cartData,
-        cartId,
-        teeTimeId,
-        courseName: course?.name ?? "",
-        playDateTime: convertDateFormat(
-          teeTimeData?.date ?? "",
-          course?.timezoneCorrection
-        ),
-        playerCount: playerCount ?? "",
-        teeTimeType:
-          teeTimeData?.firstOrSecondHandTeeTime === TeeTimeType.SECOND_HAND
-            ? "SECONDARY"
-            : teeTimeData?.firstOrSecondHandTeeTime === TeeTimeType.FIRST_HAND
-              ? "PRIMARY"
-              : "UNLISTED",
-        listingId: listingId ?? "",
-        purpose: "tee_time_purchase"
-      })) as CreatePaymentResponse;
-      if (data?.error) {
-        toast.error(data?.error);
-      }
-      clientSecret = data?.client_secret;
-
-      if (data?.next_action) {
-        setNextaction(data?.next_action);
-        setPaymentId(data?.payment_id);
-      } else {
-        setPaymentId(data?.payment_id);
-        setOptions({
-          clientSecret: data.client_secret,
-          paymentId: data.payment_id,
-          appearance: {
-            theme: "default",
-          },
-        });
-      }
-      setLocalCartData(cartData);
-      setCartId(data.cartId);
-      // setIsLoadingSession(false);
-    } catch (error) {
-      // setIsLoadingSession(false);
-      setError(
-        (error?.message as string) ??
-        "An error occurred building checkout seesion."
-      );
+    if (buildSessionPromiseRef.current) {
+      return buildSessionPromiseRef.current;
     }
-    return clientSecret;
-  };
+    initialLoadRef.current = false;
+    const promise = (async () => {
+      let clientSecret: string | null = null;
+      if (!user) return clientSecret;
+      try {
+        setError(undefined);
 
-  useEffect(() => {
-    void buildSession();
-  }, [playerCount]);
+        const data = (await checkout({
+          userId: user.id,
+          customerId: user.id,
+          courseId: course?.id ?? "",
+          name: user?.name ?? "",
+          email: user.email ?? "",
+          phone: user.phone ?? "",
+          phone_country_code: "1",
+          paymentId: options?.paymentId
+            ? options.paymentId
+            : paymentId
+              ? paymentId
+              : null,
+          //@ts-ignore
+          cart: cartData,
+          cartId,
+          teeTimeId,
+          courseName: course?.name ?? "",
+          playDateTime: convertDateFormat(
+            teeTimeData?.date ?? "",
+            course?.timezoneCorrection
+          ),
+          playerCount: playerCount ?? "",
+          teeTimeType:
+            teeTimeData?.firstOrSecondHandTeeTime === TeeTimeType.SECOND_HAND
+              ? "SECONDARY"
+              : teeTimeData?.firstOrSecondHandTeeTime === TeeTimeType.FIRST_HAND
+                ? "PRIMARY"
+                : "UNLISTED",
+          listingId: listingId ?? "",
+          purpose: "tee_time_purchase"
+        })) as CreatePaymentResponse;
+        if (data?.error) {
+          toast.error(data?.error);
+        }
+        clientSecret = data?.client_secret;
+
+        if (data?.next_action) {
+          setNextaction(data?.next_action);
+          setPaymentId(data?.payment_id);
+        } else {
+          setPaymentId(data?.payment_id);
+          setOptions({
+            clientSecret: data.client_secret,
+            paymentId: data.payment_id,
+            appearance: {
+              theme: "default",
+            },
+          });
+        }
+        setLocalCartData(cartData);
+        setCartId(data.cartId);
+      } catch (error) {
+        setError(
+          (error?.message as string) ??
+          "An error occurred building checkout seesion."
+        );
+      }
+      return clientSecret;
+    })();
+    buildSessionPromiseRef.current = promise;
+    try {
+      return await promise;
+    } finally {
+      buildSessionPromiseRef.current = null;
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -180,7 +187,7 @@ export const HyperSwitch = ({
     //     break;
     //   }
     // }
-    if ((!options && initialLoad) || !isequal(localCartData, cartData)) {
+    if ((!options && initialLoadRef.current) || !isequal(localCartData, cartData)) {
       if (cartData?.length > 0) {
         void buildSession();
       }

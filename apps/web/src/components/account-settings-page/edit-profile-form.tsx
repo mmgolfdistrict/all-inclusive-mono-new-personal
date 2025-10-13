@@ -426,12 +426,14 @@ export const EditProfileForm = () => {
         courseId,
         color1: entity?.color1,
       });
-
+      // if (!response?.error) {
+      await update({ name: data?.name });
+      // }
       if (response?.error) {
         toast.error(response.message);
         return;
       }
-      if (profilePhoto && profilePhoto !== defaultProfilePhoto) {
+      if (profilePhoto && assetIds.profilePictureId && profilePhoto !== defaultProfilePhoto) {
         setProfilePhoto(null);
         await update({ image: assetIds.profilePictureId });
         setAssetIds((prev) => ({ ...prev, profilePictureId: "" }));

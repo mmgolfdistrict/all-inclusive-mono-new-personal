@@ -30,7 +30,7 @@ export class UserWaitlistService {
     private readonly database: Db,
     private readonly notificationService: NotificationService,
     private readonly appSettingService: AppSettingsService
-  ) { }
+  ) {}
 
   getWaitlist = async (userId: string, courseId: string) => {
     try {
@@ -190,21 +190,24 @@ export class UserWaitlistService {
         }
       }
 
-      if ((createdNotifications > 0 && deletedNotifications > 0) || (createdNotifications > 0 && deletedNotifications === 0)) {
+      if (
+        (createdNotifications > 0 && deletedNotifications > 0) ||
+        (createdNotifications > 0 && deletedNotifications === 0)
+      ) {
         return {
           message: "Notifications created successfully",
           noChanges: false,
-        }
+        };
       } else if (createdNotifications === 0 && deletedNotifications > 0) {
         return {
           message: "Notifications updated successfully",
           noChanges: false,
-        }
+        };
       } else {
         return {
           message: "Notification Already Exists",
           noChanges: true,
-        }
+        };
       }
     } catch (error: any) {
       this.logger.error(error);
@@ -318,7 +321,8 @@ export class UserWaitlistService {
     time: number,
     courseId: string,
     userId?: string,
-    listingId?: string
+    listingId?: string,
+    color1?: string
   ) => {
     try {
       if (!date || !time) {
@@ -410,6 +414,7 @@ export class UserWaitlistService {
           subDomainURL: notification.subDomainURL,
           courseName: notification.courseName,
           listingId,
+          color1,
         };
         if (listingId) {
           await this.sendQstashMessage(data, notificationDelay?.toString());

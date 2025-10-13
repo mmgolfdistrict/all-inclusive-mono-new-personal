@@ -223,7 +223,7 @@ export default function CourseHomePage() {
 
   useEffect(() => {
     if (queryDateType === "custom" && queryDate) {
-      setDateType("Custom");
+      setDateType("Select Dates");
 
       // const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
       // const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
@@ -295,41 +295,41 @@ export default function CourseHomePage() {
 
         return formatDateString(currentTimePlus30);
       }
-      case "This Week": {
-        if (isMobile) {
-          const currentTime = dayjs(new Date());
-          const currentTimePlus30 = currentTime.add(30, 'minute');
+      // case "This Week": {
+      //   if (isMobile) {
+      //     const currentTime = dayjs(new Date());
+      //     const currentTimePlus30 = currentTime.add(30, 'minute');
 
-          const closingHour = Math.floor(startTime[1] / 100);
-          const closingMinute = startTime[1] % 100;
+      //     const closingHour = Math.floor(startTime[1] / 100);
+      //     const closingMinute = startTime[1] % 100;
 
-          const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+      //     const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
 
-          if (currentTimePlus30.isAfter(closingTime)) {
-            return formatDateString(currentTime.add(1, 'day').startOf('day'))
-          }
+      //     if (currentTimePlus30.isAfter(closingTime)) {
+      //       return formatDateString(currentTime.add(1, 'day').startOf('day'))
+      //     }
 
-          return formatDateString(currentTimePlus30);
-        }
-      }
+      //     return formatDateString(currentTimePlus30);
+      //   }
+      // }
       // eslint-disable-next-line no-fallthrough
-      case "This Month": {
-        if (isMobile) {
-          const currentTime = dayjs(new Date());
-          const currentTimePlus30 = currentTime.add(30, 'minute');
+      // case "This Month": {
+      //   if (isMobile) {
+      //     const currentTime = dayjs(new Date());
+      //     const currentTimePlus30 = currentTime.add(30, 'minute');
 
-          const closingHour = Math.floor(startTime[1] / 100);
-          const closingMinute = startTime[1] % 100;
+      //     const closingHour = Math.floor(startTime[1] / 100);
+      //     const closingMinute = startTime[1] % 100;
 
-          const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+      //     const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
 
-          if (currentTimePlus30.isAfter(closingTime)) {
-            return formatDateString(currentTime.add(1, 'day').startOf('day'))
-          }
+      //     if (currentTimePlus30.isAfter(closingTime)) {
+      //       return formatDateString(currentTime.add(1, 'day').startOf('day'))
+      //     }
 
-          return formatDateString(currentTimePlus30);
-        }
-      }
+      //     return formatDateString(currentTimePlus30);
+      //   }
+      // }
       // eslint-disable-next-line no-fallthrough
       case "Furthest Day Out To Book":
         return formatDateString(dayjs(new Date()).add(30, "minute"));
@@ -374,7 +374,7 @@ export default function CourseHomePage() {
         }
       }
       // eslint-disable-next-line no-fallthrough
-      case "Custom": {
+      case "Select Dates": {
         if (!selectedDay.from) return formatDateString(new Date());
         const customDate = dayjs(
           `${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`
@@ -416,16 +416,16 @@ export default function CourseHomePage() {
 
           return formatDateStringEnd(dayjs().endOf("day").toDate());
         }
-      case "This Week": {
-        const currentDay = dayjs();
-        const isSunday = currentDay.day() === 0;
+      // case "This Week": {
+      //   const currentDay = dayjs();
+      //   const isSunday = currentDay.day() === 0;
 
-        if (isSunday) {
-          return formatDateStringEnd(currentDay.add(1, 'week').endOf('isoWeek').toDate());
-        }
+      //   if (isSunday) {
+      //     return formatDateStringEnd(currentDay.add(1, 'week').endOf('isoWeek').toDate());
+      //   }
 
-        return formatDateStringEnd(currentDay.endOf('isoWeek').toDate());
-      }
+      //   return formatDateStringEnd(currentDay.endOf('isoWeek').toDate());
+      // }
       case "This Weekend": {
         const currentDay = dayjs();
         const isSunday = currentDay.day() === 0;
@@ -436,18 +436,18 @@ export default function CourseHomePage() {
 
         return formatDateStringEnd(currentDay.day(7).endOf('day'));
       }
-      case "This Month": {
-        const today = dayjs();
-        const lastDayOfMonth = today.endOf('month');
-        if (today.isSame(lastDayOfMonth, 'day')) {
-          return formatDateStringEnd(lastDayOfMonth.add(1, 'month').endOf('month').toDate());
-        }
+      // case "This Month": {
+      //   const today = dayjs();
+      //   const lastDayOfMonth = today.endOf('month');
+      //   if (today.isSame(lastDayOfMonth, 'day')) {
+      //     return formatDateStringEnd(lastDayOfMonth.add(1, 'month').endOf('month').toDate());
+      //   }
 
-        return formatDateStringEnd(lastDayOfMonth.toDate());
-      }
+      //   return formatDateStringEnd(lastDayOfMonth.toDate());
+      // }
       case "Furthest Day Out To Book":
         return formatDateStringEnd(dayjs(farthestDateOut).toDate());
-      case "Custom": {
+      case "Select Dates": {
         if (!selectedDay.to) {
           if (selectedDay.from) {
             const endOfDay = dayjs(

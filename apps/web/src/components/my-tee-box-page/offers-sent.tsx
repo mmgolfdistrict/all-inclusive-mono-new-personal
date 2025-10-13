@@ -43,7 +43,7 @@ export type OfferSentType = {
   };
 };
 
-export const OffersSent = () => {
+const OffersSent = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isCancelOfferOpen, setIsCancelOfferOpen] = useState<boolean>(false);
@@ -202,7 +202,7 @@ const TableRow = ({
           data-test={teeTimeId}
           data-qa={courseId}
         >
-          <Avatar src={iconSrc} />
+          <Avatar src={iconSrc} isRounded={false} />
           <div className="flex flex-col">
             <div className="whitespace-nowrap underline text-secondary-black">
               {course}
@@ -223,7 +223,7 @@ const TableRow = ({
           data-test={ownedById}
           data-qa={courseId}
         >
-          <Avatar src={ownedByImage} />
+          <Avatar src={ownedByImage} isRounded={false} />
           <div className="text-primary-gray">{ownedBy}</div>
         </Link>
       </td>
@@ -259,3 +259,5 @@ const TableRow = ({
     </tr>
   );
 };
+
+export default OffersSent;
