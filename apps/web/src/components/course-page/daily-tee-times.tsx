@@ -17,6 +17,7 @@ import { LeftChevron } from "../icons/left-chevron";
 import { Tooltip } from "../tooltip";
 import { TeeTimeSkeleton } from "./tee-time-skeleton";
 import { useAppContext } from "~/contexts/AppContext";
+import { SafeContent } from "~/utils/safe-content";
 
 export const DailyTeeTimes = ({
   date,
@@ -272,7 +273,7 @@ export const DailyTeeTimes = ({
                     <Info className="h-4 md:h-5" />
                   </span>
                 }
-                content={courseException.longMessage}
+                content={SafeContent({ htmlContent: courseException.longMessage })}
               />
             )}
           </div>
