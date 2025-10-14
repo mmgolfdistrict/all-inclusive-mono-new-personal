@@ -10,6 +10,7 @@ import { Info } from "../icons/info";
 import { BlurImage } from "../images/blur-image";
 import { PoweredBy } from "../powered-by";
 import { Tooltip } from "../tooltip";
+import { SafeContent } from "~/utils/safe-content";
 
 export const MainNav = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -64,7 +65,7 @@ export const MainNav = () => {
                 trigger={
                   <Info longMessage className="ml-2 h-5 w-5" />
                 }
-                content={<div>{formatMessage(elm.longMessage)}</div>}
+                content={SafeContent({ htmlContent: elm.longMessage })}
               />
             )}
           </div>
@@ -84,7 +85,7 @@ export const MainNav = () => {
                 trigger={
                   <Info longMessage className="ml-2 h-5 w-5" />
                 }
-                content={<div>{formatMessage(elm.longMessage)}</div>}
+                content={SafeContent({ htmlContent: elm.longMessage })}
               />
             )}
           </div>
@@ -105,7 +106,7 @@ export const MainNav = () => {
                 trigger={
                   <Info longMessage className="ml-2 h-5 w-5" />
                 }
-                content={<div>{formatMessage(elm.longMessage)}</div>}
+                content={SafeContent({ htmlContent: elm.longMessage })}
               />
             )}
           </div>

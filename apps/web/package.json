@@ -55,6 +55,7 @@
     "bcrypt": "^5.1.1",
     "country-telephone-data": "^0.6.3",
     "dayjs": "^1.11.10",
+    "dompurify": "^3.3.0",
     "echarts": "^5.6.0",
     "edge-runtime": "^2.5.4",
     "follow-redirects": "^1.15.3",

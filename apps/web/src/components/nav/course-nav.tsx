@@ -32,6 +32,7 @@ import { UserProfile } from "../icons/user-profile";
 import { DownArrow } from "../icons/down-arrow";
 import { formatMessage } from "~/utils/NotificationFormatter";
 import { GroupBooking } from "../icons/group-booking";
+import { SafeContent } from "~/utils/safe-content";
 
 export const CourseNav = () => {
   const { refetchMe } = useUserContext();
@@ -167,7 +168,7 @@ export const CourseNav = () => {
                 {elm.longMessage && (
                   <Tooltip
                     trigger={<Info longMessage className="ml-2 h-5 w-5" />}
-                    content={<div>{formatMessage(elm.longMessage)}</div>}
+                    content={SafeContent({ htmlContent: elm.longMessage })}
                   />
                 )}
               </div>
@@ -185,7 +186,7 @@ export const CourseNav = () => {
                 {elm.longMessage && (
                   <Tooltip
                     trigger={<Info longMessage className="ml-2 h-5 w-5" />}
-                    content={<div>{formatMessage(elm.longMessage)}</div>}
+                    content={SafeContent({ htmlContent: elm.longMessage })}
                   />
                 )}
               </div>

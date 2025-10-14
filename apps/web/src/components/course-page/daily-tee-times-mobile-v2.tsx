@@ -19,6 +19,7 @@ import { TeeTimeSkeletonV2 } from "./tee-time-skeleton-v2";
 import { OutlineButton } from "../buttons/outline-button";
 import dayjs from "dayjs";
 import { CancelIcon } from "../icons/cancel";
+import { SafeContent } from "~/utils/safe-content";
 
 export const DailyTeeTimesMobileV2 = ({
   date,
@@ -244,7 +245,7 @@ export const DailyTeeTimesMobileV2 = ({
                         <Info className="h-4 md:h-5" />
                       </span>
                     }
-                    content={courseException.longMessage}
+                    content={SafeContent({ htmlContent: courseException.longMessage })}
                   />
                 )}
               </div>
