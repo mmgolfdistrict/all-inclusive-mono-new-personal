@@ -341,7 +341,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
                     </p>
                     <Calendar
                       calendarClassName="!m-[0px] !h-[100%] !w-[75%] xs:!min-w-fit unmask-time !text-[0.625rem]"
-                      colorPrimary="#40942A"
+                      colorPrimary={entity ? entity?.color1 : "#40942A"}
                       value={selectedDate}
                       onChange={(date: Day) => setSelectedDate(date)}
                       minimumDate={minimumDate}
