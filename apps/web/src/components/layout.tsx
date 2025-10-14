@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { Footer } from "./footer/footer";
 import { MainNav } from "./nav/main-nav";
 import { useSession } from "@golf-district/auth/nextjs-exports";
+import { useAppContext } from "~/contexts/AppContext";
 
 const AllowedPathsForMainNav = [
   "/",
@@ -24,6 +25,7 @@ const AllowedPathsForMainNav = [
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const { status } = useSession();
+  const { entity } = useAppContext();
 
   const getRecievables = api.cashOut.getRecievablesMute.useMutation();
 
@@ -34,6 +36,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         setTimeout(() => {
           toast.success(
             `Congratulations! You have $${recievableData?.withdrawableAmount} in your account. Please visit 'Account Settings' to withdraw your balance by adding a bank account.`
+            ,
+            {
+              progressStyle: {
+                background: entity?.color1,
+              },
+            }
           );
         }, 3000);
         localStorage.setItem("showBalanceToast", "false");

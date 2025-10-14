@@ -229,8 +229,11 @@ export const ManageOwnedTeeTime = ({
           teeTimeId: selectedTeeTime?.teeTimeId,
           minimumOfferPrice,
         });
-
-        toast.success("Tee time listing updated successfully");
+        toast.success("Tee time listing updated successfully", {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         if (params.get("groupId")) {
           router.replace(`/${course?.id}/my-tee-box?section=owned`);
         }

@@ -21,6 +21,7 @@ import { useAppContext } from "~/contexts/AppContext";
 export const WatchlistTable = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const { entity } = useAppContext();
   const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
   const [selectedTeeTime, setSelectedTeeTime] = useState<
     WatchlistItem | undefined
@@ -78,7 +79,11 @@ export const WatchlistTable = () => {
         teeTimeId: teeTimeId,
       });
       await refetch();
-      toast.success("Removed from watchlist");
+      toast.success("Removed from watchlist", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error removing from watchlist");
     }

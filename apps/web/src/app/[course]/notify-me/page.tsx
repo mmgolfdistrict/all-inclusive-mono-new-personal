@@ -29,6 +29,7 @@ function NotifyMe({ params }: { params: { course: string } }) {
   const router = useRouter();
   const { user, isLoading } = useMe();
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
   const courseId = params.course;
   const [selectedDates, setSelectedDates] = useState<Day[]>([]);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -170,14 +171,20 @@ function NotifyMe({ params }: { params: { course: string } }) {
           const toastContent = (
             <div>
               <p>{data.message}</p>
-              <p className="text-green-600 text-[0.875rem] font-bold">
+              <p style={{
+                color: entity?.color1,
+              }} className="text-[0.875rem] font-bold">
                 If you don’t see the notification emails please check your Junk
                 Mail or Spam folder. Remember to add no-reply@golfdistrict.com to
                 the safe senders list.
               </p>
             </div>
           );
-          toast.success(toastContent);
+          toast.success(toastContent, {
+            progressStyle: {
+              background: entity?.color1,
+            },
+          });
         }
 
         setSelectedDates([]);

@@ -49,7 +49,11 @@ export const NotificationSettings = () => {
         color1: entity?.color1,
       });
       await refetch();
-      toast.success("Phone notifications updated successfully");
+      toast.success("Phone notifications updated successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
       setIsMutating(false);
     } catch (error) {
       setIsMutating(false);
@@ -72,7 +76,11 @@ export const NotificationSettings = () => {
         color1: entity?.color1,
       });
       await refetch();
-      toast.success("Email notifications updated successfully");
+      toast.success("Email notifications updated successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
       setIsMutating(false);
     } catch (error) {
       setIsMutating(false);

@@ -57,7 +57,11 @@ export default function ForgotPassword() {
       if (result.error) {
         toast.error(result.message);
       } else {
-        toast.success(result.message);
+        toast.success(result.message, {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
       }
     } catch (error) {
       await recaptchaRef.current?.executeAsync();

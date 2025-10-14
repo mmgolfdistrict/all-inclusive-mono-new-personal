@@ -13,6 +13,7 @@ import { Close } from "../icons/close";
 import { DeleteIcon } from "../icons/delete";
 import { Spinner } from "../loading/spinner";
 import Waitlist from "./waitlist";
+import { useAppContext } from "~/contexts/AppContext";
 
 dayjs.extend(UTC);
 
@@ -34,6 +35,7 @@ function Waitlists() {
   const [selectedNotifications, setSelectedNotifications] = useState<
     WaitlistItem[]
   >([]);
+  const { entity } = useAppContext();
   const [selectedIndividualNotification, setSelectedIndividualNotification] = useState<WaitlistItem | undefined>(undefined);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { mutateAsync: deleteNotifications } =
@@ -86,7 +88,11 @@ function Waitlists() {
       { ids: notificationsToDelete },
       {
         onSuccess: (msg) => {
-          toast.success(msg);
+          toast.success(msg, {
+            progressStyle: {
+              background: entity?.color1,
+            },
+          });
           setIsDeleteModalOpen(false);
           setSelectedNotifications([]);
         },

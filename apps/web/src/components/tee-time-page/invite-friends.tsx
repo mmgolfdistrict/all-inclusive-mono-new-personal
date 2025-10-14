@@ -26,7 +26,7 @@ export const InviteFriends = ({
 }) => {
   const isGroupBooking = teeTimeId?.includes(",");
   const router = useRouter();
-
+  const { entity } = useAppContext();
   const {
     data: bookingData,
     isLoading: isLoadingBookingData,
@@ -47,7 +47,6 @@ export const InviteFriends = ({
 
   const { user } = useUserContext();
   const { course } = useCourseContext();
-  const { entity } = useAppContext();
 
   const selectedTeeTime: InviteFriend[] = bookingData?.bookings || [];
   const href = window.location.href;
@@ -73,55 +72,6 @@ export const InviteFriends = ({
   const visibleFriends = isGroupBooking ? friends.slice(0, 4) : friends;
   const invite = api.user.inviteUsers.useMutation();
   const updateNames = api.teeBox.updateNamesOnBookings.useMutation();
-
-  const handleInviteFriend = async (friend: InviteFriend, index: number) => {
-    if (invite.isLoading) return;
-
-    const teeTimeIds = teeTimeId.split(",");
-    const teeTimeIdForFriend = teeTimeIds[Math.floor(index / 4)];
-
-    const bookingSlotId = friend?.slotId;
-    const match1 = friend?.slotId.match(/\d(?=\D*$)/);
-
-    const lastDigit = match1 ? match1[0] : null;
-
-    try {
-      const invitesPayload = friends
-        .filter((f) => f.emailOrPhoneNumber && f.slotId) // only send valid invites
-        .map((f) => ({
-          emailOrPhoneNumber: f.email,
-          teeTimeId: teeTimeId,
-          bookingSlotId: f.slotId,
-          slotPosition: parseInt(f.slotId?.match(/\d(?=\D*$)/)?.[0] || "0", 10),
-        }));
-      await invite.mutateAsync({
-        invites: invitesPayload,
-        redirectHref: match[0],
-        courseId: course?.id,
-        color1: entity?.color1
-      });
-      toast.success("Invitation sent successfully.");
-    } catch (error) {
-      // Remove the friend from UI on failure
-      setFriends((prev) =>
-        prev.map((f) =>
-          f.slotId === bookingSlotId ? { ...f, name: "", email: "", handle: "", id: "", currentlyEditing: true } : f
-        )
-      );
-      setNewFriend({
-        id: "",
-        handle: "",
-        name: "",
-        email: "",
-        slotId: bookingSlotId,
-        bookingId: "",
-        currentlyEditing: true,
-      });
-      toast.error(
-        (error as Error)?.message ?? "An error occurred inviting friend."
-      );
-    }
-  };
 
   const friendList = useMemo(() => {
     if (!data) return [];
@@ -226,7 +176,13 @@ export const InviteFriends = ({
         usersToUpdate: resultantData,
         bookingId: bookingData?.bookingIds?.[0] || "",
       });
-      toast.success("Tee time listing updated successfully");
+      toast.success("Tee time listing updated successfully"
+        , {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        }
+      );
       // await refetch();
     } catch (error) {
       toast.error(

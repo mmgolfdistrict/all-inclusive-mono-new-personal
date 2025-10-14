@@ -10,6 +10,7 @@ import { Close } from "../icons/close";
 import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
 import CardDetails from "./CardDetails";
+import { useAppContext } from "~/contexts/AppContext";
 
 export const SavedBankDetails = () => {
   const { data: associatedBanks, isLoading } =
@@ -18,6 +19,7 @@ export const SavedBankDetails = () => {
     api.cashOut.getAssociatedAccounts.useQuery({}, { enabled: false });
   const deletePaymentInstrument =
     api.cashOut.deletePaymentInstrument.useMutation();
+  const { entity } = useAppContext();
 
   const [loader, setLoader] = useState<boolean>(false);
 
@@ -29,7 +31,11 @@ export const SavedBankDetails = () => {
       });
       await refetchAssociatedBanks();
       setLoader(false);
-      toast.success("Bank detail removed successfully.");
+      toast.success("Bank detail removed successfully.", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
     } catch (error) {
       setLoader(false);
       toast.error(

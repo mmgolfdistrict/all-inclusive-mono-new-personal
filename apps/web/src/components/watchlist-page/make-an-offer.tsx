@@ -19,6 +19,7 @@ import { OutlineButton } from "../buttons/outline-button";
 import { Item } from "../course-page/filters";
 import { Close } from "../icons/close";
 import { Players } from "../icons/players";
+import { useAppContext } from "~/contexts/AppContext";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -50,6 +51,7 @@ export const MakeAnOffer = ({
 
   const makeOffer = api.teeBox.createOfferOnBookings.useMutation();
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
 
   const { toggleSidebar } = useSidebar({
     isOpen: isMakeAnOfferOpen,
@@ -104,7 +106,12 @@ export const MakeAnOffer = ({
       toast.success(
         res.message
           ? `${res.message} You must cancel your offers in "My Offers" or you are otherwise responsible for all accepted offers.`
-          : "Offer sent successfully"
+          : "Offer sent successfully",
+        {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        }
       );
       setIsMakeAnOfferOpen(false);
     } catch (error) {

@@ -11,6 +11,7 @@ import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Leaflet } from "../modal/leaflet";
+import { useAppContext } from "~/contexts/AppContext";
 
 interface DayValue {
   year: number;
@@ -40,6 +41,7 @@ export const MobileDates = ({
     useFiltersContext();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
 
   const { data } = api.searchRouter.findBlackoutDates.useQuery(
     { courseId: course?.id ?? "" },
@@ -130,7 +132,7 @@ export const MobileDates = ({
                         value={selectedDay}
                         calendarClassName="responsive-calendar"
                         onChange={setSelectedDay}
-                        colorPrimary="#40942A"
+                        colorPrimary={entity ? entity?.color1 : "#40942A"}
                         minimumDate={minimumDate}
                         disabledDays={blackOutDays}
                       />

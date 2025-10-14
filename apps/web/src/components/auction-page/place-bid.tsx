@@ -14,6 +14,7 @@ import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
 import { Info } from "../icons/info";
 import { Tooltip } from "../tooltip";
+import { useAppContext } from "~/contexts/AppContext";
 
 type SideBarProps = {
   isPlaceBidOpen: boolean;
@@ -37,6 +38,7 @@ export const PlaceBid = ({
   const { user } = useUserContext();
   const { cards } = usePaymentMethods();
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
   const courseId = course?.id;
   const placeBidMethod = api.auction.placeBid.useMutation();
 
@@ -49,7 +51,11 @@ export const PlaceBid = ({
         paymentMethodId: cards?.[0]?.payment_method_id,
       });
       await refetch();
-      toast.success(`Bid for ${bid} placed successfully!`);
+      toast.success(`Bid for ${bid} placed successfully!`, {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
       clearBid();
       setIsPlaceBidOpen(false);
     } catch (error: unknown) {
@@ -75,9 +81,8 @@ export const PlaceBid = ({
       )}
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isPlaceBidOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${isPlaceBidOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">

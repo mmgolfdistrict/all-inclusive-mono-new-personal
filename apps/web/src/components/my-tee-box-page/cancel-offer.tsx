@@ -11,6 +11,7 @@ import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
 import { Players } from "../icons/players";
 import { type OfferSentType } from "./offers-sent";
+import { useAppContext } from "~/contexts/AppContext";
 
 type SideBarProps = {
   isCancelOfferOpen: boolean;
@@ -31,6 +32,7 @@ export const CancelOffer = ({
   });
   const cancel = api.teeBox.cancelOffer.useMutation();
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
 
   const cancelOffer = async () => {
     const offerId = selectedOffer?.offer.offerId ?? "";
@@ -48,7 +50,11 @@ export const CancelOffer = ({
       });
 
       await refetch();
-      toast.success("Offer cancelled successfully");
+      toast.success("Offer cancelled successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
       setIsCancelOfferOpen(false);
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error cancelling offer");

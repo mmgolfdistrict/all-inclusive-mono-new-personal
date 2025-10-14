@@ -6,6 +6,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { useAppContext } from "~/contexts/AppContext";
 
 declare global {
   interface Window {
@@ -24,7 +25,7 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
   const [showError, setShowError] = useState(false);
   const [showLoadingSubmit, setShowLoadingSubmit] = useState(false);
   const courseId = course?.id;
-
+  const { entity } = useAppContext();
   const auditLog = api.webhooks.auditLog.useMutation();
   const logAudit = () => {
     void auditLog.mutateAsync({
@@ -78,7 +79,11 @@ const FinixForm = ({ onClose, setLoading, loading }) => {
               }
               await refetchAssociatedBanks();
               logAudit();
-              toast.success("Bank account added successfully .");
+              toast.success("Bank account added successfully .", {
+                progressStyle: {
+                  background: entity?.color1,
+                },
+              });
               onClose();
               setShowLoadingSubmit(false);
             }

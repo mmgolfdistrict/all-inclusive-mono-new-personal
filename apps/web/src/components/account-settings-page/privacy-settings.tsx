@@ -43,7 +43,11 @@ export const PrivacySettings = () => {
         color1: entity?.color1,
       });
       await refetch();
-      toast.success("Privacy settings updated successfully");
+      toast.success("Privacy settings updated successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
       setIsMutating(false);
     } catch (error) {
       setIsMutating(false);

@@ -27,6 +27,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "usehooks-ts";
 import { OutlineButton } from "../buttons/outline-button";
+import { useAppContext } from "~/contexts/AppContext";
 
 interface DayValue {
   year: number;
@@ -94,6 +95,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
     const [selectedDayMobile, setSelectedDayMobile] = useState(selectedDay);
     const router = useRouter();
     const isMobile = useMediaQuery("(max-width: 768px)");
+    const { entity } = useAppContext();
 
     const highestPrice = useMemo(() => {
       if (!course) return 0;
@@ -359,7 +361,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                         onChange={
                           isMobile ? setSelectedDayMobile : setSelectedDay
                         }
-                        colorPrimary="#40942A"
+                        colorPrimary={entity ? entity?.color1 : "#40942A"}
                         minimumDate={minimumDate}
                         maximumDate={maximumDate}
                       // disabledDays={blackOutDays}
