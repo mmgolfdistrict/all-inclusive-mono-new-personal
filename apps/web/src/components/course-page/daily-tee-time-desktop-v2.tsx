@@ -16,6 +16,7 @@ import { LeftChevron } from "../icons/left-chevron";
 import { Tooltip } from "../tooltip";
 import { TeeTimeSkeleton } from "./tee-time-skeleton";
 import dayjs from "dayjs";
+import { SafeContent } from "~/utils/safe-content";
 
 export const DailyTeeTimesDesktopV2 = ({
     minDate,
@@ -328,7 +329,7 @@ export const DailyTeeTimesDesktopV2 = ({
                                         <Info className="h-4 md:h-5" />
                                     </span>
                                 }
-                                content={courseExceptions.longMessage}
+                                content={SafeContent({ htmlContent: courseExceptions.longMessage })}
                             />
                         )}
                     </div>
