@@ -13,6 +13,7 @@ const mockDatabase = {
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     leftJoin: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockReturnThis(),
     execute: vi.fn(),
     transaction: vi.fn(async (callback) => {
         const tx = {
