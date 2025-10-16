@@ -23,6 +23,7 @@ import { type OwnedTeeTime } from "./owned";
 import Flyout from "../modal/flyout";
 import { Modal } from "../modal/modal";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAppContext } from "~/contexts/AppContext";
 
 type SideBarProps = {
   isManageOwnedTeeTimeOpen: boolean;
@@ -46,6 +47,7 @@ export const ManageOwnedTeeTime = ({
     refetch
   }: Omit<SideBarProps, "isManageOwnedTeeTimeOpen">) => {
 
+    const { entity } = useAppContext();
     const { course } = useCourseContext();
     const [minimumOfferPrice, setMinimumOfferPrice] = useState<number>(0);
     const [friends, setFriends] = useState<InviteFriend[]>([]);
@@ -90,6 +92,8 @@ export const ManageOwnedTeeTime = ({
           bookingSlotId,
           slotPosition: lastDigit ? parseInt(lastDigit, 10) : 0,
           redirectHref: redirectHref,
+          courseId: course?.id,
+          color1: entity?.color1
         });
 
         setFriends((prevFriends) =>
@@ -322,6 +326,8 @@ export const ManageOwnedTeeTime = ({
           bookingSlotId, // Ensure a string is passed
           slotPosition: lastDigit ? parseInt(lastDigit, 10) : 0,
           redirectHref: redirectHref,
+          courseId: course?.id,
+          color1: entity?.color1
         });
         setInviteSuccess((prev) => ({ ...prev, [bookingSlotId]: true }));
         toast.success("Invitation sent successfully.");

@@ -443,10 +443,6 @@ export const TeeTime = ({
                 availableSlots={
                   status === "SECOND_HAND" ? listedSlots || 0 : availableSlots
                 }
-                isDisabled={
-                  (status === "SECOND_HAND" && !allowSplit) ||
-                  allowedPlayers?.selectStatus === "ALL_PLAYERS"
-                }
                 className={`md:px-[1rem] md:py-[.25rem] md:!text-[0.875rem] !text-[0.625rem] px-[.75rem] py-[.1rem]`}
                 teeTimeId={teeTimeId}
                 numberOfPlayers={numberOfPlayers ? (

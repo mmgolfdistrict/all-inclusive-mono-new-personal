@@ -50,6 +50,14 @@ import { courseMerchandise } from "@golf-district/database/schema/courseMerchand
 dayjs.extend(UTC);
 dayjs.extend(timezone);
 
+function escapeForHandlebars(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 interface TeeTimeData {
   courseId: string;
   courseName: string;
@@ -304,6 +312,7 @@ export class BookingService {
         markupFees: bookings.markupFees,
         splitPaymentsAmount: bookingSplitPayment.payoutAmount,
         isPaidSplitAmount: bookingSplitPayment.isPaid,
+        bookingStatus: bookings.status
       })
       .from(transfers)
       .innerJoin(bookings, eq(bookings.id, transfers.bookingId))
@@ -363,6 +372,15 @@ export class BookingService {
           receiveAfterSaleAmount = Math.abs(totalPayoutForAllGolfers);
         }
 
+        let status: string;
+        if (teeTime.bookingStatus === "CANCELLED") {
+          status = "CANCELLED";
+        } else if (teeTime.from === userId) {
+          status = "SOLD";
+        } else {
+          status = "CONFIRMED";
+        }
+
         combinedData[teeTime.transferId] = {
           courseId,
           courseName: teeTime.courseName,
@@ -377,7 +395,7 @@ export class BookingService {
               ? [(teeTime.greenFee * teeTime.players) / 100]
               : [teeTime.purchasedPrice / 100],
           bookingIds: [teeTime.bookingId],
-          status: teeTime.from === userId ? "SOLD" : "PURCHASED",
+          status,
           playerCount: teeTime.players,
           sellerServiceFee: teeTime.from === userId ? sellerServiceFee : 0,
           receiveAfterSale: teeTime.from === userId ? receiveAfterSaleAmount : 0,
@@ -1473,7 +1491,8 @@ export class BookingService {
       formattedTime,
       courseId,
       userId,
-      toCreate.id
+      toCreate.id,
+      color1
     );
     // console.log("CREATING LISTING FOR DATE:", date, formattedTime);
     return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };
@@ -4076,7 +4095,7 @@ export class BookingService {
         }
 
         if (additionalNoteFromUser) {
-          details = `${details}\n${additionalNoteFromUser}`;
+          details = `${details}\n${escapeForHandlebars(additionalNoteFromUser)}`;
         } else {
           details = `${details}`;
         }
@@ -4260,7 +4279,7 @@ export class BookingService {
                 {
                   EMail: user?.email ?? "",
                   CustomerName: user?.name ?? "",
-                  NoteFromUser: additionalNoteFromUser || "-",
+                  NoteFromUser: additionalNoteFromUser ? escapeForHandlebars(additionalNoteFromUser) : "-",
                   NeedRentals: needRentals ? "Yes" : "No",
                   PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
                   HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
@@ -5505,7 +5524,7 @@ export class BookingService {
           }
 
           if (additionalNoteFromUser) {
-            details = `${details}\n${additionalNoteFromUser}`;
+            details = `${details}\n${escapeForHandlebars(additionalNoteFromUser)}`;
           } else {
             details = `${details}`;
           }
@@ -5676,7 +5695,7 @@ export class BookingService {
                   {
                     EMail: user?.email ?? "",
                     CustomerName: user?.name ?? "",
-                    NoteFromUser: additionalNoteFromUser || "-",
+                    NoteFromUser: additionalNoteFromUser ? escapeForHandlebars(additionalNoteFromUser) : "-",
                     NeedRentals: needRentals ? "Yes" : "No",
                     PlayDateTime: formatTime(teeTime.providerDate, true, teeTime.timezoneCorrection ?? 0),
                     HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
@@ -5805,6 +5824,7 @@ export class BookingService {
           isFirstHandGroupBooking: true,
           providerBookings,
           purchasedMerchandise,
+          color1: color1,
         })
         .catch(async (err) => {
           this.logger.error(`Error creating booking, ${err}`);
@@ -6256,7 +6276,8 @@ export class BookingService {
       formattedTime,
       courseId,
       userId,
-      toCreate.id
+      toCreate.id,
+      color1
     );
     return { success: true, body: { listingId: toCreate.id }, message: "Listings created successfully." };
   };
@@ -6481,7 +6502,8 @@ export class BookingService {
   addListingForRemainingSlotsOnGroupBooking = async (
     groupId: string,
     listedSlotsCount = 0,
-    ownerId: string
+    ownerId: string,
+    color1?: string
   ) => {
     try {
       if (listedSlotsCount === 0) {
@@ -6680,7 +6702,8 @@ export class BookingService {
           formattedTime,
           groupBooking.courseId,
           ownerId,
-          toCreate.id
+          toCreate.id,
+          color1
         );
       } else {
         // update the group to be unlisted
@@ -6714,7 +6737,8 @@ export class BookingService {
     providerBookingId: string,
     previousListid: string,
     slotsToList = 0,
-    ownerId: string
+    ownerId: string,
+    color1?: string
   ) => {
     try {
       if (slotsToList === 0) {
@@ -6856,6 +6880,7 @@ export class BookingService {
               ),
               PlayerCount: slotsToList ?? 0,
               ListedPricePerPlayer: previousListing.listPrice ? `${previousListing.listPrice}` : "-",
+              color1: color1,
             },
             []
           )
@@ -6885,7 +6910,8 @@ export class BookingService {
         formattedTime,
         previousBooking.courseId,
         ownerId,
-        toCreate.id
+        toCreate.id,
+        color1
       );
     } catch (error: any) {
       this.logger.error(`Error adding listing for remaining slots, ${JSON.stringify(error)}`);
