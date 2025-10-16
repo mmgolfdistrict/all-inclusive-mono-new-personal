@@ -34,12 +34,16 @@ export const CheckoutItem = ({
   isSensibleInvalid,
   sensibleDataToMountComp,
   isGroupBooking = false,
+  getPlayersPerSlotLabelFull,
+  selectedTeeTimes
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;
   isSensibleInvalid: boolean;
   sensibleDataToMountComp: SensibleDataToMountCompType;
   isGroupBooking?: boolean;
+  getPlayersPerSlotLabelFull?: (group: SearchObject[], totalPlayers: number) => string;
+  selectedTeeTimes?: SearchObject[]
 }) => {
   const searchParams = useSearchParams();
   const playerCount = searchParams.get("playerCount");
@@ -169,6 +173,13 @@ export const CheckoutItem = ({
   ) => {
     setMembershipStatus(event.target.value);
   };
+
+  const getGroupBookingInfo = () => {
+    if (getPlayersPerSlotLabelFull && selectedTeeTimes) {
+      return getPlayersPerSlotLabelFull(selectedTeeTimes, Number(playerCount ?? "0"))
+    }
+  }
+
   const handleValidateMemberShipUser = async (index: number, email: string) => {
     console.log("index", index + 1);
     console.log("email", email);
@@ -281,88 +292,94 @@ export const CheckoutItem = ({
             className="h-[3.75rem] w-[3.75rem] rounded-lg object-cover lg:h-[6.25rem] lg:w-[6.25rem]"
           />
           {isMobile ? (
-            <div className="flex w-full justify-between">
-              <div className="flex-col">
-                <div className="flex-row font-semibold unmask-time">
-                  {isLoading ? (
-                    <div className="h-6 w-[50%] bg-gray-200 rounded-md animate-pulse" />
-                  ) : (
-                    <span className="text-[1rem]" id="date-time-checkout">
-                      {formatTime(
-                        teeTime?.date ?? "",
-                        true,
-                        course?.timezoneCorrection
-                      )}
-                    </span>
-                  )}
-                  <div>{course?.name}</div>
+            <div className="flex w-full flex-col gap-1">
+              <div className="flex w-full justify-between">
+                <div className="flex-col">
+                  <div className="flex-row font-semibold unmask-time">
+                    {isLoading ? (
+                      <div className="h-6 w-[50%] bg-gray-200 rounded-md animate-pulse" />
+                    ) : (
+                      <span className="text-[1rem]" id="date-time-checkout">
+                        {formatTime(
+                          teeTime?.date ?? "",
+                          true,
+                          course?.timezoneCorrection
+                        )}
+                      </span>
+                    )}
+                    <div>{course?.name}</div>
+                  </div>
+                  <div className="flex-row">
+                    <Data
+                      className="flex"
+                      canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
+                      players={
+                        isGroupBooking
+                          ? amountOfPlayers
+                          : 4 - (teeTime?.availableSlots ?? 0)
+                      }
+                      selectedPlayers={amountOfPlayers.toString()}
+                      choosePlayers={choosePlayers}
+                      pricePerGolfer={teeTime?.pricePerGolfer}
+                      isLoading={
+                        isLoading || teeTime === undefined || teeTime === null
+                      }
+                      availableSlots={teeTime?.availableSlots}
+                      isSecondHand={
+                        teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
+                      }
+                      teeTimeId={teeTime?.teeTimeId}
+                      numberOfPlayers={numberOfPlayers}
+                      selectStatus={allowedPlayers?.selectStatus}
+                      canShowPlayers={!isGroupBooking}
+                      allowSplit={teeTime?.allowSplit || false}
+                      groupBookingParams={groupBookingParams}
+                    />
+                  </div>
                 </div>
-                <div className="flex-row">
-                  <Data
-                    className="flex"
-                    canChoosePlayer={(teeTime?.availableSlots ?? 4) > 0}
-                    players={
-                      isGroupBooking
-                        ? amountOfPlayers
-                        : 4 - (teeTime?.availableSlots ?? 0)
-                    }
-                    selectedPlayers={amountOfPlayers.toString()}
-                    choosePlayers={choosePlayers}
-                    pricePerGolfer={teeTime?.pricePerGolfer}
-                    isLoading={
-                      isLoading || teeTime === undefined || teeTime === null
-                    }
-                    availableSlots={teeTime?.availableSlots}
-                    isSecondHand={
-                      teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
-                    }
-                    teeTimeId={teeTime?.teeTimeId}
-                    numberOfPlayers={numberOfPlayers}
-                    selectStatus={allowedPlayers?.selectStatus}
-                    canShowPlayers={!isGroupBooking}
-                    allowSplit={teeTime?.allowSplit || false}
-                    groupBookingParams={groupBookingParams}
-                  />
-                </div>
-              </div>
-              <div className="flex-col">
-                <div className="flex w-full gap-1 flex-col  lg:items-start items-start">
-                  <Tooltip
-                    trigger={
-                      teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND" ? (
-                        <Spinner className="w-[2.5rem] h-[2.5rem]" />
-                      ) : (
-                        <Avatar
-                          src={teeTime?.soldByImage}
-                          className="h-[2.5rem] w-[5rem] md:h-[2.5rem] md:w-[5rem] lg:h-[2.5rem] lg:w-[5rem]"
-                          isRounded={false}
-                        />
-                      )
-                    }
-                    content={
-                      "Sold by " +
-                      (teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
-                        ? "another Golf District golfer."
-                        : teeTime?.soldByName)
-                    }
-                  />
-                  <p
-                    className={`text-${getTextColor(
-                      getCourseException(teeTime?.date ?? "")?.displayType
-                    )} font-semibold`}
-                  >
-                    {getCourseException(teeTime?.date ?? "")?.shortMessage}
-                  </p>
-                  <p
-                    className={`text-${getTextColor(
-                      getCourseException(teeTime?.date ?? "")?.displayType
-                    )} font-semibold`}
-                  >
-                    {getCourseException(teeTime?.date ?? "")?.longMessage ||
-                      getCourseException(teeTime?.date ?? "")?.longMessage}
-                  </p>
+                <div className="flex-col">
+                  <div className="flex w-full gap-1 flex-col  lg:items-start items-start">
+                    <Tooltip
+                      trigger={
+                        teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND" ? (
+                          <Spinner className="w-[2.5rem] h-[2.5rem]" />
+                        ) : (
+                          <Avatar
+                            src={teeTime?.soldByImage}
+                            className="h-[2.5rem] w-[5rem] md:h-[2.5rem] md:w-[5rem] lg:h-[2.5rem] lg:w-[5rem]"
+                            isRounded={false}
+                          />
+                        )
+                      }
+                      content={
+                        "Sold by " +
+                        (teeTime?.firstOrSecondHandTeeTime === "SECOND_HAND"
+                          ? "another Golf District golfer."
+                          : teeTime?.soldByName)
+                      }
+                    />
+
+                  </div>
                 </div>
               </div>
+              {isGroupBooking && !isLoading ? <div className="block text-[0.75rem] text-wrap md:text-[0.875rem] text-primary-gray mt-1">
+                <span className="font-medium text-secondary-black">Player Distrbution:</span> {getGroupBookingInfo()}
+              </div> : null}
+              <p
+                className={`text-${getTextColor(
+                  getCourseException(teeTime?.date ?? "")?.displayType
+                )} font-semibold`}
+              >
+                {getCourseException(teeTime?.date ?? "")?.shortMessage}
+              </p>
+              <p
+                className={`text-${getTextColor(
+                  getCourseException(teeTime?.date ?? "")?.displayType
+                )} font-semibold`}
+              >
+                {getCourseException(teeTime?.date ?? "")?.longMessage ||
+                  getCourseException(teeTime?.date ?? "")?.longMessage}
+              </p>
             </div>
           ) : (
             <div className="flex w-full flex-col gap-2">
@@ -434,6 +451,9 @@ export const CheckoutItem = ({
                       : teeTime?.soldByName)
                   }
                 />
+                {isGroupBooking && !isLoading ? <div className="block text-[0.75rem] text-wrap md:text-[0.875rem] text-primary-gray mt-1">
+                  <span className="font-medium text-secondary-black">Player Distrbution:</span> {getGroupBookingInfo()}
+                </div> : null}
                 <p
                   className={`text-${getTextColor(
                     getCourseException(teeTime?.date ?? "")?.displayType

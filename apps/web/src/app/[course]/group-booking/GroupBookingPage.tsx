@@ -54,6 +54,48 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
   // const [teeTimeGroup, setTeeTimeGroup] = useState<TeeTimeGroup | null | undefined>(null);
   const [otherTeeTimeGroups, setOtherTeeTimeGroups] = useState<TeeTimeGroup[] | null>(null);
 
+  const allocatePlayersAcrossTeeTimes = (group: TeeTimeGroup, totalPlayers: number): { label: string; count: number }[] => {
+    const teeTimesSorted = group.teeTimes.sort((a, b) => a.time - b.time);
+
+    let remaining = totalPlayers;
+    const allocations: { label: string; count: number }[] = [];
+
+    for (const t of teeTimesSorted) {
+      if (remaining <= 0) break;
+      const capacity = Math.max(0, t.maxPlayersPerBooking);
+      const count = Math.min(remaining, capacity);
+      if (count > 0) {
+        allocations.push({ label: getTime(t.providerDate, timezoneCorrection), count });
+        remaining -= count;
+      }
+    }
+
+    return allocations;
+  };
+
+  const getPlayersPerSlotLabel = (group: TeeTimeGroup, totalPlayers: number): string => {
+    const allocations = allocatePlayersAcrossTeeTimes(group, totalPlayers);
+    const parts = allocations.map((a) => `${a.label} (${a.count})`.replace(/ /g, "\u00A0"));
+    const shown = parts.slice(0, 3);
+    const remaining = parts.length - shown.length;
+    return remaining > 0 ? `${shown.join(" • ")} • +${remaining} more` : shown.join(" • ");
+  };
+
+  // Desktop/Tablet: Show full, non-truncated labels
+  const getGroupedTimesLabelFull = (group: TeeTimeGroup): string => {
+    const labels = group.teeTimes
+      .slice()
+      .sort((a, b) => a.time - b.time)
+      .map((t) => getTime(t.providerDate, timezoneCorrection));
+    return labels.join(" • ");
+  };
+
+  const getPlayersPerSlotLabelFull = (group: TeeTimeGroup, totalPlayers: number): string => {
+    const allocations = allocatePlayersAcrossTeeTimes(group, totalPlayers);
+    const parts = allocations.map((a) => `${a.label} (${a.count})`.replace(/ /g, "\u00A0"));
+    return parts.join(" • ");
+  };
+
   const sortedDates = useMemo(() => {
     if (teeTimesData) {
       return Object.keys(teeTimesData).sort((a, b) => {
@@ -183,43 +225,63 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
               </div>
 
               {/* Group booking Items */}
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(17.5rem,1fr))] gap-4">
-                {teeTimesData[date]?.slice(0, 4).map((teeTimeGroup: TeeTimeGroup) => (
-                  <div key={teeTimeGroup.teeTimeIds.toString()} className="bg-white p-3 rounded-xl min-w-[17.5rem] md:max-w-[22.5rem] flex flex-col text-[0.75rem] md:text-[1rem] text-secondary-black cursor-pointer">
-                    {/* First Row */}
-                    <div className="flex flex-row justify-between items-center unmask-time">
-                      <div className="font-semibold text-[1rem] md:text-[1.25rem] unmask-time">
-                        {getTime(teeTimeGroup.date, timezoneCorrection)}
-                      </div>
-                    </div>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(17.5rem,1fr))] md:grid-cols-[repeat(auto-fit,minmax(35rem,1fr))] gap-4">
+                {teeTimesData[date]?.slice(0, 2).map((teeTimeGroup: TeeTimeGroup) => (
+                  <div key={teeTimeGroup.teeTimeIds.toString()} className="bg-white p-3 rounded-xl min-w-[17.5rem] md:max-w-[50rem] flex flex-col text-[0.75rem] md:text-[1rem] text-secondary-black cursor-pointer">
+                    <div className="flex gap-4">
+                      <div className="min-w-[17.5rem] md:max-w-[50%]">
+                        {/* First Row */}
+                        <div className="flex flex-row justify-between items-center unmask-time">
+                          <div className="font-semibold text-[1rem] md:text-[1.25rem] unmask-time">
+                            {getTime(teeTimeGroup.date, timezoneCorrection)}
+                          </div>
+                        </div>
+                        {/* Mobile: compact distribution */}
+                        <div className="block md:hidden text-[0.75rem] text-wrap md:text-[0.875rem] text-primary-gray mt-1">
+                          <span className="font-medium text-secondary-black">Player Distrbution:</span> {getPlayersPerSlotLabel(teeTimeGroup, playerCount)}
+                        </div>
 
-                    {/* Second Row */}
-                    <div className="flex flex-row items-center gap-1 mt-2">
-                      <div className="text-[0.75rem] md:text-[0.875rem] text-primary-gray">
-                        Avg. Price
-                      </div>
-                      <div className="text-[0.875rem] md:text-[1rem] font-semibold text-secondary-black" >
-                        {formatMoney(teeTimeGroup.pricePerGolfer)}
-                      </div>
-                    </div >
+                        {/* Second Row */}
+                        <div className="flex flex-row items-center gap-1 mt-2">
+                          <div className="text-[0.75rem] md:text-[0.875rem] text-primary-gray">
+                            Avg. Price
+                          </div>
+                          <div className="text-[0.875rem] md:text-[1rem] font-semibold text-secondary-black" >
+                            {formatMoney(teeTimeGroup.pricePerGolfer)}
+                          </div>
+                        </div >
 
-                    {/* Third Row */}
-                    <div>
-                      <div className="text-[0.875rem] md:text-[1rem] font-semibold text-secondary-black" >
-                        {playerCount} Players
-                      </div>
-                    </div >
+                        {/* Third Row */}
+                        <div>
+                          <div className="text-[0.875rem] md:text-[1rem] font-semibold text-secondary-black" >
+                            {playerCount} Players
+                          </div>
 
-                    {/* Fourth Row */}
-                    <div className="mt-2 w-full mb-4">
-                      <FilledButton
-                        className="whitespace-nowrap !min-w-[5.125rem] md:min-w-[6.875rem] !py-[.28rem] md:py-1.5 w-full"
-                        data-testid="buy-tee-time-id"
-                        data-qa="Buy"
-                        onClick={() => buyTeeTimeGroup(teeTimeGroup)}
-                      >
-                        Buy
-                      </FilledButton>
+                        </div >
+
+                        {/* Fourth Row */}
+                        <div className="mt-2 w-full">
+                          <FilledButton
+                            className="whitespace-nowrap !min-w-[5.125rem] md:min-w-[6.875rem] !py-[.28rem] md:py-1.5 w-full"
+                            data-testid="buy-tee-time-id"
+                            data-qa="Buy"
+                            onClick={() => buyTeeTimeGroup(teeTimeGroup)}
+                          >
+                            Buy
+                          </FilledButton>
+                        </div>
+                      </div>
+                      <div>
+                        {/* Desktop/Tablet: richer informative section */}
+                        <div className="hidden md:block text-[0.75rem] md:text-[0.875rem] text-primary-gray mt-1">
+                          <div>
+                            <span className="font-medium text-secondary-black">Tee times in group:</span> {getGroupedTimesLabelFull(teeTimeGroup)}
+                          </div>
+                          <div className="mt-1">
+                            <span className="font-medium text-secondary-black">Player distribution:</span> {getPlayersPerSlotLabelFull(teeTimeGroup, playerCount)}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}

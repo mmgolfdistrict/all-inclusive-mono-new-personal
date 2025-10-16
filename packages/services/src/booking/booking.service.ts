@@ -114,6 +114,10 @@ interface OwnedTeeTimeData {
   groupId: string;
   allowSplit?: boolean | null;
   totalMerchandiseAmount: number;
+  teeTimeInfo?: {
+    time: string;
+    player: number;
+  }[]
 }
 
 interface ListingData {
@@ -1084,6 +1088,10 @@ export class BookingService {
           isGroupBooking: true,
           groupId: teeTime.groupId ?? "",
           totalMerchandiseAmount: teeTime.totalMerchandiseAmount ?? 0,
+          teeTimeInfo: [{
+            time: teeTime.date,
+            player: teeTime.playerCount
+          }]
         };
       } else {
         const currentEntry = combinedGroupData[teeTime.groupId!];
@@ -1111,6 +1119,13 @@ export class BookingService {
           }
           currentEntry.purchasedFor =
             (currentEntry.purchasedFor ?? 0) + Number(teeTime.purchasedFor) / (teeTime.playerCount * 100);
+          const hasDuplicateTeeTimeInfo = currentEntry.teeTimeInfo?.some((teeTimeInfo) => teeTimeInfo.time === teeTime.date);
+          if (!hasDuplicateTeeTimeInfo) {
+            currentEntry.teeTimeInfo?.push({
+              time: teeTime.date,
+              player: teeTime.playerCount
+            })
+          }
         }
       }
     });

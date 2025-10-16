@@ -3,9 +3,9 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import { formatTime } from "~/utils/formatters";
+import { formatTime, getTime } from "~/utils/formatters";
 import { type InviteFriend } from "~/utils/types";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Avatar } from "../../avatar";
 import { FilledButton } from "../../buttons/filled-button";
 import { OutlineButton } from "../../buttons/outline-button";
@@ -14,7 +14,6 @@ import { ListTeeTime } from "../list-tee-time";
 import { ManageOwnedTeeTime } from "../manage-owned-tee-time";
 import { SkeletonRow } from "../skeleton-row";
 import { type OwnedTeeTime } from "../owned";
-import Link from "next/link";
 import { CollectPayment } from "../collect-payment";
 import dayjs from "dayjs";
 
@@ -137,6 +136,7 @@ const MobileOwned = () => {
               isGroupBooking={i.isGroupBooking}
               isCollectPaymemtEnabled={Boolean(isCollectPaymemtEnabled)}
               collectPaymentList={() => collectPaymentList(i)}
+              teeTimeInfo={i.teeTimeInfo}
             />
           ))}
       </div>
@@ -199,7 +199,8 @@ const TableCard = ({
   bookingStatus,
   isGroupBooking,
   isCollectPaymemtEnabled,
-  collectPaymentList
+  collectPaymentList,
+  teeTimeInfo
 }: {
   course: string;
   date: string;
@@ -221,13 +222,25 @@ const TableCard = ({
   isGroupBooking: boolean;
   isCollectPaymemtEnabled: boolean;
   collectPaymentList: () => void;
+  teeTimeInfo?: {
+    time: string;
+    player: number;
+  }[]
 }) => {
-  const href = useMemo(() => {
-    if (isListed) {
-      return `/${courseId}/${teeTimeId}/listing/${listingId}`;
-    }
-    return `/${courseId}/${teeTimeId}/owner/${ownerId}`;
-  }, [courseId, teeTimeId, listingId, ownerId, isListed]);
+  const [_teeTimeId, _listingId, _ownerId] = [teeTimeId, listingId, ownerId];
+  const getPlayersPerSlotLabelFull = (): string => {
+    if (teeTimeInfo === undefined) return "";
+    const parts = teeTimeInfo.map((teeTime) => `${getTime(teeTime.time, timezoneCorrection)
+      } (${teeTime.player})`.replace(/ /g, "\u00A0"));
+    return parts.join(" • ");
+  };
+
+  // const href = useMemo(() => {
+  //   if (isListed) {
+  //     return `/${courseId}/${teeTimeId}/listing/${listingId}`;
+  //   }
+  //   return `/${courseId}/${teeTimeId}/owner/${ownerId}`;
+  // }, [courseId, teeTimeId, listingId, ownerId, isListed]);
 
   return (
     <div className="card w-full border border-gray-300 rounded-lg shadow-md my-2 py-2">
@@ -235,7 +248,7 @@ const TableCard = ({
         <table className="w-full text-sm text-left text-gray-500">
           <tbody className="text-xs text-gray-700 bg-gray-50">
             <tr className="border-b border-gray-300">
-              <th scope="col" className="px-2 py-1">Course</th>
+              <th scope="col" className="px-2 py-1 w-[40%]">Course</th>
               <td>
                 {isGroupBooking ? (
                   <div className="flex items-center gap-2">
@@ -266,7 +279,7 @@ const TableCard = ({
               </td>
             </tr>
             <tr className="border-b border-gray-300">
-              <th scope="col" className="px-2 py-1">
+              <th scope="col" className="px-2 py-1 w-[40%]">
                 <p>Tee Time</p>
                 <p># of Golfers</p>
               </th>
@@ -286,8 +299,20 @@ const TableCard = ({
                 </div>
               </td>
             </tr>
+            {isGroupBooking ? <tr className="border-b border-gray-300 ">
+              <th scope="col" className="px-2 py-1 w-[40%]">
+                <p>Tee Time</p>
+                <p>Player Distribution</p>
+              </th>
+              <td>
+                <div className="block text-[0.75rem] text-wrap md:text-[0.875rem] text-primary-gray mt-1">
+                  {getPlayersPerSlotLabelFull()}
+                </div>
+              </td>
+            </tr>
+              : null}
             <tr className="border-b border-gray-300">
-              <th className="px-2 py-1">
+              <th className="px-2 py-1 w-[40%]">
                 <p>Status</p>
                 <p>Booking Status</p>
               </th>
