@@ -5958,6 +5958,9 @@ export class BookingService {
         totalAmount: bookings.totalAmount,
         timezoneCorrection: courses.timezoneCorrection,
         providerBookingId: bookings.providerBookingId,
+        sellerFees: courses.sellerFee,
+        weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
+        merchandiseAmount: bookings.totalMerchandiseAmount
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -6175,6 +6178,12 @@ export class BookingService {
       return;
     }
     console.log("######", ownedBookings);
+    const amount = (listPrice * 100) ?? 1;
+    const serviceCharge = amount * ((firstBooking.sellerFees ?? 0) / 100);
+    const payable =
+      (amount - serviceCharge) * (slots) +
+      (firstBooking.weatherGuaranteeAmount ?? 0) +
+      (firstBooking.merchandiseAmount ?? 0);
     if (user.email && user.name) {
       await this.notificationService
         .sendEmailByTemplate(
@@ -6197,12 +6206,14 @@ export class BookingService {
             ListedPricePerPlayer: listPrice ? `${listPrice}` : "-",
             TotalAmount: formatMoney(lastBooking.totalAmount / 100 ?? 0),
             color1: color1,
+            PayableAmount: formatMoney(payable / 100 ?? 0),
+            ListType: "Whole",
           },
           []
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
-          loggerService.errorLog({
+          void loggerService.errorLog({
             userId: userId,
             url: "/createListingForGroupBookings",
             userAgent: "",
