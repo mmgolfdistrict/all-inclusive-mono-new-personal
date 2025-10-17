@@ -13,7 +13,6 @@ import { toast } from "react-toastify";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
-import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
 import { SkeletonRow } from "../my-tee-box-page/skeleton-row";
 import { MakeAnOffer } from "./make-an-offer";
@@ -22,6 +21,7 @@ import { useAppContext } from "~/contexts/AppContext";
 export const WatchlistTable = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
+  const { entity } = useAppContext();
   const [isMakeAnOfferOpen, setIsMakeAnOfferOpen] = useState<boolean>(false);
   const [selectedTeeTime, setSelectedTeeTime] = useState<
     WatchlistItem | undefined
@@ -79,7 +79,11 @@ export const WatchlistTable = () => {
         teeTimeId: teeTimeId,
       });
       await refetch();
-      toast.success("Removed from watchlist");
+      toast.success("Removed from watchlist", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error removing from watchlist");
     }
@@ -325,12 +329,13 @@ const TableRow = ({
               Make an Offer
             </FilledButton>
           )}
-          <button
+          <OutlineButton
+            className="min-w-[9.6875rem]"
             onClick={() => void removeFromWatchlist(teeTimeId)}
             data-testid="remove-watch-list-button-id"
           >
-            <Trashcan className="w-[1.5625rem] max-w-[1.5625rem]" />
-          </button>
+            Delete
+          </OutlineButton>
         </div>
       </td>
     </tr>

@@ -17,6 +17,7 @@ import {
 import { FilledButton } from "../buttons/filled-button";
 import { Input } from "../input/input";
 import { useMediaQuery } from "usehooks-ts";
+import { useAppContext } from "~/contexts/AppContext";
 
 const Options = ["debit", "credit"];
 type OptionsType = "debit" | "credit";
@@ -38,7 +39,7 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [type, setType] = useState<OptionsType | "">("");
-
+  const { entity } = useAppContext();
   const addCard = api.checkout.createPaymentMethod.useMutation();
 
   const onSubmit: SubmitHandler<CreditCardSchemaType> = async (data) => {
@@ -84,7 +85,11 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
         if (response.status === "Cannot add card please enter valid details") {
           toast.error("Cannot add card please enter valid card details");
         } else {
-          toast.success("Card added successfully");
+          toast.success("Card added successfully", {
+            progressStyle: {
+              background: entity?.color1,
+            },
+          });
         }
         await refetchCards();
         setType("");

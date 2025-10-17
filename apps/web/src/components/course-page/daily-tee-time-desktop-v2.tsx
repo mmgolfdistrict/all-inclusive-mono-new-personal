@@ -16,6 +16,8 @@ import { LeftChevron } from "../icons/left-chevron";
 import { Tooltip } from "../tooltip";
 import { TeeTimeSkeleton } from "./tee-time-skeleton";
 import dayjs from "dayjs";
+import { useAppContext } from "~/contexts/AppContext";
+import { SafeContent } from "~/utils/safe-content";
 
 export const DailyTeeTimesDesktopV2 = ({
     minDate,
@@ -43,6 +45,7 @@ export const DailyTeeTimesDesktopV2 = ({
     const [isAtEnd, setIsAtEnd] = useState(false);
     const { course, getAllowedPlayersForTeeTime } = useCourseContext();
     const courseId = course?.id;
+    const { entity } = useAppContext();
     useEffect(() => {
         setDate(dates[0] ?? '')
     }, [dateType, minDate])
@@ -230,7 +233,7 @@ export const DailyTeeTimesDesktopV2 = ({
                         aria-label="Scroll Left"
                     // disabled={isAtStart}
                     >
-                        <LeftChevron fill="#40942A" className="w-[1rem]" />
+                        <LeftChevron fill={entity?.color1} className="w-[1rem]" />
                     </button>
                 </div>
                 <div
@@ -290,7 +293,7 @@ export const DailyTeeTimesDesktopV2 = ({
                         data-testid="tee-time-right-chevron-id"
                         aria-label="Scroll Right"
                     >
-                        <LeftChevron fill="#40942A" className="w-[1rem] rotate-180" />
+                        <LeftChevron fill={entity?.color1} className="w-[1rem] rotate-180" />
                     </button>
                 </div>
             </div>
@@ -328,7 +331,7 @@ export const DailyTeeTimesDesktopV2 = ({
                                         <Info className="h-4 md:h-5" />
                                     </span>
                                 }
-                                content={courseExceptions.longMessage}
+                                content={SafeContent({ htmlContent: courseExceptions.longMessage })}
                             />
                         )}
                     </div>

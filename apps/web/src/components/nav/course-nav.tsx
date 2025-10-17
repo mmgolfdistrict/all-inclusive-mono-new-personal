@@ -32,9 +32,10 @@ import { UserProfile } from "../icons/user-profile";
 import { DownArrow } from "../icons/down-arrow";
 import { formatMessage } from "~/utils/NotificationFormatter";
 import { GroupBooking } from "../icons/group-booking";
+import { SafeContent } from "~/utils/safe-content";
 
 export const CourseNav = () => {
-  const { user } = useUserContext();
+  const { refetchMe } = useUserContext();
   const { entity, setPrevPath, isNavExpanded,
     setIsNavExpanded, setHeaderHeight } = useAppContext();
   const { course } = useCourseContext();
@@ -43,6 +44,8 @@ export const CourseNav = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const pathname = usePathname();
   const session = useSession();
+  const isAuthenticated =
+    session.status === "authenticated" && !!session?.data?.user?.id;
   const { setDateType } = useFiltersContext();
   const router = useRouter();
   const bottomNavRef = useRef<HTMLDivElement | null>(null);
@@ -56,7 +59,7 @@ export const CourseNav = () => {
       courseId: courseId ?? "",
     },
     {
-      enabled: courseId !== undefined && user?.id !== undefined,
+      enabled: courseId !== undefined && isAuthenticated,
     }
   );
 
@@ -77,7 +80,7 @@ export const CourseNav = () => {
   const logAudit = (func: () => unknown) => {
     auditLog
       .mutateAsync({
-        userId: user?.id ?? "",
+        userId: session?.data?.user?.id ?? "",
         teeTimeId: "",
         bookingId: "",
         listingId: "",
@@ -94,6 +97,12 @@ export const CourseNav = () => {
         console.log("error", err);
       });
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      void refetchMe();
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     (() => {
@@ -159,7 +168,7 @@ export const CourseNav = () => {
                 {elm.longMessage && (
                   <Tooltip
                     trigger={<Info longMessage className="ml-2 h-5 w-5" />}
-                    content={<div>{formatMessage(elm.longMessage)}</div>}
+                    content={SafeContent({ htmlContent: elm.longMessage })}
                   />
                 )}
               </div>
@@ -177,7 +186,7 @@ export const CourseNav = () => {
                 {elm.longMessage && (
                   <Tooltip
                     trigger={<Info longMessage className="ml-2 h-5 w-5" />}
-                    content={<div>{formatMessage(elm.longMessage)}</div>}
+                    content={SafeContent({ htmlContent: elm.longMessage })}
                   />
                 )}
               </div>
@@ -247,7 +256,7 @@ export const CourseNav = () => {
               </div>
 
               <div className="flex items-center gap-6">
-                {user && session.status === "authenticated" ? (
+                {isAuthenticated ? (
                   <div className="flex items-center gap-4">
                     <UserInNav />
                   </div>
@@ -354,7 +363,7 @@ export const CourseNav = () => {
                 {course?.supportsOffers ? (
                   <NavItem
                     href={
-                      user
+                      isAuthenticated
                         ? `/${courseId}/my-tee-box?section=offers-received`
                         : `/${course?.id}/login`
                     }
@@ -459,7 +468,11 @@ export const CourseNav = () => {
                 />
 
                 <NavItem
-                  href={user && session.status === "authenticated" ? `/${courseId}/account-settings/${user?.id}` : `/${courseId}/login`}
+                  href={
+                    isAuthenticated
+                      ? `/${courseId}/account-settings/${session?.data?.user?.id}`
+                      : `/${courseId}/login`
+                  }
                   text="Account"
                   icon={<UserProfile className="w-5 fill-[#353b3f]" />}
                   data-testid="account-settings-id"
@@ -488,7 +501,7 @@ export const CourseNav = () => {
                 {course?.supportsOffers ? (
                   <NavItem
                     href={
-                      user
+                      isAuthenticated
                         ? `/${courseId}/my-tee-box?section=offers-received`
                         : `/${course?.id}/login`
                     }

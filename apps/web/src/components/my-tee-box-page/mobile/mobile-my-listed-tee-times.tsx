@@ -12,7 +12,7 @@ import { type MyListedTeeTimeType } from "../my-listed-tee-times";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-export const MobileMyListedTeeTimes = () => {
+const MobileMyListedTeeTimes = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const searchParams = useSearchParams();
@@ -199,3 +199,5 @@ const TableCard = ({
     </div>
   );
 };
+
+export default MobileMyListedTeeTimes;

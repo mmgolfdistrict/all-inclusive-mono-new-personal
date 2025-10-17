@@ -11,6 +11,7 @@ import { Info } from "../icons/info";
 import { Tooltip } from "../tooltip";
 import Modal from "./modal";
 import OptionDetails from "./SelectComponent";
+import { useAppContext } from "~/contexts/AppContext";
 
 export const BalanceHistory = ({ userId }: { userId: string }) => {
   const { data: user, refetch } = useUser(userId);
@@ -35,7 +36,7 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
       return;
     }
   };
-
+  const { entity } = useAppContext();
   const closeModal = () => {
     setModalOpen(false);
   };
@@ -56,7 +57,11 @@ export const BalanceHistory = ({ userId }: { userId: string }) => {
         courseId,
       });
       if ((response as { success: boolean; error: boolean }).success) {
-        toast.success(`Cash out requested for $${amount}`);
+        toast.success(`Cash out requested for $${amount}`, {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         await refetch();
         await refetchRecievableData();
       } else {

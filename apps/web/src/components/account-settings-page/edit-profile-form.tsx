@@ -426,12 +426,14 @@ export const EditProfileForm = () => {
         courseId,
         color1: entity?.color1,
       });
-
+      // if (!response?.error) {
+      await update({ name: data?.name });
+      // }
       if (response?.error) {
         toast.error(response.message);
         return;
       }
-      if (profilePhoto && profilePhoto !== defaultProfilePhoto) {
+      if (profilePhoto && assetIds.profilePictureId && profilePhoto !== defaultProfilePhoto) {
         setProfilePhoto(null);
         await update({ image: assetIds.profilePictureId });
         setAssetIds((prev) => ({ ...prev, profilePictureId: "" }));
@@ -446,7 +448,11 @@ export const EditProfileForm = () => {
       }
       await refetchMe();
       await refetch();
-      toast.success("Profile updated successfully");
+      toast.success("Profile updated successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
     } catch (error) {
       if (error?.message === "Handle already exists") {
         setError("handle", {

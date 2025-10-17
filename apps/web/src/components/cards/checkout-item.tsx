@@ -24,6 +24,7 @@ import { SensibleWidget } from "../sensible/sensible-widget";
 import { Tooltip } from "../tooltip";
 import MerchandiseCarousel from "../checkout-page/merchandise-carousel";
 import { Info } from "../icons/info";
+import { useAppContext } from "~/contexts/AppContext";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -60,6 +61,7 @@ export const CheckoutItem = ({
     null
   );
   const { course, getAllowedPlayersForTeeTime } = useCourseContext();
+  const { entity } = useAppContext();
   const { user } = useUserContext();
   const courseId = course?.id;
   const [playerEmails, setPlayerEmails] = useState(
@@ -202,7 +204,11 @@ export const CheckoutItem = ({
             providerCourseMemberShipId: result.providerCourseMembershipId,
           },
         ]);
-        toast.success(result.message);
+        toast.success(result.message, {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         setIsCustomerValidated(null);
         return;
       } else {

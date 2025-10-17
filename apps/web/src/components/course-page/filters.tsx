@@ -22,11 +22,12 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import type { DateType, GolferType, HoleType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
-import { debounceFunction } from "~/utils/debounce";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "usehooks-ts";
+import { OutlineButton } from "../buttons/outline-button";
+import { useAppContext } from "~/contexts/AppContext";
 
 interface DayValue {
   year: number;
@@ -94,6 +95,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
     const [selectedDayMobile, setSelectedDayMobile] = useState(selectedDay);
     const router = useRouter();
     const isMobile = useMediaQuery("(max-width: 768px)");
+    const { entity } = useAppContext();
 
     const highestPrice = useMemo(() => {
       if (!course) return 0;
@@ -251,11 +253,11 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
       const defaultDateOptions = [
         "All",
         "Today",
-        "This Week",
+        // "This Week",
         "This Weekend",
-        "This Month",
+        // "This Month",
         "Furthest Day Out To Book",
-        "Custom",
+        "Select Dates",
       ];
 
       const specialEventOptions: string[] =
@@ -306,12 +308,12 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                       ?.iconUrl || "no-icon"
                   }
                   label={
-                    value === "Custom" ? (
+                    value === "Select Dates" ? (
                       <div className="w-full flex justify-between">
                         <span>{value}</span>
                         <span>
                           {isMobile
-                            ? dateTypeMobile === "Custom" && (
+                            ? dateTypeMobile === "Select Dates" && (
                               <>
                                 {selectedDayMobile.from
                                   ? formatDate(selectedDayMobile.from)
@@ -321,7 +323,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                                   : ""}
                               </>
                             )
-                            : dateType === "Custom" && (
+                            : dateType === "Select Dates" && (
                               <>
                                 {selectedDay.from
                                   ? formatDate(selectedDay.from)
@@ -342,15 +344,15 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                   className={`${index === 0
                     ? "rounded-t-2xl border border-stroke"
                     : index === DateOptions.length - 1 &&
-                      dateType === "Custom"
+                      dateType === "Select Dates"
                       ? "border-l border-r border-stroke"
                       : index === DateOptions.length - 1
                         ? "rounded-b-2xl border-b border-l border-r border-stroke"
                         : "border-b border-l border-r border-stroke"
                     }`}
                 />
-                {(dateTypeMobile === "Custom" || dateType === "Custom") &&
-                  value === "Custom" ? (
+                {(dateTypeMobile === "Select Dates" || dateType === "Select Dates") &&
+                  value === "Select Dates" ? (
                   <>
                     <div className="custom_calendar unmask-time">
                       <Calendar
@@ -359,20 +361,17 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                         onChange={
                           isMobile ? setSelectedDayMobile : setSelectedDay
                         }
-                        colorPrimary="#40942A"
+                        colorPrimary={entity ? entity?.color1 : "#40942A"}
                         minimumDate={minimumDate}
                         maximumDate={maximumDate}
                       // disabledDays={blackOutDays}
                       />
                       <div
-                        className={`z-50 text-sm w-full flex justify-center flex-wrap p-0 px-4 pb-4 `}
+                        className={`z-50 text-sm w-full flex flex-col items-center p-0 px-4 pb-4`}
                       >
                         {specialEvents?.map((event, i) => (
                           <>
-                            <button
-                              key={i}
-                              className={`inline-block mt-1 ${isMobile ? "mx-4" : "mx-2"
-                                }`}
+                            <OutlineButton
                               onClick={() => {
                                 const startDate = new Date(event.startDate);
                                 const endDate = new Date(event.endDate);
@@ -381,9 +380,17 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                                   to: dateToDayValue(endDate),
                                 });
                               }}
-                            >
+                              key={i}
+                              className="mb-2 flex items-center justify-center w-full">
+                              <Image
+                                src={event?.iconUrl || ""}
+                                alt={event.eventName}
+                                width={22}
+                                height={22}
+                                className="mr-2 h-5 w-5"
+                              />
                               {event.eventName}
-                            </button>
+                            </OutlineButton>
                           </>
                         ))}
                       </div>
@@ -620,7 +627,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
             }
           />
         </section> */}
-      </div>
+      </div >
     );
   }
 );

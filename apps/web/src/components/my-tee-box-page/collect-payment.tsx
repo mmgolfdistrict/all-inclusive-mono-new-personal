@@ -323,7 +323,11 @@ export const CollectPayment = ({
           return newLoadingStates;
         });
       } else {
-        toast.success(result?.message);
+        toast.success(result?.message, {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         setCollectPaymentInput((prevInputs) =>
           prevInputs.map((input) =>
             input.index === index
@@ -391,7 +395,11 @@ export const CollectPayment = ({
           return newLoadingStates;
         });
       } else {
-        toast.success(result?.message);
+        toast.success(result?.message, {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         setSendTrigger((prev) => prev + 1);
         setLoadingStates((prev) => {
           const newLoadingStates = [...prev];
@@ -623,7 +631,10 @@ export const CollectPayment = ({
                     {(player.isPaid === 1) ? (
                       <input
                         className="outline-none bg-secondary-white px-3 py-1 rounded-md cursor-default text-black w-[17rem]"
-                        type="text"
+                        name={`player-${index}-email`}
+                        id={`player-${index}-email`}
+                        autoComplete={`section-player-${index} email`}
+                        type="email"
                         value={player.email}
                         readOnly
                         disabled // optional if you want to gray it out
@@ -632,7 +643,10 @@ export const CollectPayment = ({
                     ) : (
                       <input
                         className="outline-none bg-secondary-white focus:outline-white px-3 py-1 rounded-md w-[17rem]"
-                        type="text"
+                        name={`player-${index}-email`}
+                        id={`player-${index}-email`}
+                        autoComplete={`section-player-${index} email`}
+                        type="email"
                         placeholder="Enter the email"
                         onChange={(e) => handleEmailChange(index, e.target.value)}
                         value={player.email}

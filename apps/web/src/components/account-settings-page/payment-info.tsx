@@ -10,10 +10,12 @@ import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
 import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
+import { useAppContext } from "~/contexts/AppContext";
 
 export const PaymentInfoMangeProfile = () => {
   const { cards, refetch, isLoading } = usePaymentMethods();
   const removeCard = api.checkout.removePaymentMethod.useMutation();
+  const { entity } = useAppContext();
 
   const removeMethod = async (paymentMethodId: string) => {
     if (!paymentMethodId) return;
@@ -21,7 +23,11 @@ export const PaymentInfoMangeProfile = () => {
     try {
       await removeCard.mutateAsync({ paymentMethodId });
       await refetch();
-      toast.success("Card removed successfully");
+      toast.success("Card removed successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error removing card");
     }

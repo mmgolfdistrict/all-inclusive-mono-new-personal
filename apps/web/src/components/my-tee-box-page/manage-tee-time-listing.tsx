@@ -169,7 +169,11 @@ export const ManageTeeTimeListing = ({
           });
         }
         await refetch?.();
-        toast.success("Listing cancelled successfully");
+        toast.success("Listing cancelled successfully", {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         setIsManageTeeTimeListingOpen(false);
         void logAudit();
       } catch (error) {
@@ -283,7 +287,11 @@ export const ManageTeeTimeListing = ({
           listingId: selectedTeeTime?.listingId,
           endTime: new Date(selectedTeeTime?.date),
         });
-        toast.success("Tee time listing updated successfully");
+        toast.success("Tee time listing updated successfully", {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         if (needRedirect) {
           return router.push(
             `/${selectedTeeTime?.courseId}/my-tee-box?section=my-listed-tee-times`
@@ -377,7 +385,11 @@ export const ManageTeeTimeListing = ({
               <DownChevron fill={"#40942A"} className="w-[0.875rem] -rotate-90" />
             </Link>
           </div>
-        );
+          , {
+            progressStyle: {
+              background: entity?.color1,
+            },
+          });
         setIsManageTeeTimeListingOpen(false);
         if (needRedirect) {
           return router.push(
