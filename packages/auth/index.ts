@@ -246,15 +246,15 @@ export const {
           process.env.REDIS_TOKEN!
         );
 
-        const userService = new UserService(db, notificationService);
-        const existingUser = await userService.getUserById(user.id ?? "");
+        // const userService = new UserService(db, notificationService);
+        // const existingUser = await userService.getUserById(user.id ?? "");
 
-        if (existingUser && !existingUser.handle) {
-          const username = await userService.generateUsername(6);
-          await userService.updateUser(user.id ?? "", {
-            handle: username,
-          });
-        }
+        // if (existingUser && !existingUser.handle) {
+        //   const username = await userService.generateUsername(6);
+        //   await userService.updateUser(user.id ?? "", {
+        //     handle: username,
+        //   });
+        // }
 
         // const isUserBlocked = await authService.isUserBlocked(user.email ?? "");
         // if (isUserBlocked) {
