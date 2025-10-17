@@ -56,7 +56,7 @@ DESCRIPTION:Reservation ID: ${event.reservationId ?? "N/A"}, Players: ${event.nu
     }
 STATUS:CONFIRMED
 TRANSP:OPAQUE
-ORGANIZER;CN=Golf District:MAILTO:${process.env.ICS_ORGANIZER_EMAIL || "noreply@golfdistrict.com"
+ORGANIZER;CN=Golf District:MAILTO:${process.env.SENDGRID_EMAIL ?? "noreply@golfdistrict.com"
     }
 ATTENDEE;CN=Guest;RSVP=TRUE:MAILTO:${event.email ?? ""}
 END:VEVENT
