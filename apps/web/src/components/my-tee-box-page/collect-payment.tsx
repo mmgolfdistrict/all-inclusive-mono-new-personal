@@ -615,6 +615,7 @@ export const CollectPayment = ({
                   onClick={() => setSendTrigger((prev) => prev + 1)}
                   width={20}
                   height={20}
+                  color={entity?.color1}
                   className={`cursor-pointer ${refreshLoader ? "animate-spin" : ""} `}
                 />
               </div>
