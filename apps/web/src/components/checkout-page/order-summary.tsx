@@ -3,8 +3,6 @@ import {
   type SensibleDataToMountCompType,
 } from "~/utils/types";
 import { CheckoutItem } from "../cards/checkout-item";
-import { Info } from "../icons/info";
-import { Tooltip } from "../tooltip";
 import { useMediaQuery } from "usehooks-ts";
 
 export const OrderSummary = ({
@@ -14,6 +12,8 @@ export const OrderSummary = ({
   isSensibleInvalid,
   privacyPolicyAndTCByCourseUrl,
   isGroupBooking = false,
+  getPlayersPerSlotLabelFull,
+  selectedTeeTimes
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;
@@ -24,6 +24,8 @@ export const OrderSummary = ({
     termsAndConditionsURL: string | null;
   };
   isGroupBooking?: boolean;
+  getPlayersPerSlotLabelFull?: (group: SearchObject[], totalPlayers: number) => string;
+  selectedTeeTimes?: SearchObject[]
 }) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   return (
@@ -40,6 +42,8 @@ export const OrderSummary = ({
           isSensibleInvalid={isSensibleInvalid}
           sensibleDataToMountComp={sensibleDataToMountComp}
           isGroupBooking={isGroupBooking}
+          getPlayersPerSlotLabelFull={getPlayersPerSlotLabelFull}
+          selectedTeeTimes={selectedTeeTimes}
         />
       </div>
       <h2 className="italic">
