@@ -252,7 +252,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 >
                   <div className="flex items-center gap-2">
                     <Avatar
-                      src={imageUrl ?? "/defaults/default-profile.webp"}
+                      src={imageUrl ?? ""}
                       name={user?.name}
                     />
                     <div className="flex flex-col text-xs">

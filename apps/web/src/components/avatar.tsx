@@ -1,4 +1,5 @@
 import * as RadixAvatar from "@radix-ui/react-avatar";
+import { UserIcon } from "./icons/UserIcon";
 
 export const Avatar = ({
   src,
@@ -19,16 +20,16 @@ export const Avatar = ({
       <RadixAvatar.Image
         className={`h-full w-full ${isRounded ? "rounded-full" : "rounded-none"
           } ${isRounded ? "object-cover" : "object-contain bg-white"}`}
-        src={src ?? "/defaults/default-profile.webp"}
+        src={src}
         alt="user"
         draggable={false}
       />
 
       <RadixAvatar.Fallback
         className="leading-1 flex h-full w-full items-center justify-center bg-primary text-[0.9375rem] font-medium text-white"
-        delayMs={600}
+        delayMs={0}
       >
-        {name?.slice(0, 1)}
+        <UserIcon />
       </RadixAvatar.Fallback>
     </RadixAvatar.Root>
   );

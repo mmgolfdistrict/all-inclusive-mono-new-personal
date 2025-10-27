@@ -369,7 +369,7 @@ export class SearchService extends CacheService {
       soldByName: firstBooking.ownerHandle ? firstBooking.ownerHandle : "Anonymous",
       soldByImage: firstBooking.profilePicture
         ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${firstBooking.profilePicture.key}.${firstBooking.profilePicture.extension}`
-        : "/defaults/default-profile.webp",
+        : "",
       availableSlots: unlistedBookingData.length,
       pricePerGolfer: 0,
       teeTimeId: teeTimeId,
@@ -453,7 +453,7 @@ export class SearchService extends CacheService {
       soldByName: firstBooking.ownerHandle ? firstBooking.ownerHandle : "Anonymous",
       soldByImage: firstBooking.image
         ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${firstBooking.image.key}.${firstBooking.image.extension}`
-        : "/defaults/default-profile.webp",
+        : "",
       availableSlots: firstBooking.listedSlots,
       pricePerGolfer: Number((firstBooking.listPrice * (1 + firstBooking.buyerFee / 100)) / 100),
       firstHandPurchasePrice: firstBooking.firstHandPrice ?? 0,
@@ -639,7 +639,7 @@ export class SearchService extends CacheService {
       soldByName: tee.courseName ? tee.courseName : "Golf District",
       soldByImage: tee.logo
         ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${tee.logo.key}.${tee.logo.extension}`
-        : "/defaults/default-profile.webp",
+        : "",
       availableSlots: tee.firstPartySlots,
       pricePerGolfer:
         tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal,
@@ -662,7 +662,7 @@ export class SearchService extends CacheService {
           handle: watcher.handle ? watcher.handle : "Anonymous",
           image: watcher.image
             ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${watcher.image.key}.${watcher.image.extension}`
-            : "/defaults/default-profile.webp",
+            : "",
         };
       }),
       weather,
@@ -1388,10 +1388,10 @@ export class SearchService extends CacheService {
         sortPrice === "desc"
           ? desc(teeTimes.greenFeePerPlayer)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(teeTimes.greenFeePerPlayer)
-          : asc(teeTimes.time)
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(teeTimes.greenFeePerPlayer)
+              : asc(teeTimes.time)
       );
     const teeQueryLimited = teeQuery.limit(limit);
 
@@ -1408,7 +1408,7 @@ export class SearchService extends CacheService {
         .from(courses)
         .where(eq(courses.id, courseId))
         .execute()
-        .catch(() => {});
+        .catch(() => { });
 
       await cacheManager.set(cacheCourseDataKey, courseData, 600000);
     }
@@ -1627,7 +1627,7 @@ export class SearchService extends CacheService {
         soldByName: teeTime.courseName ? teeTime.courseName : "Golf District",
         soldByImage: teeTime.logo
           ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${teeTime.logo.key}.${teeTime.logo.extension}`
-          : "/defaults/default-profile.webp",
+          : "",
         date: teeTime.providerDate,
         teeTimeId: teeTime.id,
         time: teeTime.time,
@@ -1699,10 +1699,10 @@ export class SearchService extends CacheService {
         sortPrice === "desc"
           ? desc(lists.listPrice)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(lists.listPrice)
-          : asc(teeTimes.time)
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(lists.listPrice)
+              : asc(teeTimes.time)
       );
     // .limit(limit);
     const secoondHandData = await secondHandBookingsQuery.execute().catch(async (err) => {
@@ -1730,7 +1730,7 @@ export class SearchService extends CacheService {
               soldByName: booking?.ownerName ?? "Anonymous",
               soldByImage: booking?.profilePicture
                 ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${booking?.profilePicture.key}.${booking?.profilePicture.extension}`
-                : "/defaults/default-profile.webp",
+                : "",
               pricePerGolfer:
                 booking.listingId && booking.listPrice
                   ? Number((booking.listPrice * (1 + buyerFee)) / 100)
@@ -2132,8 +2132,8 @@ export class SearchService extends CacheService {
           courseSettingResponse?.groupBookingFeePerPlayer !== null
             ? courseSettingResponse?.groupBookingFeePerPlayer
             : filteredDate.length
-            ? filteredDate[0]?.markUpFees
-            : courseSettingResponse?.fixedMarkup;
+              ? filteredDate[0]?.markUpFees
+              : courseSettingResponse?.fixedMarkup;
         const markupFeesToBeUsed = (markupFeesFinal ?? 0) / 100;
         const advancedBookingFeesPerPlayer = filteredAdvancedFees.length
           ? filteredAdvancedFees[0]?.advancedBookingFeePerPlayer ?? 0
@@ -2223,8 +2223,8 @@ export class SearchService extends CacheService {
               return Math.max(
                 acc,
                 (teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 +
-                  markupFeesToBeUsed +
-                  advancedBookingFeesPerPlayerDecimal
+                markupFeesToBeUsed +
+                advancedBookingFeesPerPlayerDecimal
               );
             }, 0);
           } else if (groupBookingPriceSelectionMethod === "SUM") {
@@ -2236,7 +2236,7 @@ export class SearchService extends CacheService {
                 ((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 +
                   markupFeesToBeUsed +
                   advancedBookingFeesPerPlayerDecimal) *
-                  players
+                players
               );
             }, 0);
             pricePerGolfer = totalPrice / golferCount;
@@ -2417,7 +2417,7 @@ export class SearchService extends CacheService {
           soldByName: tee.courseName ? tee.courseName : "Golf District",
           soldByImage: tee.logo
             ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${tee.logo.key}.${tee.logo.extension}`
-            : "/defaults/default-profile.webp",
+            : "",
           availableSlots: tee.firstPartySlots,
           pricePerGolfer:
             tee.greenFee / 100 + tee.cartFee / 100 + markupFeesToBeUsed + advancedBookingFeesPerPlayerDecimal,
@@ -2440,7 +2440,7 @@ export class SearchService extends CacheService {
               handle: watcher.handle ? watcher.handle : "Anonymous",
               image: watcher.image
                 ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${watcher.image.key}.${watcher.image.extension}`
-                : "/defaults/default-profile.webp",
+                : "",
             };
           }),
           weather,

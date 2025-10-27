@@ -31,9 +31,7 @@ export const DropMedia = ({
   const { entity } = useAppContext();
 
   useEffect(() => {
-    if (src) {
-      setImageSrc(src);
-    }
+    setImageSrc(src ?? null);
   }, [src]);
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
