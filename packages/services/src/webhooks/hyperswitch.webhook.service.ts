@@ -926,6 +926,7 @@ export class HyperSwitchWebhookService {
           timezoneCorrection: courses.timezoneCorrection,
           groupId: bookings.groupId,
           totalMerchandiseAmount: bookings.totalMerchandiseAmount,
+          timezoneISO: courses.timezoneISO,
         })
         .from(bookings)
         .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -1085,6 +1086,7 @@ export class HyperSwitchWebhookService {
           cartFeeTaxPerPlayer: teeTimes.cartFeeTaxPerPlayer,
           timezoneCorrection: courses.timezoneCorrection,
           cartFee: teeTimes.cartFeePerPlayer,
+          timezoneISO: courses.timezoneISO,
         })
         .from(teeTimes)
         .where(eq(teeTimes.id, firstBooking.teeTimeId))
@@ -1643,6 +1645,7 @@ export class HyperSwitchWebhookService {
           playTime: this.extractTime(
             formatTime(existingTeeTime?.providerDate ?? "", true, existingTeeTime?.timezoneCorrection ?? 0)
           ),
+          courseTimeZone: existingTeeTime?.timezoneISO ?? "",
         };
         const icsContent: string = createICS(event);
 
@@ -1737,8 +1740,8 @@ export class HyperSwitchWebhookService {
                 })}` || "-",
               Payout: formatMoney(
                 (listedPrice - totalTax) * (listedSlotsCount || 1) +
-                  sellerWeatherGuaranteeAmount / 100 +
-                  sellerMerchandiseAmount / 100
+                sellerWeatherGuaranteeAmount / 100 +
+                sellerMerchandiseAmount / 100
               ),
               PurchasedFrom: existingTeeTime?.courseName || "-",
               BuyTeeTImeURL: `${redirectHref}`,
@@ -1774,8 +1777,8 @@ export class HyperSwitchWebhookService {
               })}` || "-",
             Payout: formatMoney(
               (listedPrice - totalTax) * (listedSlotsCount || 1) +
-                sellerWeatherGuaranteeAmount / 100 +
-                sellerMerchandiseAmount / 100
+              sellerWeatherGuaranteeAmount / 100 +
+              sellerMerchandiseAmount / 100
             ),
             SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
             PurchasedFrom: existingTeeTime?.courseName || "-",

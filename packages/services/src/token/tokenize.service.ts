@@ -68,7 +68,7 @@ export class TokenizeService {
     private readonly database: Db,
     private readonly notificationService: NotificationService,
     private readonly sensibleService: SensibleService
-  ) {}
+  ) { }
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -271,6 +271,7 @@ export class TokenizeService {
         cdnKey: assets.key,
         extension: assets.extension,
         timezoneCorrection: courses.timezoneCorrection,
+        timezoneISO: courses.timezoneISO,
       })
       .from(teeTimes)
       .where(isFirstHandGroupBooking ? inArray(teeTimes.id, teeTimeIds) : eq(teeTimes.id, providerTeeTimeId))
@@ -924,6 +925,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         playTime: this.extractTime(
           formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0)
         ),
+        courseTimeZone: existingTeeTime.timezoneISO ?? "",
       };
 
       template = {
@@ -960,6 +962,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         playTime: this.extractTime(
           formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0)
         ),
+        courseTimeZone: existingTeeTime.timezoneISO ?? "",
       };
 
       template = {
@@ -975,7 +978,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
             (existingTeeTime.greenFee +
               Number(cartFeeCharge) +
               (normalizedCartData?.markupCharge ?? 0) * 100) /
-              100 +
+            100 +
             normalizedCartData.advancedBookingAmount
           ).toLocaleString("en-US", {
             minimumFractionDigits: 2,
