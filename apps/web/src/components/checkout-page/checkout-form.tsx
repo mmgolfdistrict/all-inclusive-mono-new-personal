@@ -1905,7 +1905,7 @@ export const CheckoutForm = ({
           />
           <div className="cursor-pointer ml-2 text-[0.875rem] font-bold text-justify">
             I understand and agree that I am purchasing a non-refundable, non-cancellable and non-changeable tee time.
-            By checking the box and completing this reservation, I agree to the{" "}
+            By checking the box and completing this reservation, {isFirstHandGroup.length ? "I agree that my group will play continuous tee times in a party of 4," : ""} I agree to the{" "}
             <Link
               href="/terms-of-service"
               className="text-blue-600 underline"

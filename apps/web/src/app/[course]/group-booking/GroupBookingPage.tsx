@@ -27,6 +27,7 @@ interface TeeTime {
   courseId: string;
   createdDateTime: string;
   lastUpdatedDateTime: string;
+  players: number;
 }
 
 interface TeeTimeGroup {
@@ -54,27 +55,19 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
   // const [teeTimeGroup, setTeeTimeGroup] = useState<TeeTimeGroup | null | undefined>(null);
   const [otherTeeTimeGroups, setOtherTeeTimeGroups] = useState<TeeTimeGroup[] | null>(null);
 
-  const allocatePlayersAcrossTeeTimes = (group: TeeTimeGroup, totalPlayers: number): { label: string; count: number }[] => {
+  const allocatePlayersAcrossTeeTimes = (group: TeeTimeGroup): { label: string; count: number }[] => {
     const teeTimesSorted = group.teeTimes.sort((a, b) => a.time - b.time);
-
-    let remaining = totalPlayers;
     const allocations: { label: string; count: number }[] = [];
 
     for (const t of teeTimesSorted) {
-      if (remaining <= 0) break;
-      const capacity = Math.max(0, t.maxPlayersPerBooking);
-      const count = Math.min(remaining, capacity);
-      if (count > 0) {
-        allocations.push({ label: getTime(t.providerDate, timezoneCorrection), count });
-        remaining -= count;
-      }
+      allocations.push({ label: getTime(t.providerDate, timezoneCorrection), count: t.players });
     }
 
     return allocations;
   };
 
-  const getPlayersPerSlotLabel = (group: TeeTimeGroup, totalPlayers: number): string => {
-    const allocations = allocatePlayersAcrossTeeTimes(group, totalPlayers);
+  const getPlayersPerSlotLabel = (group: TeeTimeGroup): string => {
+    const allocations = allocatePlayersAcrossTeeTimes(group);
     const parts = allocations.map((a) => `${a.label} (${a.count})`.replace(/ /g, "\u00A0"));
     const shown = parts.slice(0, 3);
     const remaining = parts.length - shown.length;
@@ -82,18 +75,10 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
   };
 
   // Desktop/Tablet: Show full, non-truncated labels
-  const getGroupedTimesLabelFull = (group: TeeTimeGroup): string => {
-    const labels = group.teeTimes
-      .slice()
-      .sort((a, b) => a.time - b.time)
-      .map((t) => getTime(t.providerDate, timezoneCorrection));
-    return labels.join(" • ");
-  };
-
-  const getPlayersPerSlotLabelFull = (group: TeeTimeGroup, totalPlayers: number): string => {
-    const allocations = allocatePlayersAcrossTeeTimes(group, totalPlayers);
-    const parts = allocations.map((a) => `${a.label} (${a.count})`.replace(/ /g, "\u00A0"));
-    return parts.join(" • ");
+  const getPlayersPerSlotLabelFull = (group: TeeTimeGroup): string => {
+    const allocations = allocatePlayersAcrossTeeTimes(group);
+    const parts = allocations.map(a => `${a.label} - ${a.count} ${a.count === 1 ? "player" : "players"}`);
+    return parts.join("\n").replace(/\\n/g, "\n");
   };
 
   const sortedDates = useMemo(() => {
@@ -238,7 +223,7 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
                         </div>
                         {/* Mobile: compact distribution */}
                         <div className="block md:hidden text-[0.75rem] text-wrap md:text-[0.875rem] text-primary-gray mt-1">
-                          <span className="font-medium text-secondary-black">Player Distrbution:</span> {getPlayersPerSlotLabel(teeTimeGroup, playerCount)}
+                          <span className="font-medium text-secondary-black">Player Distrbution:</span> {getPlayersPerSlotLabel(teeTimeGroup)}
                         </div>
 
                         {/* Second Row */}
@@ -275,10 +260,10 @@ const GroupBookingPage = ({ teeTimesData, isTeeTimesLoading, playerCount }: {
                         {/* Desktop/Tablet: richer informative section */}
                         <div className="hidden md:block text-[0.75rem] md:text-[0.875rem] text-primary-gray mt-1">
                           <div>
-                            <span className="font-medium text-secondary-black">Tee times in group:</span> {getGroupedTimesLabelFull(teeTimeGroup)}
-                          </div>
-                          <div className="mt-1">
-                            <span className="font-medium text-secondary-black">Player distribution:</span> {getPlayersPerSlotLabelFull(teeTimeGroup, playerCount)}
+                            <span className="font-medium text-secondary-black">Group Player Distribution:</span>
+                            <div className="whitespace-pre-line">
+                              {getPlayersPerSlotLabelFull(teeTimeGroup)}
+                            </div>
                           </div>
                         </div>
                       </div>

@@ -1388,10 +1388,10 @@ export class SearchService extends CacheService {
         sortPrice === "desc"
           ? desc(teeTimes.greenFeePerPlayer)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(teeTimes.greenFeePerPlayer)
-          : asc(teeTimes.time)
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(teeTimes.greenFeePerPlayer)
+              : asc(teeTimes.time)
       );
     const teeQueryLimited = teeQuery.limit(limit);
 
@@ -1408,7 +1408,7 @@ export class SearchService extends CacheService {
         .from(courses)
         .where(eq(courses.id, courseId))
         .execute()
-        .catch(() => {});
+        .catch(() => { });
 
       await cacheManager.set(cacheCourseDataKey, courseData, 600000);
     }
@@ -1699,10 +1699,10 @@ export class SearchService extends CacheService {
         sortPrice === "desc"
           ? desc(lists.listPrice)
           : sortTime === "desc"
-          ? desc(teeTimes.time)
-          : sortPrice === "asc"
-          ? asc(lists.listPrice)
-          : asc(teeTimes.time)
+            ? desc(teeTimes.time)
+            : sortPrice === "asc"
+              ? asc(lists.listPrice)
+              : asc(teeTimes.time)
       );
     // .limit(limit);
     const secoondHandData = await secondHandBookingsQuery.execute().catch(async (err) => {
@@ -2132,8 +2132,8 @@ export class SearchService extends CacheService {
           courseSettingResponse?.groupBookingFeePerPlayer !== null
             ? courseSettingResponse?.groupBookingFeePerPlayer
             : filteredDate.length
-            ? filteredDate[0]?.markUpFees
-            : courseSettingResponse?.fixedMarkup;
+              ? filteredDate[0]?.markUpFees
+              : courseSettingResponse?.fixedMarkup;
         const markupFeesToBeUsed = (markupFeesFinal ?? 0) / 100;
         const advancedBookingFeesPerPlayer = filteredAdvancedFees.length
           ? filteredAdvancedFees[0]?.advancedBookingFeePerPlayer ?? 0
@@ -2192,8 +2192,13 @@ export class SearchService extends CacheService {
           let areSpotsAvailable = true,
             isContinuous = true;
           let remainingGolferCount = golferCount;
+          const requiresPlayerRedistribution = golferCount % 4 === 1 && minimumGolferGroup === 4;
           for (const teeTime of window) {
             if (teeTime.availableFirstHandSpots >= Math.min(minimumGolferGroup, remainingGolferCount)) {
+              if (requiresPlayerRedistribution && remainingGolferCount === 1 && !(teeTime.availableFirstHandSpots > 1)) {
+                areSpotsAvailable = false;
+                break;
+              }
               remainingGolferCount -= teeTime.availableFirstHandSpots;
             } else {
               areSpotsAvailable = false;
@@ -2223,8 +2228,8 @@ export class SearchService extends CacheService {
               return Math.max(
                 acc,
                 (teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 +
-                  markupFeesToBeUsed +
-                  advancedBookingFeesPerPlayerDecimal
+                markupFeesToBeUsed +
+                advancedBookingFeesPerPlayerDecimal
               );
             }, 0);
           } else if (groupBookingPriceSelectionMethod === "SUM") {
@@ -2236,7 +2241,7 @@ export class SearchService extends CacheService {
                 ((teeTime.greenFeePerPlayer + teeTime.cartFeePerPlayer) / 100 +
                   markupFeesToBeUsed +
                   advancedBookingFeesPerPlayerDecimal) *
-                  players
+                players
               );
             }, 0);
             pricePerGolfer = totalPrice / golferCount;
@@ -2248,8 +2253,24 @@ export class SearchService extends CacheService {
             if (!availableTimes[date]) {
               availableTimes[date] = [];
             }
+
+            let remainingPlayers = golferCount;
+            const windowWithSlots = window.map((teeTime) => {
+              let players = Math.min(remainingPlayers, teeTime.availableFirstHandSpots);
+
+              if (requiresPlayerRedistribution && remainingPlayers === 5) {
+                players = players - 1;
+              }
+
+              remainingPlayers -= players;
+              return {
+                ...teeTime,
+                players,
+              };
+            })
+
             availableTimes[date]!.push({
-              teeTimes: window,
+              teeTimes: windowWithSlots,
               time: window[0]!.time,
               pricePerGolfer,
               teeTimeIds: window.map((teeTime) => teeTime.id),
