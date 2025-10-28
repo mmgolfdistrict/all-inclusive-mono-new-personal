@@ -385,6 +385,12 @@ export class UserService {
     for (const invite of invites) {
       const { emailOrPhoneNumber, teeTimeId, bookingSlotId, slotPosition } = invite;
 
+      // Check if the invited person already exists in the system
+      const [existingInvitedUser] = await this.database
+        .select({ name: users.name, email: users.email })
+        .from(users)
+        .where(eq(users.email, emailOrPhoneNumber));
+
       try {
         // Prevent self-invite
         if (user.email === emailOrPhoneNumber) {
@@ -449,6 +455,10 @@ export class UserService {
           }
         }
 
+        // Prepare personalized invite details
+        const inviterFirstName = user?.name?.split(" ")[0] ?? "User";
+        const invitedFirstName = existingInvitedUser?.name?.split(" ")[0];
+
         // Determine invite method
         if (isValidEmail(emailOrPhoneNumber)) {
           try {
@@ -457,7 +467,9 @@ export class UserService {
               "You've been invited to Golf District",
               process.env.SENDGRID_INVITE_USER_TEMPLATE_ID!,
               {
-                CustomerName: user?.name ?? "User",
+                // ✅ if existing user → use their first name, else use "User"
+                CustomerName: inviterFirstName,
+                InvitedName: invitedFirstName?.trim() ? invitedFirstName : "User",
                 CourseLogoURL,
                 CourseURL,
                 CourseName,
