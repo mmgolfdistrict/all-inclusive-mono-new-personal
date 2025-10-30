@@ -6,11 +6,14 @@ export async function GET(request: Request, { params }: { params: { filename: st
             value: appSettings.value,
         })
             .from(appSettings)
-            .where(eq(appSettings.internalName, 'APPLEPAY_DOMAIN_VERIFICATION'))
+            .where(eq(appSettings.internalName, 'APPLEPAY_DOMAIN_VERIFICATION_FILE_URL'))
             ;
-        // const result = await db.query(`SELECT content FROM apple_merchant_association LIMIT 1`);
-        // const textContent = result?.[0]?.content || "";
-        return new Response(result.value, { headers: { "Content-Type": "text/plain" } });
+        if (result == undefined || result.value == undefined) {
+            return new Response("Missing app setting APPLEPAY_DOMAIN_VERIFICATION_FILE_URL", { headers: { "Content-Type": "text/plain" } });
+        }
+        let res = await fetch(result.value)
+        let text = await res.text()
+        return new Response(text, { headers: { "Content-Type": "text/plain" } });
     }
 
     return new Response("Not found", { status: 404 });
