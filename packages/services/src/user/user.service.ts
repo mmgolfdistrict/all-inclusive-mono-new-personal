@@ -335,6 +335,7 @@ export class UserService {
       .leftJoin(teeTimes, eq(teeTimes.id, invitedTeeTime.teeTimeId))
       .leftJoin(courses, eq(courses.id, teeTimes.courseId))
       .where(eq(invitedTeeTime.email, emailOrPhoneNumber))
+      .orderBy(asc(teeTimes.providerDate))
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving Invited tee times: ${err}`);

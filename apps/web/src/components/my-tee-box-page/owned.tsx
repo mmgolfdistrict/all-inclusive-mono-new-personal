@@ -94,10 +94,10 @@ export const Owned = () => {
         return { ...data[key], teeTimeId: data[key].teeTimeId } as OwnedTeeTime;
       })
       .sort((a, b) => {
-        const dateA = a.date;
-        const dateB = b.date;
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
 
-        return Number(new Date(dateA)) - Number(new Date(dateB));
+        return dateA - dateB;
       });
   }, [data]);
   // const loadMore = () => {

@@ -63,8 +63,8 @@ export const TransactionHistory = () => {
   function sortByDate(objectOfObjects: Record<string, TxnHistoryType>) {
     const arrayOfObjects: TxnHistoryType[] = Object.values(objectOfObjects);
     arrayOfObjects.sort((a, b) => {
-      const dateA = Number(new Date(a.date));
-      const dateB = Number(new Date(b.date));
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
       return dateB - dateA;
     });
 
