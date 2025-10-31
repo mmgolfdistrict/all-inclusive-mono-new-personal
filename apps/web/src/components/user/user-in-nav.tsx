@@ -35,6 +35,10 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
     }
   );
 
+  if (pathname.includes("reset-password")) {
+    return null; // don't show user dropdown on reset password page
+  }
+
   const auditLog = api.webhooks.auditLog.useMutation();
   const logAudit = (func: () => unknown) => {
     auditLog
