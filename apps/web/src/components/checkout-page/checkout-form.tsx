@@ -675,6 +675,8 @@ export const CheckoutForm = ({
         golfersCount: Number(playerCount ?? 0),
       });
 
+      console.log("TEETIME AVAILABILITY RESPONSE: ", resp);
+
       if (!resp) {
         toast.error("Oops! Tee time is not available anymore");
         setIsLoading(false);
