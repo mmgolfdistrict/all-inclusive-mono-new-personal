@@ -9,7 +9,7 @@ export const bookingRefund = mySqlTable("bookingRefund",
         bookingId: varchar('bookingId', { length: 36 }).notNull(),
         refundAmount: int("refundAmount").notNull(),
         status: varchar("status", { length: 15 }).notNull().$type<"PENDING" | "INITIATED" | "COMPLETED" | "REJECTED" | "AI GENERATED">(),
-        extrenalRefundId: varchar("extrenalRefundId", { length: 100 }),
+        externalRefundId: varchar("externalRefundId", { length: 100 }),
         createdDateTime: datetime("createdDateTime", { mode: "string", fsp: 3 })
             .notNull()
             .default(sql`CURRENT_TIMESTAMP(3)`),
