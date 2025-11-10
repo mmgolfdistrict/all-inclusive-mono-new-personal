@@ -1,3 +1,4 @@
+import React from 'react';
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { type Dispatch, type SetStateAction } from "react";
 import { FilledButton } from "../buttons/filled-button";
@@ -47,15 +48,14 @@ export const MobileSort = ({
           {SortOptions.map((value, index) => (
             <Item
               key={index}
-              value={value} 
+              value={value}
               label={value}
-              className={`${
-                index === 0
+              className={`${index === 0
                   ? "rounded-t-2xl border border-stroke"
                   : index === SortOptions.length - 1
-                  ? "rounded-b-2xl border-b border-l border-r border-stroke"
-                  : "border-b border-l border-r border-stroke"
-              }`}
+                    ? "rounded-b-2xl border-b border-l border-r border-stroke"
+                    : "border-b border-l border-r border-stroke"
+                }`}
               dataTestId={"sort-by-id"}
               dataTest={""}
               dataQa={value}

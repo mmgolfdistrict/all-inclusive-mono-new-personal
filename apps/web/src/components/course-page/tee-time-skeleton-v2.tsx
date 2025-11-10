@@ -1,3 +1,4 @@
+import React from 'react';
 export const TeeTimeSkeletonV2 = () => (
   <div className="md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[14.375rem] md:min-w-[16.5625rem] w-full animate-pulse">
     <div className="border-b border-stroke">

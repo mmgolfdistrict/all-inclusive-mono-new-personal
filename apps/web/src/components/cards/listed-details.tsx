@@ -1,5 +1,5 @@
 "use client";
-
+import React from "react";
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import { WeatherIcons } from "~/constants/weather-icons";
 import { useCourseContext } from "~/contexts/CourseContext";
@@ -88,7 +88,7 @@ export const ListedDetails = ({
       return;
     } else {
       const stillListed = await refetchStillListed();
-      if (!stillListed.data) {
+      if (!stillListed?.data) {
         toast.info("The tee time is no longer available, please refresh your screen.");
         return;
       }
@@ -176,21 +176,10 @@ export const ListedDetails = ({
         </div>
       ) : (
         <div className="flex flex-col gap-4  px-4 pb-2 text-[14px] md:px-6 md:pb-3">
-          {/* <div className="flex items-center gap-1">
-            <Tooltip
-              trigger={<Avatar src={data?.soldByImage} />}
-              content={"Sold by another Golf District golfer"}
-            />
-          </div> */}
-          {/* <div className="flex items-center gap-4">
-            {data?.includesCart ? <GolfCart className="w-[25px]" /> : null}
-            <div>
-              {data?.includesCart ? "Includes" : "Doesn't include"} cart
-            </div>
-          </div> */}
           <div className="flex items-center gap-4">
             <Players className="w-[25px]" />
             <ChoosePlayers
+              data-testid="choose-players"
               players={players}
               setPlayers={setPlayers}
               playersOptions={PlayersOptions}
@@ -319,7 +308,7 @@ export const ListedDetails = ({
 };
 
 const Skeleton = () => (
-  <div className="flex w-full flex-col gap-4 bg-white  md:rounded-xl">
+  <div data-testid="loading-skeleton" className="flex w-full flex-col gap-4 bg-white  md:rounded-xl">
     <div className="stroke flex flex-wrap justify-between gap-4 border-b px-4 py-3 md:gap-2 md:px-6 md:py-4">
       <div className="h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />
       <div className="h-8 w-[30%] bg-gray-200 rounded-md  animate-pulse" />

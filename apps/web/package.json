@@ -83,7 +83,9 @@
   "devDependencies": {
     "@golf-district/eslint-config": "^0.1.0",
     "@golf-district/tsconfig": "^0.1.0",
+    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcrypt": "^5.0.0",
     "@types/eslint": "^8.37.0",
     "@types/node": "^18.16.0",

@@ -51,17 +51,6 @@ export const ProfileDetails = ({
                 {userData?.handle ?? ""}
               </div>
             </div>
-            {/* <div className="flex items-center md:justify-start justify-center gap-1 text-primary-gray">
-              {!isThirdPartyProfile ||
-              (isThirdPartyProfile &&
-                userData?.city &&
-                userData?.profileVisibility === "PUBLIC") ? (
-                <>
-                  <Location className="w-[1rem] md:w-[1.375rem]" />
-                  <div>{userData?.city}</div>
-                </>
-              ) : null}
-            </div> */}
           </div>
         </div>
       </div>

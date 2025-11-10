@@ -34,6 +34,7 @@ export const LoadingContainer: FC<LoadingContainerProps> = ({
     >
       {isLoading && (
         <div
+          data-testid="loading-container"
           style={{
             display: "flex",
             flexDirection: "column",

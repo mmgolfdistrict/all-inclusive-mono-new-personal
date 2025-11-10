@@ -1,3 +1,4 @@
+import React from 'react';
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { Calendar } from "@taak/react-modern-calendar-datepicker";
 import { useCourseContext } from "~/contexts/CourseContext";

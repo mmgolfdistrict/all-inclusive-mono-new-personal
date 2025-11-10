@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useAppContext } from "~/contexts/AppContext";
 import { useCourseContext } from "~/contexts/CourseContext";

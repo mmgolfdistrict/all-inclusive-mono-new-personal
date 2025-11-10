@@ -1,3 +1,4 @@
+import React from "react";
 import { type IconCodeType } from "@golf-district/shared";
 import { Cloudy } from "~/components/icons/weather/cloudy";
 import { CloudyClearAtTime } from "~/components/icons/weather/cloudy-clear-at-time";
