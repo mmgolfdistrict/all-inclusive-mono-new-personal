@@ -152,44 +152,35 @@ export default function RegisterPage() {
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
-    if (place?.address_components) {
-      const addressComponents = place.address_components;
+    if (!place?.address_components) return;
 
-      const getAddressComponent = (type: string): string => {
-        return (
-          addressComponents.find((component) => component.types.includes(type))
-            ?.long_name || ""
-        );
-      };
+    const getComponent = (type: string) =>
+      place?.address_components?.find((c) => c.types.includes(type))?.long_name || "";
 
-      const streetNumber = getAddressComponent("street_number");
-      const route = getAddressComponent("route");
-      const address1 = `${streetNumber} ${route}`.trim();
-      const address2 = getAddressComponent("sublocality");
-      let state = getAddressComponent("administrative_area_level_1");
-      const city = getAddressComponent("locality");
-      const zipcode = getAddressComponent("postal_code");
-      const country = getAddressComponent("country");
+    const streetNumber = getComponent("street_number");
+    const route = getComponent("route");
+    const subpremise = getComponent("subpremise");
+    const sublocality = getComponent("sublocality");
+    const locality =
+      getComponent("locality") ||
+      getComponent("sublocality_level_1") ||
+      getComponent("administrative_area_level_2");
+    const state = getComponent("administrative_area_level_1");
+    const zipcode = getComponent("postal_code");
+    const zipcodeSuffix = getComponent("postal_code_suffix");
+    const country = getComponent("country");
 
-      state = normalizeString(state);
+    const address1 = [streetNumber, route].filter(Boolean).join(" ");
+    const address2 = [subpremise, sublocality].filter(Boolean).join(", ");
+    const fullZip = zipcodeSuffix ? `${zipcode}-${zipcodeSuffix}` : zipcode;
 
-      let countryByCode = country;
-      if (country === "United States") {
-        countryByCode = "USA";
-      }
+    setValue("address1", address1);
+    setValue("address2", address2);
+    setValue("city", locality);
+    setValue("state", state);
+    setValue("zipcode", fullZip);
+    setValue("country", country === "United States" ? "USA" : country);
 
-      if (inputRef?.current) {
-        inputRef.current.value = address1;
-      }
-
-      // Type guard before passing to setValue
-      if (typeof address1 === "string") setValue("address1", address1);
-      if (typeof address2 === "string") setValue("address2", address2);
-      if (typeof state === "string") setValue("state", state);
-      if (typeof city === "string") setValue("city", city);
-      if (typeof zipcode === "string") setValue("zipcode", zipcode);
-      if (typeof country === "string") setValue("country", countryByCode);
-    }
   };
 
   useEffect(() => {
