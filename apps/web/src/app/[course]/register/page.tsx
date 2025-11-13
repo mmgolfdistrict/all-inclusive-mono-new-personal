@@ -56,6 +56,7 @@ export default function RegisterPage() {
     setError,
     control,
     getValues,
+    trigger,
     formState: { errors },
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
@@ -189,6 +190,7 @@ export default function RegisterPage() {
       if (typeof city === "string") setValue("city", city);
       if (typeof zipcode === "string") setValue("zipcode", zipcode);
       if (typeof country === "string") setValue("country", countryByCode);
+      void trigger(["address1", "address2", "city", "state", "zipcode", "country"]);
     }
   };
 
@@ -436,7 +438,11 @@ export default function RegisterPage() {
                     placeholder="9988776655"
                     id="phoneNumber"
                     name="phoneNumber"
-                    onChange={handlePhoneNumberChange}
+                    onChange={(e) => {
+                      field.onChange(e); // Update react-hook-form
+                      handlePhoneNumberChange(e);
+                      void trigger("phoneNumber"); // Immediately validate this field
+                    }}
                     value={getValues("phoneNumber")}
                     data-testid="profile-phone-number-id"
                     autoComplete="off"
