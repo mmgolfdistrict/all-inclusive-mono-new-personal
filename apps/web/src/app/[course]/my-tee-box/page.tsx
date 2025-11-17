@@ -67,7 +67,7 @@ export default function MyTeeBox({
             </p>
           </div>
         </div>
-        {isMobile ? <TableViewMobile /> : <TableView />}
+        {isMobile ? <TableViewMobile data-testid="table-mobile" /> : <TableView data-testid="table-desktop" />}
       </section>
     </main>
   );

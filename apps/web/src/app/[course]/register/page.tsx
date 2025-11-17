@@ -346,7 +346,7 @@ export default function RegisterPage() {
           select the respective social icon to login. The below form is not
           require for social logins.
         </p>
-        <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
+        <form data-testid="register-form" className="flex flex-col gap-2" role="form" onSubmit={handleSubmit(onSubmit)}>
           <Controller
             name="firstName"
             control={control}

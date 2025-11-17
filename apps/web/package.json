@@ -62,6 +62,7 @@
     "framer-motion": "^10.16.1",
     "google-libphonenumber": "^3.2.40",
     "next": "14.0.4",
+    "next-auth": "^4.24.13",
     "payment": "^2.4.6",
     "pdfmake": "^0.2.18",
     "react": "18.2.0",

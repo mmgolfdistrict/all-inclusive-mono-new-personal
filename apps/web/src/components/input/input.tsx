@@ -62,6 +62,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...register(name)}
           ref={resolvedRef}
           autoComplete={autoComplete ?? "off"}
+          data-testid={props["data-testid"]}
           {...props}
         />
 

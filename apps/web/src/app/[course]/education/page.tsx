@@ -9,7 +9,6 @@ import { PlaylistAddCheck } from "~/components/icons/playlist-add-check";
 import { Timer } from "~/components/icons/timer";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useRouter } from "next/navigation";
-import React from "react";
 import { useMediaQuery } from "usehooks-ts";
 
 const Education = () => {
