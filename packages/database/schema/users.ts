@@ -53,7 +53,7 @@ export const users = mySqlTable(
     address2: varchar("address2", { length: 127 }),
     state: varchar("state", { length: 50 }),
     city: varchar("city", { length: 50 }),
-    zipcode: varchar("zipcode", { length: 25 }),
+    zipcode: varchar("zipcode", { length: 50 }),
     country: varchar("country", { length: 50 }),
     bannerImage: varchar("bannerImage", { length: 191 }),
     profileVisibility: mysqlEnum("profileVisibility", ["PUBLIC", "PRIVATE"]).default("PUBLIC").notNull(),
