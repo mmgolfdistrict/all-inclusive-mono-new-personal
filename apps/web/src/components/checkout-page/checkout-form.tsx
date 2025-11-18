@@ -1671,7 +1671,7 @@ export const CheckoutForm = ({
                   </Fragment>
                 </div>
                 <div className="flex justify-between" id="total-checkout">
-                  <div>Total</div>
+                  <div>Total Reservation Fee</div>
                   {isLoadingTotalAmount ? (
                     <Skeleton />
                   ) : (
@@ -1868,7 +1868,7 @@ export const CheckoutForm = ({
                   </CheckoutItemAccordion>
                   <Fragment>
                     <div className="flex justify-between px-2">
-                      <div className="px-10">Total</div>
+                      <div className="px-10">Total Reservation Fee</div>
                       {isLoadingTotalAmount ? (
                         <Skeleton />
                       ) : (
