@@ -275,6 +275,56 @@ export default function RegisterPage() {
     }
   }, [recaptchaRef]);
 
+  const countryAliases: Record<string, string[]> = {
+    USA: [
+      "USA",
+      "United States",
+      "United States of America",
+      "US",
+      "U.S.",
+      "U.S.A",
+      "America"
+    ],
+    Canada: [
+      "Canada",
+      "CA",
+      "C.A.",
+      "Canadian"
+    ]
+  };
+
+  const cleanCity = (city: string, state: string, country: string) => {
+    if (!city) return "";
+
+    let result = city.trim();
+
+    // Do NOT clean if the entire city is exactly equal to the state
+    // Example: city="New York", state="New York"
+    if (result.toLowerCase() === state.toLowerCase()) {
+      return state; // return as is
+    }
+
+    // Remove state only when it's an EXTRA part of the string
+    if (state) {
+      const stateRegex = new RegExp(state, "i");
+      if (result.toLowerCase().includes(state.toLowerCase())) {
+        result = result.replace(stateRegex, "");
+      }
+    }
+
+    // Remove country + aliases
+    if (country) {
+      const aliases = countryAliases[country] || [country];
+
+      aliases.forEach(alias => {
+        const aliasRegex = new RegExp(alias, "i");
+        result = result.replace(aliasRegex, "");
+      });
+    }
+
+    return result.replace(/\s+/g, " ").trim();
+  };
+
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
     setIsSubmitting(true);
     if (profanityCheckData?.isProfane) {
@@ -294,6 +344,7 @@ export default function RegisterPage() {
       const response = await registerUser.mutateAsync({
         ...data,
         // country: "USA",
+        city: cleanCity(data.city, data.state, data.country),
         courseId: course?.id,
         color1: entity?.color1,
       });
