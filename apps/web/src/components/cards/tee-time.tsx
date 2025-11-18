@@ -326,16 +326,16 @@ export const TeeTime = ({
     // setIsManageOpen(true);
   };
 
-  useEffect(() => {
-    if (golfers && golfers !== "Any") {
-      const golfersStr = golfers.toString();
-      if (selectedPlayers !== golfersStr) {
-        setSelectedPlayers(golfersStr);
-      }
-    } else if (golfers && golfers === "Any") {
-      setSelectedPlayers(numberOfPlayers[0] ?? "1");
-    }
-  }, [golfers]);
+  // useEffect(() => {
+  //   if (golfers && golfers !== "Any") {
+  //     const golfersStr = golfers.toString();
+  //     if (selectedPlayers !== golfersStr) {
+  //       setSelectedPlayers(golfersStr);
+  //     }
+  //   } else if (golfers && golfers === "Any") {
+  //     setSelectedPlayers(numberOfPlayers[0] ?? "1");
+  //   }
+  // }, [golfers]);
 
   return (
     <>
