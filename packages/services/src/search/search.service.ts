@@ -2031,16 +2031,35 @@ export class SearchService extends CacheService {
 
       // const availableTimes: Record<string, any> = {};
       const availableTimes: Record<string, TeeTimeGroup[]> = {};
-      const [courseSettingResponse] = await this.database
+      const [courseInfo] = await this.database
         .select({
-          value: courseSetting.value,
           fixedMarkup: courses.markupFeesFixedPerPlayer,
           timeZoneCorrection: courses.timezoneCorrection,
           courseOpenTime: courses.courseOpenTime,
           groupBookingFeePerPlayer: courses.groupBookingFeePerPlayer,
         })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .execute()
+        .catch((err) => {
+          this.logger.error(err);
+          loggerService.errorLog({
+            userId: "",
+            url: "/getAvailableTimesForGroupedBookings",
+            userAgent: "",
+            message: "ERROR_GETTING_COURSE_INFO",
+            stackTrace: `${err.stack}`,
+            additionalDetailsJSON: JSON.stringify({
+              courseId,
+            }),
+          });
+          return [];
+        });
+      const [courseSettingResponse] = await this.database
+        .select({
+          value: courseSetting.value,
+        })
         .from(courseSetting)
-        .innerJoin(courses, eq(courseSetting.courseId, courses.id))
         .where(
           and(
             eq(courseSetting.courseId, courseId),
@@ -2074,7 +2093,7 @@ export class SearchService extends CacheService {
           .subtract(MINUTES_PRIOR_TO_START_TIME, "minute")
           .format("HHmm")
       );
-      const searchStartTime = Math.max(prioreStartTime, courseSettingResponse?.courseOpenTime ?? 0);
+      const searchStartTime = Math.max(prioreStartTime, courseInfo?.courseOpenTime ?? 0);
 
       for (let day = 1; day <= ADDITIONAL_DAYS_TO_SEARCH; day++) {
         const searchedDate = dates[0];
@@ -2083,11 +2102,11 @@ export class SearchService extends CacheService {
 
       const priceAccordingToDate = await this.getTeeTimesPriceWithRange(
         courseId,
-        courseSettingResponse?.timeZoneCorrection ?? 0
+        courseInfo?.timeZoneCorrection ?? 0
       );
       const advancedBookingFeeAccordingToDate = await this.getTeeTimesAdvancedFeeWithRange(
         courseId,
-        courseSettingResponse?.timeZoneCorrection ?? 0
+        courseInfo?.timeZoneCorrection ?? 0
       );
 
       const groupBookingPriceSelectionMethod = courseSettingResponse?.value ?? "MAX";
@@ -2129,11 +2148,11 @@ export class SearchService extends CacheService {
         });
 
         const markupFeesFinal =
-          courseSettingResponse?.groupBookingFeePerPlayer !== null
-            ? courseSettingResponse?.groupBookingFeePerPlayer
-            : filteredDate.length
+          courseInfo?.groupBookingFeePerPlayer !== null
+            ? courseInfo?.groupBookingFeePerPlayer
+            : (filteredDate.length
               ? filteredDate[0]?.markUpFees
-              : courseSettingResponse?.fixedMarkup;
+              : courseInfo?.fixedMarkup);
         const markupFeesToBeUsed = (markupFeesFinal ?? 0) / 100;
         const advancedBookingFeesPerPlayer = filteredAdvancedFees.length
           ? filteredAdvancedFees[0]?.advancedBookingFeePerPlayer ?? 0
