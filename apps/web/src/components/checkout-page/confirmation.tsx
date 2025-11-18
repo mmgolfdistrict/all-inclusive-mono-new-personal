@@ -117,6 +117,11 @@ export const Confirmation = ({
                     Collect the payment from your players in your tee time.
                   </span>
                 </div>
+                <div className="mt-5">
+                  <span className="text-blue-500 font-semibold text-center text-justify">
+                    Your credit card statement should show <strong>FI *GOLF DISTRICT</strong>
+                  </span>
+                </div>
                 {isEmailSend ? (
                   <Fragment>
                     <div>

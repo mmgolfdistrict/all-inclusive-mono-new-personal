@@ -5511,7 +5511,12 @@ export class BookingService {
           );
 
           //check if the teeTime has valid amount of spots available
-          const requiredSpots = Math.min(remainingPlayersToBook as number, minPlayersPerBooking as number);
+          let requiredSpots = Math.min(remainingPlayersToBook as number, minPlayersPerBooking as number);
+
+          if (remainingPlayersToBook === 5 && playerCount % 4 === 1) {
+            requiredSpots = 3
+          }
+
           if (requiredSpots > teeTime.firstHandSpotsAvailable) {
             void loggerService.errorLog({
               userId: userId,
