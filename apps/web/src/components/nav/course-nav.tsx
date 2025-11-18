@@ -145,8 +145,8 @@ export const CourseNav = () => {
 
   const handleResetFilters = () => {
     setDateType("All");
-    setGolfers("Any");
-    setStartTime([course?.courseOpenTime ?? 0, course?.courseCloseTime ?? 0]);
+    // setGolfers("Any");
+    // setStartTime([course?.courseOpenTime ?? 0, course?.courseCloseTime ?? 0]);
   };
 
   const divHeight = !loadingCourseGlobalNotification || !loadingSystemNotifications ? document?.getElementById('header')?.offsetHeight || 0 : 0;
