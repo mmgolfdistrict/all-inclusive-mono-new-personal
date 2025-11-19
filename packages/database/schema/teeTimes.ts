@@ -11,7 +11,7 @@ export const teeTimes = mySqlTable(
     id: varchar("id", { length: 36 }).notNull().unique().primaryKey(),
     providerTeeTimeId: varchar("providerTeeTimeId", { length: 191 }).notNull(), //maybe int
     date: datetime("date", { mode: "string", fsp: 3 }).notNull(),
-    providerDate: varchar("providerDate", { length: 191 }).notNull(),
+    providerDate: varchar("providerDate", { length: 25 }).notNull(),
     time: int("time").notNull(), //military time
     numberOfHoles: int("numberOfHoles").default(18).notNull(),
     maxPlayersPerBooking: int("maxPlayersPerBooking").notNull(),
