@@ -105,7 +105,7 @@ export const ChoosePlayers = ({
           />
         );
       })}
-      {supportsGroupBooking && (
+      {Boolean(supportsGroupBooking) && (
         <button
           className={`!text-primary rounded-full border border-primary
           px-[0.75rem] py-[0.25rem] ml-[0.25rem] bg-white cursor-pointer
