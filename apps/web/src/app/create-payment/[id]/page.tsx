@@ -2,7 +2,7 @@
 
 import { api } from "~/utils/api";
 import { useParams } from "next/navigation";
-import React, { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 const CreatePaymentPage = () => {
   const params = useParams();

@@ -5,7 +5,7 @@
     "module": "ESNext", // allows top-level await
     "moduleResolution": "Node",
     "isolatedModules": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "types": [
       "vitest/globals"
     ],

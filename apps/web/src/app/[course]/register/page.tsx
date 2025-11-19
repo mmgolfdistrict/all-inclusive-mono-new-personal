@@ -231,7 +231,7 @@ export default function RegisterPage() {
   const handleCheckProfanity = async (text: string) => {
     if (!text) return;
     const data = await checkProfanity({ text });
-    if (data.isProfane) {
+    if (data?.isProfane) {
       setError("username", {
         message: "Handle not available.",
       });
@@ -285,6 +285,12 @@ export default function RegisterPage() {
   }, [recaptchaRef]);
 
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
+    const onReCAPTCHAChange = (captchaCode: string | null | undefined) => {
+      if (!captchaCode) {
+        return;
+      }
+      setValue("ReCAPTCHA", captchaCode); // <-- This is the key line being verified by your test click
+    };
     setIsSubmitting(true);
     if (profanityCheckData?.isProfane) {
       setError("username", {
@@ -329,11 +335,13 @@ export default function RegisterPage() {
     setValue("ReCAPTCHA", captchaCode);
   };
 
+  const rmfPassword = watch("password");
+
   const passwordFeedback = useMemo(() => {
-    if (!password) return;
-    const feedback = isValidPassword(password).feedback;
+    if (!rmfPassword) return; // Check the RHF value
+    const feedback = isValidPassword(rmfPassword).feedback;
     return feedback;
-  }, [password]);
+  }, [rmfPassword]);
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
