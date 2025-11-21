@@ -31,7 +31,7 @@ export default function TermsOfService({
 
   return (
     <>
-      <LoadingContainer isLoading={isLoading}>
+      <LoadingContainer data-testid="loading-container" isLoading={isLoading} loadingText="Loading...">
         <div></div>
       </LoadingContainer>
       <div style={{ marginTop }} className="mx-auto flex items-center justify-between px-4 max-w-[1560px] md:px-6">

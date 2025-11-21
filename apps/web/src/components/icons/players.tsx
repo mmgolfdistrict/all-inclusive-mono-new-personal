@@ -1,3 +1,4 @@
+import React from "react";
 import { type ComponentProps } from "react";
 
 export const Players = (props: ComponentProps<"svg">) => (

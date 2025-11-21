@@ -1,79 +1,75 @@
-import { type InputHTMLAttributes } from "react";
+import { forwardRef, type InputHTMLAttributes } from "react";
 import { Info } from "../icons/info";
 import { Tooltip } from "../tooltip";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  register: unknown;
+  register: (name: string) => Record<string, unknown>;
   name: string;
   className?: string;
   error?: string;
   showInfoTooltip?: boolean;
   content?: string;
-  inputRef?: unknown;
+  inputRef?: React.Ref<HTMLInputElement>;
   additionalContent?: boolean;
 }
 
-export const Input = ({
-  label,
-  className,
-  name,
-  register,
-  error,
-  showInfoTooltip = false,
-  content,
-  inputRef,
-  autoComplete,
-  additionalContent,
-  required,
-  ...props
-}: InputProps) => {
-  return (
-    <div className={`flex flex-col gap-1 ${className ?? ""}`}>
-      <div className="flex gap-1">
-        <label className="text-[0.875rem] text-primary-gray" htmlFor={props.id}>
-          {label}
-          {required && <span className="text-red ml-1">*</span>}
-        </label>
-        {showInfoTooltip && (
-          <Tooltip
-            trigger={<Info className="h-[1.25rem] w-[1.25rem]" />}
-            content={content}
-          />
-        )}
-      </div>
-      {additionalContent && (
-        <p className="text-[0.75rem] text-blue-500">
-          (Type and select from below auto complete to auto populate)
-        </p>
-      )}
-      {autoComplete && inputRef ? (
-        <input
-          className={`rounded-lg bg-secondary-white px-4 py-3 text-[0.875rem] text-gray-500 outline-none text-ellipsis`}
-          // @ts-ignore
-          {...register(name)}
-          {...props}
-          ref={inputRef}
-          autoComplete="new-password"
-        />
-      ) : inputRef ? (
-        <input
-          className={`rounded-lg bg-secondary-white px-4 py-3 text-[0.875rem] text-gray-500 outline-none text-ellipsis`}
-          // @ts-ignore
-          {...register(name)}
-          {...props}
-          ref={inputRef}
-        />
-      ) : (
-        <input
-          className={`rounded-lg bg-secondary-white px-4 py-3 text-[0.875rem] text-gray-500 outline-none text-ellipsis`}
-          // @ts-ignore
-          {...register(name)}
-          {...props}
-        />
-      )}
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  (
+    {
+      label,
+      className,
+      name,
+      register,
+      error,
+      showInfoTooltip = false,
+      content,
+      inputRef,
+      autoComplete,
+      additionalContent,
+      required,
+      ...props
+    },
+    ref
+  ) => {
+    const resolvedRef = inputRef ?? ref;
+    return (
+      <div className={`flex flex-col gap-1 ${className ?? ""}`}>
+        <div className="flex gap-1">
+          <label
+            className="text-[0.875rem] text-primary-gray"
+            htmlFor={props.id ?? name}
+          >
+            {label}
+            {required && <span className="text-red ml-1">*</span>}
+          </label>
+          {showInfoTooltip && (
+            <Tooltip
+              trigger={<Info className="h-[1.25rem] w-[1.25rem]" />}
+              content={content}
+            />
+          )}
+        </div>
 
-      {error && <p className="text-[0.75rem] text-red">{error}</p>}
-    </div>
-  );
-};
+        {additionalContent && (
+          <p className="text-[0.75rem] text-blue-500">
+            (Type and select from below auto complete to auto populate)
+          </p>
+        )}
+
+        <input
+          className="rounded-lg bg-secondary-white px-4 py-3 text-[0.875rem] text-gray-500 outline-none text-ellipsis"
+          {...register(name)}
+          ref={resolvedRef}
+          autoComplete={autoComplete ?? "off"}
+          data-testid={props["data-testid"]}
+          {...props}
+        />
+
+        {error && <p className="text-[0.75rem] text-red">{error}</p>}
+      </div>
+    );
+  }
+);
+
+Input.displayName = "Input";

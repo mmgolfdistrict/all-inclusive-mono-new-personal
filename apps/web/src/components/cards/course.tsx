@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import * as React from "react";
+
 export const Course = ({
   image,
   courseName,

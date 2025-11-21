@@ -1,6 +1,16 @@
 {
   "extends": "@golf-district/tsconfig/nextjs.json",
   "compilerOptions": {
+    "target": "ES2020", // or ES2017 or higher
+    "module": "ESNext", // allows top-level await
+    "moduleResolution": "Node",
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "types": [
+      "vitest/globals"
+    ],
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "plugins": [
       {
         "name": "next"
@@ -9,7 +19,9 @@
     "strictNullChecks": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": [
+        "./src/*"
+      ]
     }
   },
   "include": [
@@ -21,5 +33,7 @@
     "postcss.config.cjs",
     ".eslintrc.cjs"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

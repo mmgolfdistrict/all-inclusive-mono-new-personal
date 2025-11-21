@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUser } from "~/hooks/useUser";
 import { api } from "~/utils/api";
