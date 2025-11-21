@@ -5034,8 +5034,6 @@ export class BookingService {
       await cacheManager.set(cacheKey, teeTime, cacheTTL);
     }
 
-    this.logger.info(`TEE TIME DATA FROM DB: ${JSON.stringify(teeTime)}`);
-
     if (teeTime.availableFirstHandSpots >= golfersCount) {
       const { provider, token } = await this.providerService.getProviderAndKey(
         teeTime.internalId!,
@@ -5050,10 +5048,9 @@ export class BookingService {
         `${teeTime.time + 1}`.length === 3 ? `0${teeTime.time + 1}` : `${teeTime.time + 1}`,
         teeTime.providerDate.split("T")[0] ?? ""
       );
-      this.logger.info(`TEE TIME DATA FROM PROVIDER: ${JSON.stringify(providerDetailsGetTeeTime)}`);
+
       if (providerDetailsGetTeeTime?.length) {
         const teeTimeData = provider.findTeeTimeById(teeTime.providerTeeTimeId, providerDetailsGetTeeTime);
-        this.logger.info(`TEE TIME DATA BY ID FROM PROVIDER: ${JSON.stringify(teeTimeData)}, TEE TIME ID: ${teeTime.providerTeeTimeId}`);
 
         if (teeTimeData && provider.getAvailableSpotsOnTeeTime(teeTimeData) >= golfersCount) {
           return true;
