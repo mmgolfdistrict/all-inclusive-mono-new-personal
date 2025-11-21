@@ -17,7 +17,7 @@ export class EntityService {
    * Constructs the EntityService.
    * @param database - The database instance to use for queries.
    */
-  constructor(private readonly database: Db) {}
+  constructor(private readonly database: Db) { }
 
   /**
    * Retrieves an entity associated with a given course ID.
@@ -31,7 +31,7 @@ export class EntityService {
    * console.log(entity);
    */
   getEntityFromCourseId = async (courseId: string) => {
-    this.logger.info(`getEnityFromCourseId called with courseId: ${courseId}`);
+    // this.logger.info(`getEnityFromCourseId called with courseId: ${courseId}`);
     return await this.database.query.courses.findFirst({
       with: {
         entity: true,
@@ -55,7 +55,7 @@ export class EntityService {
     let staticParams = await cacheManager.get(cacheKey);
 
     if (!staticParams) {
-      this.logger.info("Cache miss for staticParams. Querying database.");
+      // this.logger.info("Cache miss for staticParams. Querying database.");
 
       const [subdomains, customDomains] = await Promise.all([
         this.database
@@ -87,7 +87,7 @@ export class EntityService {
       // Store the result in cache for 10 minutes
       await cacheManager.set(cacheKey, staticParams, 600000);
     } else {
-      this.logger.info("Cache hit for staticParams. Returning cached data.");
+      // this.logger.info("Cache hit for staticParams. Returning cached data.");
     }
 
     return staticParams;
@@ -104,7 +104,7 @@ export class EntityService {
    */
   getEntityFromDomain = async (domain: string, rootDomain: string) => {
     const subdomain = domain.endsWith(`.${rootDomain}`) ? domain.replace(`.${rootDomain}`, "") : null;
-     //const subdomain = "demo.golfdistrict.in";
+    // const subdomain = "demo.golfdistrict.in";
 
     const query = this.database
       .select({
@@ -163,12 +163,12 @@ export class EntityService {
    * @returns Promise resolving to an array of courses associated with the provided entity ID.
    */
   getCoursesByEntityId = async (entityId: string) => {
-    this.logger.info(`findCoursesByEntityId called with entityId: ${entityId}`);
+    // this.logger.info(`findCoursesByEntityId called with entityId: ${entityId}`);
 
     const cacheKey = `coursesForEntity_${entityId}`;
     let coursesData = (await cacheManager.get(cacheKey)) as any;
     if (!coursesData) {
-      this.logger.info(`Cache miss for entityId: ${entityId}. Querying database.`);
+      // this.logger.info(`Cache miss for entityId: ${entityId}. Querying database.`);
       // Fetch courses data
       const data = await this.database
         .select({
@@ -200,45 +200,47 @@ export class EntityService {
           throw new Error(`Error getting courses for entity: ${entityId}`);
         });
 
-      // Find all images for each course
-      const images = await this.database
-        .select({
-          id: assets.id,
-          coursesId: assets.courseId,
-          key: assets.key,
-          extension: assets.extension,
-          order: courseAssets.order,
-        })
-        .from(assets)
-        .leftJoin(courseAssets, eq(assets.id, courseAssets.assetId))
-        .where(
-          inArray(
-            assets.courseId,
-            data.map(({ id }) => id)
-          )
-        );
-
-      // Map courses with their images
-      coursesData = data.map((course) => ({
-        ...course,
-        logo: images
-          .filter((i) => i.id === course.logo)
-          .map(
-            ({ key, extension }) =>
-              `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
-          )[0],
-        images: images
-          .filter((i) => i.coursesId === course.id && i.id !== course.logo)
-          .sort((a, b) => {
-            const orderA = a.order !== null ? a.order : Number.MAX_SAFE_INTEGER;
-            const orderB = b.order !== null ? b.order : Number.MAX_SAFE_INTEGER;
-            return orderA - orderB;
+      if (data.length > 0) {
+        // Find all images for each course
+        const images = await this.database
+          .select({
+            id: assets.id,
+            coursesId: assets.courseId,
+            key: assets.key,
+            extension: assets.extension,
+            order: courseAssets.order,
           })
-          .map(
-            ({ key, extension }) =>
-              `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
-          ),
-      }));
+          .from(assets)
+          .leftJoin(courseAssets, eq(assets.id, courseAssets.assetId))
+          .where(
+            inArray(
+              assets.courseId,
+              data.map(({ id }) => id)
+            )
+          );
+
+        // Map courses with their images
+        coursesData = data.map((course) => ({
+          ...course,
+          logo: images
+            .filter((i) => i.id === course.logo)
+            .map(
+              ({ key, extension }) =>
+                `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
+            )[0],
+          images: images
+            .filter((i) => i.coursesId === course.id && i.id !== course.logo)
+            .sort((a, b) => {
+              const orderA = a.order !== null ? a.order : Number.MAX_SAFE_INTEGER;
+              const orderB = b.order !== null ? b.order : Number.MAX_SAFE_INTEGER;
+              return orderA - orderB;
+            })
+            .map(
+              ({ key, extension }) =>
+                `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${key}.${extension}`
+            ),
+        }));
+      }
 
       // Store the result in cache for 10 minutes
       await cacheManager.set(cacheKey, coursesData, 600000);

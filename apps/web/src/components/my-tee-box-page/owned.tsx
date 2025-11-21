@@ -3,9 +3,8 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import { formatTime } from "~/utils/formatters";
+import { formatTime, getTime } from "~/utils/formatters";
 import { type InviteFriend } from "~/utils/types";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
@@ -17,6 +16,7 @@ import { SkeletonRow } from "./skeleton-row";
 import { CollectPayment } from "./collect-payment";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
+import dayjs from "dayjs";
 export type OwnedTeeTime = {
   courseName: string;
   courseLogo: string;
@@ -42,6 +42,10 @@ export type OwnedTeeTime = {
   groupId: string;
   allowSplit?: boolean;
   totalMerchandiseAmount: number;
+  teeTimeInfo?: {
+    time: string;
+    player: number;
+  }[]
 };
 
 export const Owned = () => {
@@ -51,6 +55,11 @@ export const Owned = () => {
   const router = useRouter();
   const paramBookingId = params.get("bookingId");
   const collectPayment = params.get("collectPayment") === "true";
+
+  const userTime = useMemo(() => {
+    const currentLocalTime = dayjs(new Date()).format("YYYY-MM-DDTHH:mm:ss"); // browser's current time in ISO format
+    return currentLocalTime;
+  }, []);
 
   const courseId = course?.id;
   const [isListTeeTimeOpen, setIsListTeeTimeOpen] = useState<boolean>(false);
@@ -66,8 +75,11 @@ export const Owned = () => {
     api.teeBox.getOwnedTeeTimes.useQuery(
       {
         courseId: courseId ?? "",
+        userTime: userTime ?? "",
       },
-      { enabled: !!courseId }
+      {
+        enabled: !!courseId && !!userTime // ensure userTime is set before triggering query
+      }
     );
 
   const [selectedTeeTime, setSelectedTeeTime] = useState<
@@ -104,6 +116,9 @@ export const Owned = () => {
   };
 
   const openManageListTeeTime = (teeTime: OwnedTeeTime) => {
+    if (params.get("groupId")) {
+      router.replace(`/${course?.id}/my-tee-box?section=owned`);
+    }
     setSelectedTeeTime(teeTime);
     setIsManageOwnedTeeTimeOpen(true);
   };
@@ -112,12 +127,24 @@ export const Owned = () => {
     setSelectedTeeTime(teeTime);
   }
 
+  const groupIdFromParams = params.get("groupId");
+
+  useEffect(() => {
+    if (groupIdFromParams) {
+      const newTeeTime = ownedTeeTimes?.find((item) => item.groupId === params.get("groupId"));
+      if (newTeeTime) {
+        setSelectedTeeTime(newTeeTime);
+        setIsManageOwnedTeeTimeOpen(true);
+      }
+    } else if (groupIdFromParams === undefined) {
+      setIsManageOwnedTeeTimeOpen(false);
+    }
+  }, [ownedTeeTimes, groupIdFromParams]);
+
   const filteredResult = ownedTeeTimes?.find((item) => item.bookingIds[0] === paramBookingId);
-  console.log(filteredResult, "filteredResult");
 
   useEffect(() => {
     const handlePopState = () => {
-      console.log("Back button pressed");
       void router.push(`/${courseId}`);
     };
     window.addEventListener('popstate', handlePopState);
@@ -134,7 +161,7 @@ export const Owned = () => {
 
   if (isError && error) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         {error?.message ?? "An error occurred fetching tee times"}
       </div>
     );
@@ -147,7 +174,7 @@ export const Owned = () => {
     !error
   ) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         No owned tee times found
       </div>
     );
@@ -155,7 +182,7 @@ export const Owned = () => {
 
   return (
     <>
-      <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-[14px] md:pb-3">
+      <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-sm md:pb-3">
         <table className="w-full table-auto  overflow-auto">
           <thead className="top-0 table-header-group">
             <tr className="text-left">
@@ -167,7 +194,7 @@ export const Owned = () => {
               <TableHeader text="" className="text-right" />
             </tr>
           </thead>
-          <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
+          <tbody className={`max-h-[18.75rem] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
                 .fill(null)
@@ -197,6 +224,7 @@ export const Owned = () => {
                   bookingStatus={i.bookingStatus}
                   isGroupBooking={i.isGroupBooking}
                   isCollectPaymentEnabled={Boolean(isCollectPaymemtEnabled)}
+                  teeTimeInfo={i.teeTimeInfo}
                 />
               ))}
           </tbody>
@@ -281,7 +309,8 @@ const TableRow = ({
   collectPaymentList,
   bookingStatus,
   isGroupBooking,
-  isCollectPaymentEnabled
+  isCollectPaymentEnabled,
+  teeTimeInfo
 }: {
   course: string;
   date: string;
@@ -303,22 +332,48 @@ const TableRow = ({
   bookingStatus: string;
   isGroupBooking: boolean;
   isCollectPaymentEnabled?: boolean;
+  teeTimeInfo?: {
+    time: string;
+    player: number;
+  }[]
 }) => {
-  const href = useMemo(() => {
-    if (isListed) {
-      return `/${courseId}/${teeTimeId}/listing/${listingId}`;
-    }
-    return `/${courseId}/${teeTimeId}/owner/${ownerId}`;
-  }, [courseId, teeTimeId, listingId, ownerId, isListed]);
+  const [_teeTimeId, _listingId, _ownerId] = [teeTimeId, listingId, ownerId];
+  const getPlayersPerSlotLabelFull = (): string => {
+    if (teeTimeInfo === undefined) return "";
+    const parts = teeTimeInfo.map((teeTime) => `${getTime(teeTime.time, timezoneCorrection)
+      } (${teeTime.player})`.replace(/ /g, "\u00A0"));
+    return parts.join(" • ");
+  };
+  // const href = useMemo(() => {
+  //   if (isListed) {
+  //     return `/${courseId}/${teeTimeId}/listing/${listingId}`;
+  //   }
+  //   return `/${courseId}/${teeTimeId}/owner/${ownerId}`;
+  // }, [courseId, teeTimeId, listingId, ownerId, isListed]);
 
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
-      <td className="gap-2 px-4 py-3">
+      <td className="gap-2 px-4 py-3 ">
         {isGroupBooking ? (
-          <div className="flex items-center gap-2">
-            <Avatar src={iconSrc} />
+          <div className="flex items-start gap-2">
+            <Avatar src={iconSrc} isRounded={false} />
             <div className="flex flex-col">
-              <div className="whitespace-nowrap underline text-secondary-black">
+              <div className="whitespace-nowrap text-secondary-black">
+                {course}
+              </div>
+              <div className="text-primary-gray unmask-time">
+                {formatTime(date, false, timezoneCorrection)}
+              </div>
+              <div className="block text-[0.75rem] text-wrap md:text-[0.875rem] text-primary-gray mt-1 max-w-[24rem]">
+                <span className="text-secondary-black">Player Distrbution:</span> {getPlayersPerSlotLabelFull()}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Avatar src={iconSrc} isRounded={false} />
+            <div className="flex flex-col">
+              <div className="whitespace-nowrap text-secondary-black">
                 {course}
               </div>
               <div className="text-primary-gray unmask-time">
@@ -326,24 +381,6 @@ const TableRow = ({
               </div>
             </div>
           </div>
-        ) : (
-          <Link
-            href={href}
-            className="flex items-center gap-2"
-            data-testid="course-tee-time-listing-id"
-            data-test={teeTimeId}
-            data-qa={courseId}
-          >
-            <Avatar src={iconSrc} />
-            <div className="flex flex-col">
-              <div className="whitespace-nowrap underline text-secondary-black">
-                {course}
-              </div>
-              <div className="text-primary-gray unmask-time">
-                {formatTime(date, false, timezoneCorrection)}
-              </div>
-            </div>
-          </Link>
         )}
       </td>
       {/* <td className="whitespace-nowrap px-4 py-3">
@@ -361,10 +398,10 @@ const TableRow = ({
             return `${i.name || "Guest"}, `;
           })}
       </td>
-      <td className="flex items-center gap-1 whitespace-nowrap px-4 pb-3 pt-6">
+      <td className="whitespace-nowrap px-4 py-3">
         {offers ? (
           <div className="flex items-center gap-1">
-            <div className="flex min-w-[22px] items-center justify-center rounded-full bg-alert-red px-1.5 text-white">
+            <div className="flex min-w-[1.375rem] items-center justify-center rounded-full bg-alert-red px-1.5 text-white">
               {offers}
             </div>
             <div className="text-primary">
@@ -381,14 +418,14 @@ const TableRow = ({
         <div className="flex w-full justify-end gap-2">
           {golfers.length > 1 && isCollectPaymentEnabled && (
             <FilledButton
-              className="min-w-[145px]"
+              className="min-w-[9.0625rem]"
               onClick={collectPaymentList}
               data-testid="sell-button-id"
               data-test={courseId}
               data-qa={course}
               id="sell-teetime-button"
             >
-              Collect payment
+              Request payment
             </FilledButton>
 
           )}
@@ -404,7 +441,7 @@ const TableRow = ({
           </div>
           {isListed ? (
             <FilledButton
-              className="min-w-[145px]"
+              className="min-w-[9.0625rem]"
               onClick={openCancelListing}
               data-testid="cancel-listing-button-id"
               data-test={courseId}
@@ -414,7 +451,7 @@ const TableRow = ({
             </FilledButton>
           ) : (
             <FilledButton
-              className="min-w-[145px]"
+              className="min-w-[9.0625rem]"
               onClick={openListTeeTime}
               data-testid="sell-button-id"
               data-test={courseId}

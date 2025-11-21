@@ -11,6 +11,7 @@ import { useMediaQuery } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
 import { OutlineButton } from "../buttons/outline-button";
 import { Leaflet } from "../modal/leaflet";
+import { useAppContext } from "~/contexts/AppContext";
 
 interface DayValue {
   year: number;
@@ -40,6 +41,7 @@ export const MobileDates = ({
     useFiltersContext();
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
 
   const { data } = api.searchRouter.findBlackoutDates.useQuery(
     { courseId: course?.id ?? "" },
@@ -54,10 +56,10 @@ export const MobileDates = ({
 
   const DateOptions = useMemo(() => {
     const defaultDateOptions = [
-      "Custom",
-      "This Week",
+      "Select Dates",
+      // "This Week",
       "This Weekend",
-      "This Month",
+      // "This Month",
       "Furthest Day Out To Book",
     ];
 
@@ -116,21 +118,21 @@ export const MobileDates = ({
                   className={`${index === 0
                     ? "rounded-t-2xl border border-stroke"
                     : index === DateOptions.length - 1 &&
-                      dateType === "Custom"
+                      dateType === "Select Dates"
                       ? "border-l border-r border-stroke"
                       : index === DateOptions.length - 1
                         ? "rounded-b-2xl border-b border-l border-r border-stroke"
                         : "border-b border-l border-r border-stroke"
                     }`}
                 />
-                {dateType === "Custom" && value === "Custom" ? (
+                {dateType === "Select Dates" && value === "Select Dates" ? (
                   <>
                     <div className="custom_calendar">
                       <Calendar
                         value={selectedDay}
                         calendarClassName="responsive-calendar"
                         onChange={setSelectedDay}
-                        colorPrimary="#40942A"
+                        colorPrimary={entity ? entity?.color1 : "#40942A"}
                         minimumDate={minimumDate}
                         disabledDays={blackOutDays}
                       />
@@ -165,7 +167,7 @@ export const MobileDates = ({
           </ToggleGroup.Root>
         </section>
         <div className="fixed bottom-10 left-1/2 z-10 flex w-full -translate-x-1/2 gap-2 px-4">
-          <OutlineButton className="min-w-[40%]" onClick={toggleFilters}>
+          <OutlineButton className="w-full" onClick={toggleFilters}>
             Cancel
           </OutlineButton>
           <FilledButton className="w-full" onClick={toggleFilters}>
@@ -199,7 +201,7 @@ export const Item = ({
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white flex items-center px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
+      className={`bg-white flex items-center px-4 py-2 text-left text-[0.875rem] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
         }`}
       data-testid={dataTestId}
       data-qa={dataQa}

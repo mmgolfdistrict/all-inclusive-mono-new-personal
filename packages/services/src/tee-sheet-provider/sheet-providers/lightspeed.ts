@@ -109,14 +109,14 @@ export class Lightspeed extends BaseProvider {
         throw new Error(`Error fetching tee times fail to get token: ${token}`);
       }
 
-      const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/teetimes?custom_params[player_count]=4&custom_params[holes]=18&custom_params[with_pricing]=true&filter[course]=${courseId}&page[size]=100&page[number]=${page}&filter[date]=${date}${
-        DEFAULT_PLAYER_TYPE_ID ? `&custom_params[player_types][]=${DEFAULT_PLAYER_TYPE_ID}` : ""
-      }`;
+      const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/teetimes?custom_params[player_count]=4&custom_params[holes]=18&custom_params[with_pricing]=true&filter[course]=${courseId}&page[size]=100&page[number]=${page}&filter[date]=${date}${DEFAULT_PLAYER_TYPE_ID ? `&custom_params[player_types][]=${DEFAULT_PLAYER_TYPE_ID}` : ""
+        }`;
       const headers = {
         Authorization: `Bearer ${token}`,
         "Content-Type": CONTENT_TYPE,
         Accept: ACCEPT,
       };
+      this.logger.info(`fetchTeeTimes - ${url}`);
       const response = await fetch(url, {
         method: "GET",
         headers: headers,
@@ -129,7 +129,7 @@ export class Lightspeed extends BaseProvider {
         }
         if (response.status === 403) {
           this.logger.error(`Error fetching tee time: ${response.statusText}`);
-          loggerService.errorLog({
+          void loggerService.errorLog({
             userId: "",
             url: "/Lightspeed/getTeeTimes",
             userAgent: "",
@@ -175,7 +175,6 @@ export class Lightspeed extends BaseProvider {
       "Content-Type": CONTENT_TYPE,
       Accept: ACCEPT,
     };
-    console.log("LIGHTSPEED DATA", data);
     const payload = {
       data: {
         type: "reservation_request",
@@ -196,6 +195,8 @@ export class Lightspeed extends BaseProvider {
     };
     // create reservation request
     const reservationRequestUrl = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/reservation_requests`;
+    this.logger.info(`reservationRequestUrl - ${reservationRequestUrl}`);
+    this.logger.info(`reservationRequestPayload - ${JSON.stringify(payload)}`);
     const reservationRequestResponse = await fetch(reservationRequestUrl, {
       method: "POST",
       headers: headers,
@@ -205,20 +206,20 @@ export class Lightspeed extends BaseProvider {
     if (!reservationRequestResponse.ok) {
       const responseData = await reservationRequestResponse.json();
       if (reservationRequestResponse.status === 403) {
-        this.logger.error(`Error creating booking: ${reservationRequestResponse.statusText}`);
+        this.logger.error(`Error creating reservation_requests: ${reservationRequestResponse.statusText}`);
       }
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId,
         url: "/Lightspeed/createBooking",
         userAgent: "",
-        message: "ERROR_CREATING_BOOKING",
+        message: "ERROR_CREATING_RESERVATION_REQUESTS",
         stackTrace: ``,
         additionalDetailsJSON: JSON.stringify({
           data,
           responseData,
         }),
       });
-      throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
+      throw new Error(`Error creating reservation_requests: ${JSON.stringify(responseData)}`);
     }
 
     const reservationRequest =
@@ -275,6 +276,8 @@ export class Lightspeed extends BaseProvider {
           },
         };
       }
+      this.logger.info(`roundRequestUrl - ${roundRequestUrl}`);
+      this.logger.info(`roundRequestPayload - ${JSON.stringify(payload)}`);
       const roundRequestResponse = await fetch(roundRequestUrl, {
         method: "POST",
         headers: headers,
@@ -282,15 +285,15 @@ export class Lightspeed extends BaseProvider {
       });
       if (!roundRequestResponse.ok) {
         const responseData = await roundRequestResponse.json();
-        this.logger.error(`Error creating booking: ${roundRequestResponse.statusText}`);
+        this.logger.error(`Error creating round_requests: ${roundRequestResponse.statusText}`);
         if (roundRequestResponse.status === 403) {
-          this.logger.error(`Error creating booking: ${JSON.stringify(responseData)}`);
+          this.logger.error(`Error creating round_requests: ${JSON.stringify(responseData)}`);
         }
-        loggerService.errorLog({
+        void loggerService.errorLog({
           userId,
           url: "/Lightspeed/createBooking",
           userAgent: "",
-          message: "ERROR_CREATING_BOOKING",
+          message: "ERROR_CREATING_ROUND_REQUESTS",
           stackTrace: ``,
           additionalDetailsJSON: JSON.stringify({
             data,
@@ -298,47 +301,50 @@ export class Lightspeed extends BaseProvider {
             payload,
           }),
         });
-        throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
+        throw new Error(`Error creating booking round_requests: ${JSON.stringify(responseData)}`);
       }
     }
     // create reservation
     const reservationUrl = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/reservations`;
-
-    const reservationResponse = await fetch(reservationUrl, {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify({
-        data: {
-          type: "reservation",
-          attributes: {},
-          relationships: {
-            reservation_request: {
-              data: {
-                type: "reservation_request",
-                id: reservationRequest.data.id,
-              },
+    const reservationPayload = {
+      data: {
+        type: "reservation",
+        attributes: {},
+        relationships: {
+          reservation_request: {
+            data: {
+              type: "reservation_request",
+              id: reservationRequest.data.id,
             },
           },
         },
-      }),
+      },
+    }
+
+    this.logger.info(`reservationUrl - ${reservationUrl}`);
+    this.logger.info(`reservationPayload - ${JSON.stringify(reservationPayload)}`);
+    const reservationResponse = await fetch(reservationUrl, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(reservationPayload),
     });
     if (!reservationResponse.ok) {
       const responseData = await reservationResponse.json();
       if (reservationResponse.status === 403) {
-        this.logger.error(`Error creating booking: ${reservationResponse.statusText}`);
+        this.logger.error(`Error creating reservations: ${reservationResponse.statusText}`);
       }
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId,
         url: "/Lightspeed/createBooking",
         userAgent: "",
-        message: "ERROR_CREATING_BOOKING",
+        message: "ERROR_CREATING_RESERVATION",
         stackTrace: ``,
         additionalDetailsJSON: JSON.stringify({
           data,
           responseData,
         }),
       });
-      throw new Error(`Error creating booking: ${JSON.stringify(responseData)}`);
+      throw new Error(`Error creating reservations: ${JSON.stringify(responseData)}`);
     }
 
     const bookingResponse = (await reservationResponse.json()) as LightSpeedBookingResponse;
@@ -421,7 +427,7 @@ export class Lightspeed extends BaseProvider {
           }
         } catch (error: any) {
           this.logger.error(`Error parsing token response: ${error}`);
-          loggerService.errorLog({
+          void loggerService.errorLog({
             userId: "",
             url: "/Lightspeed/getToken",
             userAgent: "",
@@ -529,7 +535,7 @@ export class Lightspeed extends BaseProvider {
       if (response.status === 403) {
         await this.getToken();
       }
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Lightspeed/deleteBooking",
         userAgent: "",
@@ -568,23 +574,25 @@ export class Lightspeed extends BaseProvider {
     };
 
     const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/customers`;
+    const createCustomerPayload = {
+      data: {
+        type: "customer",
+        attributes: {
+          first_name: customerData.firstName ? customerData.firstName : "Guest",
+          last_name: customerData.lastName ? customerData.lastName : "N/A",
+          email: customerData.email,
+          phone: customerData.phone,
+        },
+      },
+    }
 
-    console.log(`createCustomer - ${url}`, customerData);
+    this.logger.info(`createCustomer - ${url}`);
+    this.logger.info(`createCustomerPayload - ${JSON.stringify(createCustomerPayload)}`);
 
     const response = await fetch(url, {
       method: "POST",
       headers: headers,
-      body: JSON.stringify({
-        data: {
-          type: "customer",
-          attributes: {
-            first_name: customerData.firstName ? customerData.firstName : "Guest",
-            last_name: customerData.lastName ? customerData.lastName : "N/A",
-            email: customerData.email,
-            phone: customerData.phone,
-          },
-        },
-      }),
+      body: JSON.stringify(createCustomerPayload),
     });
 
     if (!response.ok) {
@@ -593,7 +601,7 @@ export class Lightspeed extends BaseProvider {
       if (response.status === 403) {
         this.logger.error(`Error response from light-speed: ${JSON.stringify(responseData)}`);
       }
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Lightspeed/createCustomer",
         userAgent: "",
@@ -689,6 +697,8 @@ export class Lightspeed extends BaseProvider {
       };
       const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/payment_confirmations`;
 
+      this.logger.info(`addSalesData - ${url}`);
+      this.logger.info(`addSalesDataPayload - ${JSON.stringify(payload)}`);
       const response = await fetch(url, {
         method: "POST",
         headers: headers,
@@ -701,7 +711,7 @@ export class Lightspeed extends BaseProvider {
         if (response.status === 403) {
           this.logger.error(`Error response from light-speed: ${JSON.stringify(responseData)}`);
         }
-        loggerService.errorLog({
+        void loggerService.errorLog({
           userId: "",
           url: "/Lightspeed/addSalesData",
           userAgent: "",
@@ -724,7 +734,7 @@ export class Lightspeed extends BaseProvider {
       );
     } catch (error: any) {
       this.logger.error(`Error adding sales data: ${JSON.stringify(error.message)}`);
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Lightspeed/addSalesData",
         userAgent: "",
@@ -734,7 +744,7 @@ export class Lightspeed extends BaseProvider {
           options,
         }),
       });
-      throw new Error(`Error adding sales data: ${JSON.stringify(error.message)}`);
+      // throw new Error(`Error adding sales data: ${JSON.stringify(error.message)}`);
     }
   };
 
@@ -777,6 +787,8 @@ export class Lightspeed extends BaseProvider {
 
     const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/reservations/${bookingId}/rounds/${slotId}`;
 
+    this.logger.info(`updateTeeTime - ${url}`);
+    this.logger.info(`updateTeeTimePayload - ${JSON.stringify(payload)}`);
     const response = await fetch(url, {
       method: "put",
       headers: headers,
@@ -790,7 +802,7 @@ export class Lightspeed extends BaseProvider {
       if (response.status === 403) {
         await this.getToken();
       }
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Lightspeed/updateTeeTime",
         userAgent: "",
@@ -819,7 +831,7 @@ export class Lightspeed extends BaseProvider {
     const { BASE_ENDPOINT, CONTENT_TYPE, ORGANIZATION_ID, ACCEPT } = JSON.parse(
       this.providerConfiguration ?? "{}"
     );
-    const { email } = customerDetails;
+    const { email, firstName, lastName } = customerDetails;
     if (!token) {
       token = (await this.getToken()) ?? "";
       if (!token) {
@@ -845,7 +857,7 @@ export class Lightspeed extends BaseProvider {
       this.logger.error(`Error fetching customer: ${response.statusText}`);
       const responseData = await response.json();
       this.logger.error(`Error response from light-speed: ${JSON.stringify(responseData)}`);
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Lightspeed/getCustomer",
         userAgent: "",
@@ -863,17 +875,53 @@ export class Lightspeed extends BaseProvider {
 
     const customers = await response.json();
 
-    if (customers.data.length === 0) {
-      return undefined;
-    }
-
     const customer = customers.data[0];
+
+    if (!customer && customerDetails.phone) {
+      try {
+        const url = `${BASE_ENDPOINT}/partner_api/v2/organizations/${ORGANIZATION_ID}/customers?filter[phone]=${customerDetails.phone}`;
+
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": CONTENT_TYPE,
+          Accept: ACCEPT,
+        };
+
+        console.log(`getCustomer - ${url}`);
+
+        const response = await fetch(url, {
+          method: "GET",
+          headers: headers,
+        });
+
+        if (response.ok) {
+          const customers = await response.json();
+          if (customers.data.length === 0) {
+            return undefined;
+          }
+          const customersObject = customers.data;
+
+          const existingCustomer = customersObject.find((customer: LightspeedGetCustomerResponse) =>
+            customer.attributes.first_name.toLowerCase() === firstName.toLowerCase() &&
+            customer.attributes.last_name.toLowerCase() === lastName.toLowerCase()
+          );
+
+          if (existingCustomer) {
+            console.log("EXISTING CUSTOMER", existingCustomer);
+            return { includePhone: false } as LightspeedGetCustomerResponse;
+          }
+          return undefined;
+        }
+      } catch (error) {
+        this.logger.error(`Error fetching customer by phone number: ${JSON.stringify(error)}`);
+      }
+    }
 
     return customer as LightspeedGetCustomerResponse;
   }
 
   shouldAddSaleData(): boolean {
-    return true;
+    return false;
   }
 
   getSalesDataOptions(
@@ -884,7 +932,7 @@ export class Lightspeed extends BaseProvider {
     const salesDataOptions: LightspeedSaleDataOptions = {
       token: bookingDetails.token,
       roundIds: data.data.relationships.rounds.data,
-      amount: bookingDetails.totalAmountPaid,
+      amount: (bookingDetails.greenFeeCharge * bookingDetails.playerCount) + (bookingDetails.cartFeeCharge * Math.ceil(bookingDetails.playerCount / 2)),
     };
     return salesDataOptions;
   }
@@ -895,12 +943,21 @@ export class Lightspeed extends BaseProvider {
 
   getCustomerCreationData(buyerData: BuyerData): LightspeedCustomerCreationData {
     const [firstName, lastName] = buyerData.name ? buyerData.name.split(" ") : ["", ""];
-    const data = {
-      firstName,
-      lastName,
-      email: buyerData.email,
-      phone: buyerData.phone,
-    } as LightspeedCustomerCreationData;
+    let data: LightspeedCustomerCreationData
+    if (buyerData.includePhone) {
+      data = {
+        firstName,
+        lastName,
+        email: buyerData.email,
+        phone: buyerData.phone
+      } as LightspeedCustomerCreationData;
+    } else {
+      data = {
+        firstName,
+        lastName,
+        email: buyerData.email,
+      } as LightspeedCustomerCreationData;
+    }
     return data;
   }
 
@@ -970,7 +1027,7 @@ export class Lightspeed extends BaseProvider {
         .execute()
         .catch((err) => {
           this.logger.error(err);
-          loggerService.errorLog({
+          void loggerService.errorLog({
             userId: "",
             url: "/Lightspeed/indexTeeTime",
             userAgent: "",
@@ -1047,7 +1104,7 @@ export class Lightspeed extends BaseProvider {
             .execute()
             .catch((err) => {
               this.logger.error(err);
-              loggerService.errorLog({
+              void loggerService.errorLog({
                 userId: "",
                 url: "/Lightspeed/updateTeeTime",
                 userAgent: "",
@@ -1069,7 +1126,7 @@ export class Lightspeed extends BaseProvider {
       }
     } catch (error: any) {
       this.logger.error(error);
-      loggerService.errorLog({
+      void loggerService.errorLog({
         userId: "",
         url: "/Lightspeed/indexTeeTime",
         userAgent: "",

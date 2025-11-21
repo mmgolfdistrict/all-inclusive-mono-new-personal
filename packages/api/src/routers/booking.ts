@@ -64,6 +64,7 @@ export const bookingRouter = createTRPCRouter({
     .input(
       z.object({
         courseId: z.string(),
+        userTime: z.string().optional(),
         limit: z.number().optional(),
         cursor: z.string().optional(),
       })
@@ -71,7 +72,7 @@ export const bookingRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return ctx.serviceFactory
         .getBookingService()
-        .getOwnedTeeTimes(ctx.session.user.id, input.courseId, input.limit, input.cursor);
+        .getOwnedTeeTimes(ctx.session.user.id, input.courseId, input.userTime, input.limit, input.cursor);
     }),
   getOffersForBooking: protectedProcedure
     .input(
@@ -107,6 +108,7 @@ export const bookingRouter = createTRPCRouter({
         endTime: z.date(),
         slots: z.number(),
         allowSplit: z.boolean().optional(),
+        color1: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -118,7 +120,8 @@ export const bookingRouter = createTRPCRouter({
           input.bookingIds,
           input.endTime,
           input.slots,
-          input.allowSplit
+          input.allowSplit,
+          input.color1
         );
     }),
   updateListingForBookings: protectedProcedure
@@ -129,7 +132,8 @@ export const bookingRouter = createTRPCRouter({
         updatedSlots: z.number(),
         bookingIds: z.array(z.string()),
         endTime: z.date(),
-        allowSplit: z.boolean()
+        allowSplit: z.boolean(),
+        color1: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -142,7 +146,8 @@ export const bookingRouter = createTRPCRouter({
           input.updatedSlots,
           input.bookingIds,
           input.endTime,
-          input.allowSplit
+          input.allowSplit,
+          input.color1
         );
     }),
   getOwnedBookingsForTeeTime: protectedProcedure
@@ -234,10 +239,13 @@ export const bookingRouter = createTRPCRouter({
     .input(
       z.object({
         listingId: z.string(),
+        color1: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.serviceFactory.getBookingService().cancelListing(ctx.session.user.id, input.listingId);
+      return ctx.serviceFactory
+        .getBookingService()
+        .cancelListing(ctx.session.user.id, input.listingId, input.color1);
     }),
   acceptOffer: protectedProcedure
     .input(
@@ -292,6 +300,7 @@ export const bookingRouter = createTRPCRouter({
         courseMembershipId: z.string().optional(),
         playerCountForMemberShip: z.string().optional(),
         providerCourseMembershipId: z.string().optional(),
+        color1: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -308,7 +317,8 @@ export const bookingRouter = createTRPCRouter({
           input.redirectHref,
           input.courseMembershipId ?? "",
           input.playerCountForMemberShip ?? "",
-          input.providerCourseMembershipId ?? ""
+          input.providerCourseMembershipId ?? "",
+          input.color1
         );
     }),
   reserveSecondHandBooking: protectedProcedure
@@ -402,6 +412,7 @@ export const bookingRouter = createTRPCRouter({
         courseMembershipId: z.string().optional(),
         playerCountForMemberShip: z.string().optional(),
         providerCourseMembershipId: z.string().optional(),
+        color1: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -418,7 +429,8 @@ export const bookingRouter = createTRPCRouter({
           input.redirectHref,
           input.courseMembershipId ?? "",
           input.playerCountForMemberShip ?? "",
-          input.providerCourseMembershipId ?? ""
+          input.providerCourseMembershipId ?? "",
+          input.color1
         );
     }),
   createListingForGroupBookings: protectedProcedure
@@ -428,6 +440,7 @@ export const bookingRouter = createTRPCRouter({
         listPrice: z.number(),
         endTime: z.date(),
         slots: z.number(),
+        color1: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -438,16 +451,20 @@ export const bookingRouter = createTRPCRouter({
           input.listPrice,
           input.groupId,
           input.endTime,
-          input.slots
+          input.slots,
+          input.color1
         );
     }),
   cancelGroupListing: protectedProcedure
     .input(
       z.object({
         groupId: z.string(),
+        color1: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.serviceFactory.getBookingService().cancelGroupListing(ctx.session.user.id, input.groupId);
+      return ctx.serviceFactory
+        .getBookingService()
+        .cancelGroupListing(ctx.session.user.id, input.groupId, input.color1);
     }),
 });

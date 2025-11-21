@@ -10,6 +10,7 @@ import { Info } from "../icons/info";
 import { BlurImage } from "../images/blur-image";
 import { PoweredBy } from "../powered-by";
 import { Tooltip } from "../tooltip";
+import { SafeContent } from "~/utils/safe-content";
 
 export const MainNav = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -42,6 +43,7 @@ export const MainNav = () => {
       ? document?.getElementById("main-header")?.offsetHeight || 0
       : 0;
   setmainHeaderHeight(divHeight);
+
   return (
     <div>
       <div
@@ -61,9 +63,9 @@ export const MainNav = () => {
             {elm.longMessage && (
               <Tooltip
                 trigger={
-                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                  <Info longMessage className="ml-2 h-5 w-5" />
                 }
-                content={<div>{formatMessage(elm.longMessage)}</div>}
+                content={SafeContent({ htmlContent: elm.longMessage })}
               />
             )}
           </div>
@@ -81,9 +83,9 @@ export const MainNav = () => {
             {elm.longMessage && (
               <Tooltip
                 trigger={
-                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                  <Info longMessage className="ml-2 h-5 w-5" />
                 }
-                content={<div>{formatMessage(elm.longMessage)}</div>}
+                content={SafeContent({ htmlContent: elm.longMessage })}
               />
             )}
           </div>
@@ -102,15 +104,15 @@ export const MainNav = () => {
             {elm.longMessage && (
               <Tooltip
                 trigger={
-                  <Info longMessage className="ml-2 h-[20px] w-[20px]" />
+                  <Info longMessage className="ml-2 h-5 w-5" />
                 }
-                content={<div>{formatMessage(elm.longMessage)}</div>}
+                content={SafeContent({ htmlContent: elm.longMessage })}
               />
             )}
           </div>
         ))}
 
-        <div className="relative z-10 min-h-[75px] md:min-h-[95px] flex w-full items-center justify-end border-b border-stroke-secondary bg-white p-4 md:p-6">
+        <div className="relative z-10 min-h-[4.6875rem] md:min-h-[5.9375rem] flex w-full items-center justify-end border-b border-stroke-secondary bg-white p-4 md:p-6">
           <div
             className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform`}
           >
@@ -120,7 +122,8 @@ export const MainNav = () => {
                   src={entity?.logo ?? ""}
                   alt={entity?.name ?? "resort logo"}
                   width={60}
-                  height={150}
+                  height={100}
+                  className="w-[4.6875rem] object-fit"
                 />
               ) : (
                 <BlurImage
@@ -128,6 +131,7 @@ export const MainNav = () => {
                   alt={entity?.name ?? "resort logo"}
                   width={90}
                   height={150}
+                  className="w-[4.6875rem] object-fit"
                 />
               )}
             </Link>

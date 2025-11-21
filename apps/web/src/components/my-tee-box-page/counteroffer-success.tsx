@@ -10,6 +10,7 @@ import { Close } from "../icons/close";
 import { Info } from "../icons/info";
 import { Tooltip } from "../tooltip";
 import { type OfferType } from "./offers-received";
+import { useAppContext } from "~/contexts/AppContext";
 
 type SideBarProps = {
   isCounterofferSuccessOpen: boolean;
@@ -26,6 +27,7 @@ export const CounterofferSuccess = ({
     isOpen: isCounterofferSuccessOpen,
     setIsOpen: setIsCounterofferSuccessOpen,
   });
+  const { entity } = useAppContext();
 
   const { timeTillEnd, count } = useExpiration({
     expirationDate: selectedOffer?.offer.expiresAt,
@@ -33,7 +35,11 @@ export const CounterofferSuccess = ({
   });
 
   const cancelCounteroffer = () => {
-    toast.success("Counteroffer cancelled successfully");
+    toast.success("Counteroffer cancelled successfully", {
+      progressStyle: {
+        background: entity?.color1,
+      },
+    });
     setIsCounterofferSuccessOpen(false);
   };
 
@@ -48,9 +54,8 @@ export const CounterofferSuccess = ({
       )}
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isCounterofferSuccessOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:max-w-[31.25rem] md:h-screen ${isCounterofferSuccessOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
@@ -65,7 +70,7 @@ export const CounterofferSuccess = ({
               aria-label="sidebarToggle"
               data-testid="close-button-id"
             >
-              <Close className="h-[25px] w-[25px]" />
+              <Close className="h-[1.5625rem] w-[1.5625rem]" />
             </button>
           </div>
           <div className="flex h-full flex-col justify-between overflow-y-auto">
@@ -96,7 +101,7 @@ export const CounterofferSuccess = ({
                 <div className="font-[300] text-primary-gray text-[14px]">
                   Original price {"$205.99 (+$10)"}
                 </div>
-                <div className="h-[1px] w-full bg-stroke" />
+                <div className="h-px w-full bg-stroke" />
                 <div className="font-[300] text-primary-gray">
                   Number of spots offered
                 </div>

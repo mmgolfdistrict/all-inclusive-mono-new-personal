@@ -172,6 +172,7 @@ export default function CourseHomePage() {
       await updateUser.mutateAsync({
         handle: uName,
         courseId,
+        color1: entity?.color1,
       });
     } catch (error) {
       console.log("error", error);
@@ -222,7 +223,7 @@ export default function CourseHomePage() {
 
   useEffect(() => {
     if (queryDateType === "custom" && queryDate) {
-      setDateType("Custom");
+      setDateType("Select Dates");
 
       // const courseOpenTime = Number(dayjs(course?.openTime).format("HHmm"));
       // const courseCloseTime = Number(dayjs(course?.closeTime).format("HHmm"));
@@ -294,8 +295,42 @@ export default function CourseHomePage() {
 
         return formatDateString(currentTimePlus30);
       }
-      case "This Week":
-      case "This Month":
+      // case "This Week": {
+      //   if (isMobile) {
+      //     const currentTime = dayjs(new Date());
+      //     const currentTimePlus30 = currentTime.add(30, 'minute');
+
+      //     const closingHour = Math.floor(startTime[1] / 100);
+      //     const closingMinute = startTime[1] % 100;
+
+      //     const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+
+      //     if (currentTimePlus30.isAfter(closingTime)) {
+      //       return formatDateString(currentTime.add(1, 'day').startOf('day'))
+      //     }
+
+      //     return formatDateString(currentTimePlus30);
+      //   }
+      // }
+      // eslint-disable-next-line no-fallthrough
+      // case "This Month": {
+      //   if (isMobile) {
+      //     const currentTime = dayjs(new Date());
+      //     const currentTimePlus30 = currentTime.add(30, 'minute');
+
+      //     const closingHour = Math.floor(startTime[1] / 100);
+      //     const closingMinute = startTime[1] % 100;
+
+      //     const closingTime = currentTime.set('hour', closingHour).set('minute', closingMinute).set('second', 0);
+
+      //     if (currentTimePlus30.isAfter(closingTime)) {
+      //       return formatDateString(currentTime.add(1, 'day').startOf('day'))
+      //     }
+
+      //     return formatDateString(currentTimePlus30);
+      //   }
+      // }
+      // eslint-disable-next-line no-fallthrough
       case "Furthest Day Out To Book":
         return formatDateString(dayjs(new Date()).add(30, "minute"));
       case "Today": {
@@ -313,16 +348,33 @@ export default function CourseHomePage() {
 
         return formatDateString(currentTimePlus30);
       }
-      case "This Weekend":
-        {
+      case "This Weekend": {
+        if (isMobile) {
           const today = dayjs().startOf("day");
-          const weekend = dayjs().day(5);
+          const weekend = dayjs().day(5); // This Friday
+
+          const currentTime = dayjs();
+          const currentTimePlus30 = currentTime.add(30, "minute");
+
+          const closingHour = Math.floor(startTime[1] / 100);
+          const closingMinute = startTime[1] % 100;
+
+          const closingTime = currentTime.set("hour", closingHour).set("minute", closingMinute).set("second", 0);
+
+          // If today is Friday or later
           if (weekend.isSame(today, "day") || weekend.isBefore(today, "day")) {
-            return formatDateString(dayjs(new Date()).add(30, "minute").toDate());
+            if (currentTimePlus30.isAfter(closingTime)) {
+              return formatDateString(currentTime.add(1, "day").startOf("day"));
+            }
+            return formatDateString(currentTimePlus30);
           }
+
+          // Weekend is in the future
           return formatDateString(weekend.startOf("day").toDate());
         }
-      case "Custom": {
+      }
+      // eslint-disable-next-line no-fallthrough
+      case "Select Dates": {
         if (!selectedDay.from) return formatDateString(new Date());
         const customDate = dayjs(
           `${selectedDay.from.year}-${selectedDay.from.month}-${selectedDay.from.day}`
@@ -364,16 +416,16 @@ export default function CourseHomePage() {
 
           return formatDateStringEnd(dayjs().endOf("day").toDate());
         }
-      case "This Week": {
-        const currentDay = dayjs();
-        const isSunday = currentDay.day() === 0;
+      // case "This Week": {
+      //   const currentDay = dayjs();
+      //   const isSunday = currentDay.day() === 0;
 
-        if (isSunday) {
-          return formatDateStringEnd(currentDay.add(1, 'week').endOf('isoWeek').toDate());
-        }
+      //   if (isSunday) {
+      //     return formatDateStringEnd(currentDay.add(1, 'week').endOf('isoWeek').toDate());
+      //   }
 
-        return formatDateStringEnd(currentDay.endOf('isoWeek').toDate());
-      }
+      //   return formatDateStringEnd(currentDay.endOf('isoWeek').toDate());
+      // }
       case "This Weekend": {
         const currentDay = dayjs();
         const isSunday = currentDay.day() === 0;
@@ -384,18 +436,18 @@ export default function CourseHomePage() {
 
         return formatDateStringEnd(currentDay.day(7).endOf('day'));
       }
-      case "This Month": {
-        const today = dayjs();
-        const lastDayOfMonth = today.endOf('month');
-        if (today.isSame(lastDayOfMonth, 'day')) {
-          return formatDateStringEnd(lastDayOfMonth.add(1, 'month').endOf('month').toDate());
-        }
+      // case "This Month": {
+      //   const today = dayjs();
+      //   const lastDayOfMonth = today.endOf('month');
+      //   if (today.isSame(lastDayOfMonth, 'day')) {
+      //     return formatDateStringEnd(lastDayOfMonth.add(1, 'month').endOf('month').toDate());
+      //   }
 
-        return formatDateStringEnd(lastDayOfMonth.toDate());
-      }
+      //   return formatDateStringEnd(lastDayOfMonth.toDate());
+      // }
       case "Furthest Day Out To Book":
         return formatDateStringEnd(dayjs(farthestDateOut).toDate());
-      case "Custom": {
+      case "Select Dates": {
         if (!selectedDay.to) {
           if (selectedDay.from) {
             const endOfDay = dayjs(
@@ -546,17 +598,89 @@ export default function CourseHomePage() {
   };
 
   const pageUp = () => {
-    if (pageNumber === amountOfPage) return;
-    setPageNumber((prev) => prev + 1);
-    setTake((prev) => prev + TAKE);
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (isMobile) {
+      if (dateType === "Furthest Day Out To Book") {
+        setSelectedDate((prev) => {
+          if (!prev) return null;
+
+          const prevDate = dayjs(prev).subtract(1, "day");
+          const start = dayjs(startDate);
+
+          if (prevDate.isBefore(start, "day")) return prev; // don't go before startDate
+
+          // update state
+          setPageNumber((prevPage) => prevPage - 1);
+          setTake((prevTake) => prevTake - TAKE);
+          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+          return prevDate.toDate().toUTCString();
+        });
+      } else {
+        setSelectedDate((prev) => {
+          if (!prev) return null;
+
+          const nextDate = dayjs(prev).add(1, "day");
+          const end = dayjs(endDate);
+
+          if (nextDate.isAfter(end, "day")) return prev; // don't exceed endDate
+
+          // update state
+          setPageNumber((prevPage) => prevPage + 1);
+          setTake((prevTake) => prevTake + TAKE);
+          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+          return nextDate.toDate().toUTCString();
+        });
+      }
+    } else {
+      if (pageNumber === amountOfPage) return;
+      setPageNumber((prev) => prev + 1);
+      setTake((prev) => prev + TAKE);
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const pageDown = () => {
-    if (pageNumber === 1) return;
-    setPageNumber((prev) => prev - 1);
-    setTake((prev) => prev - TAKE);
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (isMobile) {
+      if (dateType === "Furthest Day Out To Book") {
+        setSelectedDate((prev) => {
+          if (!prev) return null;
+
+          const nextDate = dayjs(prev).add(1, "day");
+          const end = dayjs(endDate);
+
+          if (nextDate.isAfter(end, "day")) return prev; // don't exceed endDate
+
+          // update state
+          setPageNumber((prevPage) => prevPage + 1);
+          setTake((prevTake) => prevTake + TAKE);
+          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+          return nextDate.toDate().toUTCString();
+        });
+      } else {
+        setSelectedDate((prev) => {
+          if (!prev) return null;
+
+          const prevDate = dayjs(prev).subtract(1, "day");
+          const start = dayjs(startDate);
+
+          if (prevDate.isBefore(start, "day")) return prev; // don't go before startDate
+
+          // update state
+          setPageNumber((prevPage) => prevPage - 1);
+          setTake((prevTake) => prevTake - TAKE);
+          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+
+          return prevDate.toDate().toUTCString();
+        });
+      }
+    } else {
+      if (pageNumber === 1) return;
+      setPageNumber((prev) => prev - 1);
+      setTake((prev) => prev - TAKE);
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const handleLoading = (val: boolean) => {
@@ -688,6 +812,52 @@ export default function CourseHomePage() {
     }
   };
 
+  const [selectedDate, setSelectedDate] = useState<string | null>(startDate);
+
+  useEffect(() => {
+    if (selectedDate && startDate) {
+      const diff = dayjs(selectedDate).diff(dayjs(startDate), 'day');
+      setPageNumber(diff + 1); // Assuming page 1 is the startDate
+    }
+  }, [selectedDate, startDate]);
+
+  const dateRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (selectedDate) {
+        const ref = dateRefs.current[dayjs(selectedDate).format("YYYY-MM-DD")];
+        if (ref) {
+          ref.scrollIntoView({
+            behavior: "smooth",
+            inline: "center",
+            block: "nearest",
+          });
+        }
+      }
+    }, 100); // Waits 100ms to ensure rendering is done
+
+    return () => clearTimeout(timeout);
+  }, [selectedDate, isLoadingTeeTimeDate, isLoading, specialEventsLoading, allCoursesDataLoading]);
+
+  useEffect(() => {
+    if (dateType === "Furthest Day Out To Book") {
+      if (isMobile) {
+        const formattedEndDate = dayjs.utc(endDate).format("ddd, DD MMM YYYY 00:00:00 [GMT]");
+        setSelectedDate(formattedEndDate);
+      } else {
+        setSelectedDate(startDate); // use swapped logic for desktop
+      }
+    } else if (startDate) {
+      setSelectedDate(startDate);
+    }
+  }, [startDate, endDate, dateType, isMobile]);
+
+
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date);
+  };
+
   return (
     <main className={`bg-secondary-white py-4 md:py-6`}>
       <LoadingContainer
@@ -698,7 +868,7 @@ export default function CourseHomePage() {
       {
         !isMobile &&
         <div className="flex gap-8 items-center px-4 md:px-6 ">
-          <div className="min-w-[310px]">
+          <div className="min-w-[19.375rem]">
             {ALLOW_COURSE_SWITCHING ? <Select
               className="w-full"
               values={
@@ -712,23 +882,23 @@ export default function CourseHomePage() {
               setValue={handleCourseSwitch}
             />
               : entity?.redirectToCourseFlag ? null : (
-                <GoBack href="/" text={`Back to all ${entity?.name} Courses`} />
+                <GoBack href="/" text={`Back to All Courses`} />
               )}
           </div>
           <div className="flex items-center justify-between w-full">
             <div className="flex justify-between gap-4  px-4 md:px-0">
               <div className="text-secondary-black">
                 {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
-                <span className="text-sm text-primary-gray">
+                <span className="text-justify text-sm text-primary-gray">
                   All times shown in course time zone
                 </span>
               </div>
             </div>
-            <Select
+            {/* <Select
               value={sortValue}
               setValue={handleSetSortValue}
               values={SortOptions}
-            />
+            /> */}
           </div>
         </div>
       }
@@ -747,7 +917,7 @@ export default function CourseHomePage() {
           ref={scrollRef}
           className="absolute -top-[7.5rem] md:-top-[9.2rem]"
         />
-        <div className="hidden min-w-[310px] flex-col md:flex">
+        <div className="hidden min-w-[19.375rem] flex-col md:flex">
           <div
             style={{
               top: "calc(9.5rem + 1px)",
@@ -759,52 +929,94 @@ export default function CourseHomePage() {
             <Filters openForecastModal={openForecastModal} />
           </div>
         </div>
-        <div className={`fixed ${isNavExpanded ? "bottom-32" : "bottom-16"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
+        <div className={`fixed ${isNavExpanded ? "bottom-[9.6rem]" : "bottom-[4.8rem]"} left-1/2 z-10 -translate-x-1/2 md:hidden`}>
           {/* mobile  for filter/sort */}
           <FilterSort toggleFilters={toggleFilters} toggleSort={toggleSort} />
         </div>
         <div className="flex w-full flex-col gap-1 md:gap-4 overflow-x-hidden pr-0p md:pr-6">
+          {/* scrollable dates  */}
 
-          <div
-            className={`flex space-x-2 md:hidden px-4 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-              ? `fixed left-0 w-full z-10 bg-secondary-white pt-2 pb-3 shadow-md`
-              : "relative"
-              }`}
-            style={{
-              top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
-                ? `${divHeight && divHeight * 1}px`
-                : "auto",
-            }}
-          >
-            <div className="w-[50%] flex items-center justify-around">
-              <button
-                onClick={toggleFilters}
-                className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
+          {(MOBILE_VIEW_VERSION === "v2" && isMobile) && (
+            <div
+              className={`w-full overflow-x-auto left-0 top-0 z-10 bg-secondary-white pt-2 pb-2 ${(courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                ? "fixed shadow-md"
+                : ""
+                }`}
+              style={{
+                top: (courseImages?.length > 0 ? scrollY > 333 : scrollY > 45)
+                  ? `${divHeight || 0}px`
+                  : "auto",
+              }}
+            >
+              <div
+                className="flex gap-2 overflow-x-auto overflow-y-hidden px-2"
+                style={{
+                  maxWidth: "100%",
+                  WebkitOverflowScrolling: "touch",
+                  scrollbarWidth: "none", // Firefox
+                  msOverflowStyle: "none", // IE/Edge
+                }}
               >
-                <FiltersIcon className="h-[14px] w-[14px]" />
-                All Filters
-              </button>
-              <button
-                onClick={toggleDates}
-                className="p-2 text-xs flex items-center space-x-2 flex items-center gap-1 rounded-full border-b border-r border-t border-l border-stroke"
-              >
-                <Calendar className="h-[14px] w-[14px]" /> Date
-              </button>
+                <div
+                  className="flex gap-2 min-w-max"
+                  style={{
+                    display: "flex",
+                  }}
+                >
+                  {datesArr.map((dateStr: string, idx: number) => {
+                    // const dateObj = dayjs(dateStr as string | number | Date | Dayjs | null | undefined);
+                    const dateObj = dayjs.utc(dateStr as string | number | Date | Dayjs | null | undefined);
+
+                    const isSelected =
+                      selectedDate &&
+                      dayjs(selectedDate).utc().format("YYYY-MM-DD") === dateObj.format("YYYY-MM-DD");
+
+                    return (
+                      (isLoadingTeeTimeDate || isLoading || specialEventsLoading || allCoursesDataLoading)
+                        ? Array.from({ length: 7 }).map((_, idx) => (
+                          <div
+                            key={`skeleton-${idx}`}
+                            className="w-12 h-20 bg-gray-200 rounded-lg animate-pulse"
+                          />
+                        )) : <button
+                          ref={(el) => {
+                            if (el) dateRefs.current[dateObj.format("YYYY-MM-DD")] = el;
+                          }}
+                          key={idx} // unique index-based key
+                          onClick={() => handleDateSelect(dateStr)}
+                          className={`flex flex-col items-center justify-center rounded-lg px-2 text-sm border transition-all shadow-sm
+              ${isSelected
+                              ? "text-white font-semibold"
+                              : "bg-white text-primary-black border-gray-300 hover:bg-gray-100"
+                            }`}
+                          style={{
+                            borderColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                            backgroundColor: isSelected ? entity?.color1 : "rgb(255 255 255)",
+                          }}
+                        >
+                          <span className="text-md font-med tracking-wide">
+                            {dateObj.format("MMM")}
+                          </span>
+                          <span className="text-xl font-bold leading-tight">
+                            {dateObj.format("D")}
+                          </span>
+                          <span className="text-[0.8125rem] font-medium">
+                            {dateObj.format("ddd")}
+                          </span>
+                        </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-            <div className="text-secondary-black w-[50%] text-center">
-              {/* Showing {count?.toLocaleString() ?? "0"} tee times{" "} */}
-              <span className="text-sm text-primary-gray">
-                All times shown in course time zone
-              </span>
-            </div>
-          </div>
+          )}
 
           {error ? (
-            <div className="flex justify-center items-center h-[200px]">
+            <div className="flex justify-center items-center h-[12.5rem]">
               <div className="text-center">Error: {error}</div>
             </div>
           ) : datesArr?.length === 0 ? (
-            <div className="flex justify-center items-center h-[200px]">
+            <div className="flex justify-center items-center h-[12.5rem]">
               <div className="text-center">
                 {isLoadingTeeTimeDate
                   ? "Loading..."
@@ -823,7 +1035,7 @@ export default function CourseHomePage() {
                         }}
                         courseException={getCourseException(date as string)}
                         key={idx}
-                        date={date}
+                        date={selectedDate || date}
                         minDate={startDate.toString()}
                         maxDate={endDate.toString()}
                         handleLoading={handleLoading}
@@ -834,6 +1046,7 @@ export default function CourseHomePage() {
                         isLoadingTeeTimeDate={isLoadingTeeTimeDate}
                         // datesWithData={datesWithData}
                         allDatesArr={datesArr}
+                        toggleFilters={toggleFilters}
                       />
                     )}
                   </ViewportList>
@@ -906,34 +1119,40 @@ export default function CourseHomePage() {
         </div>
       </section>
 
-      {showSort && (
+      {/* {showSort && (
         <MobileSort
           setShowSort={setShowSort}
           toggleSort={toggleSort}
           setSortValue={handleSetSortValue}
           sortValue={sortValue}
         />
-      )}
-      {showFilters && (
-        <MobileFilters
-          setShowFilters={setShowFilters}
-          toggleFilters={toggleFilters}
-          openForecastModal={openForecastModal}
-        />
-      )}
-      {showDates && (
-        <MobileDates
-          setShowFilters={setShowDates}
-          toggleFilters={toggleDates}
-        />
-      )}
-      {isForecastModalOpen && (
-        <ForecastModal
-          closeForecastModal={closeForecastModal}
-          startDate={startDate}
-          endDate={endDate}
-        />
-      )}
-    </main>
+      )} */}
+      {
+        showFilters && (
+          <MobileFilters
+            setShowFilters={setShowFilters}
+            toggleFilters={toggleFilters}
+            openForecastModal={openForecastModal}
+          />
+        )
+      }
+      {
+        showDates && (
+          <MobileDates
+            setShowFilters={setShowDates}
+            toggleFilters={toggleDates}
+          />
+        )
+      }
+      {
+        isForecastModalOpen && (
+          <ForecastModal
+            closeForecastModal={closeForecastModal}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        )
+      }
+    </main >
   );
 }

@@ -31,9 +31,11 @@ import { ThreeDots } from "../icons/threedots";
 import { UserProfile } from "../icons/user-profile";
 import { DownArrow } from "../icons/down-arrow";
 import { formatMessage } from "~/utils/NotificationFormatter";
+import { GroupBooking } from "../icons/group-booking";
+import { SafeContent } from "~/utils/safe-content";
 
 export const CourseNav = () => {
-  const { user } = useUserContext();
+  const { refetchMe } = useUserContext();
   const { entity, setPrevPath, isNavExpanded,
     setIsNavExpanded, setHeaderHeight } = useAppContext();
   const { course } = useCourseContext();
@@ -42,7 +44,9 @@ export const CourseNav = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const pathname = usePathname();
   const session = useSession();
-  const { setDateType } = useFiltersContext();
+  const isAuthenticated =
+    session.status === "authenticated" && !!session?.data?.user?.id;
+  const { setDateType, setGolfers, setStartTime } = useFiltersContext();
   const router = useRouter();
   const bottomNavRef = useRef<HTMLDivElement | null>(null);
 
@@ -55,7 +59,7 @@ export const CourseNav = () => {
       courseId: courseId ?? "",
     },
     {
-      enabled: courseId !== undefined && user?.id !== undefined,
+      enabled: courseId !== undefined && isAuthenticated,
     }
   );
 
@@ -76,7 +80,7 @@ export const CourseNav = () => {
   const logAudit = (func: () => unknown) => {
     auditLog
       .mutateAsync({
-        userId: user?.id ?? "",
+        userId: session?.data?.user?.id ?? "",
         teeTimeId: "",
         bookingId: "",
         listingId: "",
@@ -93,6 +97,12 @@ export const CourseNav = () => {
         console.log("error", err);
       });
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      void refetchMe();
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     (() => {
@@ -135,6 +145,8 @@ export const CourseNav = () => {
 
   const handleResetFilters = () => {
     setDateType("All");
+    // setGolfers("Any");
+    // setStartTime([course?.courseOpenTime ?? 0, course?.courseCloseTime ?? 0]);
   };
 
   const divHeight = !loadingCourseGlobalNotification || !loadingSystemNotifications ? document?.getElementById('header')?.offsetHeight || 0 : 0;
@@ -157,8 +169,8 @@ export const CourseNav = () => {
                 {formatMessage(elm.shortMessage)}
                 {elm.longMessage && (
                   <Tooltip
-                    trigger={<Info longMessage className="ml-2 h-[20px] w-[20px]" />}
-                    content={<div>{formatMessage(elm.longMessage)}</div>}
+                    trigger={<Info longMessage className="ml-2 h-5 w-5" />}
+                    content={SafeContent({ htmlContent: elm.longMessage })}
                   />
                 )}
               </div>
@@ -175,8 +187,8 @@ export const CourseNav = () => {
                 {formatMessage(elm.shortMessage)}
                 {elm.longMessage && (
                   <Tooltip
-                    trigger={<Info longMessage className="ml-2 h-[20px] w-[20px]" />}
-                    content={<div>{formatMessage(elm.longMessage)}</div>}
+                    trigger={<Info longMessage className="ml-2 h-5 w-5" />}
+                    content={SafeContent({ htmlContent: elm.longMessage })}
                   />
                 )}
               </div>
@@ -191,12 +203,12 @@ export const CourseNav = () => {
             )}
           </div>
 
-          <div className="relative min-h-[67px] flex w-full items-center justify-between border-b border-stroke-secondary bg-white p-4 md:justify-end md:p-6">
+          <div className="relative min-h-[4.1875rem] flex w-full items-center justify-between border-b border-stroke-secondary bg-white p-4 md:justify-end md:p-6">
             <div className="flex items-center gap-4 md:hidden">
               {pathname !== "/" ? (
                 <Hamburger
                   onClick={toggleSideBar}
-                  className="h-[25px] w-[25px] cursor-pointer"
+                  className="h-[1.5625rem] w-[1.5625rem] cursor-pointer"
                   data-testid="hamburger-menu-id"
                 />
               ) : (
@@ -213,7 +225,7 @@ export const CourseNav = () => {
                   alt="course logo"
                   width={90}
                   height={150}
-                  className="w-[80px] object-fit"
+                  className="w-20 object-fit"
                   data-testid="course-logo-id"
                 />
               ) : (
@@ -223,13 +235,13 @@ export const CourseNav = () => {
                     alt="course logo"
                     width={60}
                     height={100}
-                    className="w-[60px] object-fit"
+                    className="w-[3.75rem] object-fit"
                   /> : <BlurImage
                     src={course?.logo ?? ""}
                     alt="course logo"
                     width={90}
                     height={150}
-                    className="w-[80px] object-fit"
+                    className="w-20 object-fit"
                   />}
                 </Link>
               )}
@@ -246,7 +258,7 @@ export const CourseNav = () => {
               </div>
 
               <div className="flex items-center gap-6">
-                {user && session.status === "authenticated" ? (
+                {isAuthenticated ? (
                   <div className="flex items-center gap-4">
                     <UserInNav />
                   </div>
@@ -287,12 +299,12 @@ export const CourseNav = () => {
         </div>
         {!isMobile ?
           <div className={`w-full z-20 bg-white border-b border-stroke`}>
-            <div className="flex w-full justify-center bg-white p-2 md:p-4">
+            <div className="flex w-full justify-center p-2 md:p-4">
               <div className="flex justify-between gap-4 md:gap-8">
                 <NavItem
                   href={`/${courseId}`}
                   text="Find Times"
-                  icon={<Search className="w-[16px]" />}
+                  icon={<Search className="w-4" />}
                   data-testid="tee-time-id"
                   data-test={courseId}
                   onClick={handleResetFilters}
@@ -302,7 +314,7 @@ export const CourseNav = () => {
                   <NavItem
                     href={`/${courseId}/notify-me`}
                     text="Waitlist"
-                    icon={<Megaphone className="w-[16px]" />}
+                    icon={<Megaphone className="w-4" />}
                     data-testid="notify-me-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
@@ -313,7 +325,7 @@ export const CourseNav = () => {
                   <NavItem
                     href={`/${courseId}/group-booking`}
                     text="Group Booking"
-                    icon={<Megaphone className="w-[16px]" />}
+                    icon={<GroupBooking className="w-4" />}
                     data-testid="group-booking-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
@@ -324,7 +336,7 @@ export const CourseNav = () => {
                   <NavItem
                     href={`/${courseId}/auctions`}
                     text="Auctions"
-                    icon={<Auction className="w-[16px]" />}
+                    icon={<Auction className="w-4" />}
                     data-testid="auction-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
@@ -334,7 +346,7 @@ export const CourseNav = () => {
                 <NavItem
                   href={`/${courseId}/my-tee-box`}
                   text="Sell"
-                  icon={<Marketplace className="w-[16px]" />}
+                  icon={<Marketplace className="w-4" />}
                   data-testid="sell-your-tee-time-id"
                   data-test={courseId}
                   onClick={handleResetFilters}
@@ -343,7 +355,7 @@ export const CourseNav = () => {
                 <NavItem
                   href={`/${courseId}/my-tee-box?section=owned`}
                   text="My Tee Box"
-                  icon={<Calendar className="w-[16px]" />}
+                  icon={<Calendar className="w-4" />}
                   data-testid="sell-your-tee-time-id"
                   data-test={courseId}
                   onClick={handleResetFilters}
@@ -353,16 +365,16 @@ export const CourseNav = () => {
                 {course?.supportsOffers ? (
                   <NavItem
                     href={
-                      user
+                      isAuthenticated
                         ? `/${courseId}/my-tee-box?section=offers-received`
                         : `/${course?.id}/login`
                     }
                     text="My Offers"
                     icon={
                       <div className="relative">
-                        <MyOffers className="w-[20px]" />
+                        <MyOffers className="w-5" />
                         {unreadOffers && unreadOffers > 0 ? (
-                          <div className="absolute -right-3.5 -top-2 md:-right-2.5 md:-top-4 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
+                          <div className="absolute -right-3.5 -top-2 md:-right-2.5 md:-top-4 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[0.625rem] font-semibold text-white">
                             {unreadOffers}
                           </div>
                         ) : null}
@@ -381,39 +393,39 @@ export const CourseNav = () => {
       </div>
       {isMobile &&
         <div className={`fixed bottom-0 w-full z-20 bg-white border-t border-[#c6c6c6] `} id="bottom-nav">
-          <div className="flex w-full justify-center bg-white p-2 md:p-4">
+          <div className="flex w-full justify-center bg-gray-100 p-2 md:p-4">
             <div className={`flex w-full ${isNavExpanded ? "gap-4" : ""} flex-col`}>
               <div className="flex w-full justify-between gap-4">
                 <NavItem
                   href={`/${courseId}`}
                   text="Find Times"
-                  icon={<Search className="w-[16px]  mt-3" />}
+                  icon={<Search className="w-4 mt-3" />}
                   data-testid="tee-time-id"
                   data-test={courseId}
                   onClick={handleResetFilters}
                   id="navbar-find-times"
-                  className="max-w-[64px]"
+                  className="max-w-16"
                 />
                 <NavItem
                   href={`/${courseId}/my-tee-box`}
                   text="Sell"
-                  icon={<Marketplace className="w-[16px] mt-3" />}
+                  icon={<Marketplace className="w-4 mt-3" />}
                   data-testid="sell-your-tee-time-id"
                   data-test={courseId}
                   onClick={handleResetFilters}
                   id="navbar-sell"
-                  className="max-w-[64px] ml-2"
+                  className="max-w-16 ml-2"
                 />
                 {course?.supportsWaitlist ? (
                   <NavItem
                     href={`/${courseId}/notify-me`}
                     text="Waitlist"
-                    icon={<Megaphone className="w-[22px]" />}
+                    icon={<Megaphone className="w-[1.375rem]" />}
                     data-testid="notify-me-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
                     id="navbar-waitlist"
-                    className="max-w-[64px] ml-2"
+                    className="max-w-16 ml-2"
                   />
                 ) : null}
 
@@ -421,11 +433,11 @@ export const CourseNav = () => {
                   <NavItem
                     href={`/${courseId}/group-booking`}
                     text="Group Booking"
-                    icon={<Megaphone className="w-[20px]" />}
+                    icon={<GroupBooking className="w-5" />}
                     data-testid="group-booking-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
-                    className="max-w-[64px]"
+                    className="max-w-16"
                   />
                 ) : null}
 
@@ -433,10 +445,10 @@ export const CourseNav = () => {
                   href=""
                   text=""
                   icon={isNavExpanded ?
-                    <DownArrow className="w-[35px] cursor-pointer" /> :
+                    <DownArrow className="w-[2.1875rem] cursor-pointer" /> :
                     <ThreeDots className="cursor-pointer" direction="vertical" />
                   }
-                  className="flex !justify-center items-center w-[35px] max-w-[64px]"
+                  className="flex !justify-center items-center w-[2.1875rem] max-w-16"
                   onClick={toggleNavExpansion}
                   data-testid="sell-your-tee-time-id"
                 />
@@ -444,59 +456,63 @@ export const CourseNav = () => {
               <div
                 ref={bottomNavRef}
                 className={`flex w-full justify-between gap-4 transition-all duration-200 ease-in-out ${isNavExpanded
-                  ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+                  ? 'max-h-[31.25rem] opacity-100' : 'max-h-0 opacity-0'}`}
               >
                 <NavItem
                   href={`/${courseId}/my-tee-box?section=owned`}
                   text={`My Tee Box`}
-                  icon={<Calendar className="w-[20px]" />}
+                  icon={<Calendar className="w-5" />}
                   data-testid="sell-your-tee-time-id"
                   data-test={courseId}
                   onClick={handleResetFilters}
                   id="navbar-my-tee-box"
-                  className="max-w-[64px]"
+                  className="max-w-16"
                 />
 
                 <NavItem
-                  href={user && session.status === "authenticated" ? `/${courseId}/account-settings/${user?.id}` : `/${courseId}/login`}
+                  href={
+                    isAuthenticated
+                      ? `/${courseId}/account-settings/${session?.data?.user?.id}`
+                      : `/${courseId}/login`
+                  }
                   text="Account"
-                  icon={<UserProfile className="w-[20px] fill-[#353b3f]" />}
+                  icon={<UserProfile className="w-5 fill-[#353b3f]" />}
                   data-testid="account-settings-id"
                   data-test={courseId}
                   onClick={handleResetFilters}
                   id="navbar-account-settings"
-                  className="max-w-[64px]"
+                  className="max-w-16"
                 />
 
                 {course?.allowAuctions ? (
                   <NavItem
                     href={`/${courseId}/auctions`}
                     text="Auctions"
-                    icon={<Auction className="w-[24px]" />}
+                    icon={<Auction className="w-6" />}
                     data-testid="auction-id"
                     data-test={courseId}
                     onClick={handleResetFilters}
                     id="navbar-auctions"
-                    className="max-w-[64px]"
+                    className="max-w-16"
                   />
                 ) : <NavItem
                   href=""
                   text="No Menu"
-                  className="flex !justify-center items-center max-w-[64px] invisible"
+                  className="flex !justify-center items-center max-w-16 invisible"
                 />}
                 {course?.supportsOffers ? (
                   <NavItem
                     href={
-                      user
+                      isAuthenticated
                         ? `/${courseId}/my-tee-box?section=offers-received`
                         : `/${course?.id}/login`
                     }
                     text="My Offers"
                     icon={
                       <div className="relative">
-                        <MyOffers className="w-[20px]" />
+                        <MyOffers className="w-5" />
                         {unreadOffers && unreadOffers > 0 ? (
-                          <div className="absolute -right-3.5 -top-2 md:-right-2.5 md:-top-4 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
+                          <div className="absolute -right-3.5 -top-2 md:-right-2.5 md:-top-4 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[0.625rem] font-semibold text-white">
                             {unreadOffers}
                           </div>
                         ) : null}
@@ -506,17 +522,17 @@ export const CourseNav = () => {
                     data-test={courseId}
                     onClick={handleResetFilters}
                     id="navbar-my-offers"
-                    className="max-w-[64px]"
+                    className="max-w-16"
                   />
                 ) : <NavItem
                   href=""
                   text="No Menu"
-                  className="flex !justify-center items-center max-w-[64px] invisible"
+                  className="flex !justify-center items-center max-w-16 invisible"
                 />}
                 <NavItem
                   href=""
                   text="No Menu"
-                  className="flex !justify-center items-center max-w-[64px] invisible"
+                  className="flex !justify-center items-center max-w-16 invisible"
                 />
               </div>
             </div>

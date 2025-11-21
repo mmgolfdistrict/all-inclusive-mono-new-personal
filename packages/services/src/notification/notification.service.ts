@@ -51,8 +51,8 @@ interface EmailParams {
   GroupReservationID?: string;
   PreviousPlayerCount?: number;
   NewPlayerCount?: number;
-  PreviousListedPrice?: number;
-  NewListedPrice?: number;
+  PreviousListedPrice?: string;
+  NewListedPrice?: string;
   USERNAME?: string;
   PAYMENT_URL?: string;
   COURSE_NAME?: string;
@@ -65,11 +65,19 @@ interface EmailParams {
   SUBJECT_LINE?: string;
   LOGO_URL?: string;
   ADDITIONAL_MESSAGE?: string;
-  PurchasedMerchandise?: boolean,
+  PurchasedMerchandise?: boolean;
   MerchandiseDetails?: {
     caption: string;
     qty: number;
   }[];
+  color1?: string;
+  PreviousListType?: string;
+  NewListType?: string;
+  PayableAmount?: string;
+  ListType?: string;
+  InviteRegisterURL?: string;
+  InviteLoginURL?: string;
+  PlayerDistribution?: string;
 }
 
 interface Attachment {
@@ -150,10 +158,13 @@ export class NotificationService {
    * @returns A promise that resolves when the email is successfully sent.
    */
   sendEmail = async (email: string, subject: string, body: string) => {
-    this.logger.info(`Sending email to ${email}`);
+    // this.logger.info(`Sending email to ${email}`);
 
     const bccEmailsList = process.env.BCC_CUSTOMER_EMAIL_LIST ? process.env.BCC_CUSTOMER_EMAIL_LIST : "";
     const bccEmails = bccEmailsList.split(",");
+    const asm = {
+      groupId: parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID || "0"),
+    };
 
     //if (process.env.NODE_ENV === "production") {
     const response = await this.sendGridClient
@@ -163,7 +174,7 @@ export class NotificationService {
         subject: subject,
         html: body,
         bcc: bccEmails,
-        trackingSettings: { subscriptionTracking: { enable: false } },
+        asm,
       })
       .catch((err) => {
         this.logger.error(err);
@@ -195,9 +206,16 @@ export class NotificationService {
     subject: string,
     templateId: string,
     template: EmailParams,
-    attachments: Attachment[]
+    attachments: Attachment[],
+    groupId?: number
   ) => {
-    this.logger.info(`Sending email to ${email.toString()}`);
+    let emailList = email;
+    if (email instanceof Array) {
+      const emailListLowercase = email.map((email) => email.toLowerCase());
+      const emailListSet = new Set(emailListLowercase);
+      emailList = Array.from(emailListSet);
+    }
+    // this.logger.info(`Sending email to ${emailList.toString()}`);
     const appSettingService = new AppSettingsService(
       this.database,
       process.env.REDIS_URL!,
@@ -205,18 +223,19 @@ export class NotificationService {
     );
     const bccEmailsList = process.env.BCC_CUSTOMER_EMAIL_LIST ? process.env.BCC_CUSTOMER_EMAIL_LIST : "";
     const bccEmails = bccEmailsList.split(",");
+    const asm = groupId ? { groupId } : undefined;
 
     const appSettings = await appSettingService.getMultiple("ENABLE_ICS_ATTACHMENT");
     if (appSettings?.ENABLE_ICS_ATTACHMENT === "false") {
       const response = await this.sendGridClient
         .send({
-          to: email,
+          to: emailList,
           from: this.sendGrid_email,
           subject,
           templateId,
           dynamicTemplateData: { ...template },
           bcc: bccEmails,
-          trackingSettings: { subscriptionTracking: { enable: false } },
+          asm,
         })
         .catch((err) => {
           this.logger.error(err);
@@ -227,7 +246,7 @@ export class NotificationService {
             message: "ERROR_SENDING_EMAIL_BY_TEMPLATE",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              email,
+              emailList,
               subject,
               template,
               templateId,
@@ -235,20 +254,20 @@ export class NotificationService {
             }),
           });
           throw new Error(
-            `Failed to send email to: ${email.toString()}, Response: ${JSON.stringify(response)}`
+            `Failed to send email to: ${emailList.toString()}, Response: ${JSON.stringify(response)}`
           );
         });
     } else {
       const response = await this.sendGridClient
         .send({
-          to: email,
+          to: emailList,
           from: this.sendGrid_email,
           subject,
           templateId,
           dynamicTemplateData: { ...template },
           attachments,
           bcc: bccEmails,
-          trackingSettings: { subscriptionTracking: { enable: false } },
+          asm,
         })
         .catch((err) => {
           this.logger.error(err);
@@ -259,7 +278,7 @@ export class NotificationService {
             message: "ERROR_SENDING_EMAIL_BY_TEMPLATE",
             stackTrace: `${err.stack}`,
             additionalDetailsJSON: JSON.stringify({
-              email,
+              emailList,
               subject,
               template,
               templateId,
@@ -267,7 +286,7 @@ export class NotificationService {
             }),
           });
           throw new Error(
-            `Failed to send email to: ${email.toString()}, Response: ${JSON.stringify(response)}`
+            `Failed to send email to: ${emailList.toString()}, Response: ${JSON.stringify(response)}`
           );
         });
     }
@@ -286,7 +305,7 @@ export class NotificationService {
    * await sendSMS('+1234567890', 'Hello, this is the SMS body.');
    */
   sendSMS = async (phoneNumber: string, body: string) => {
-    this.logger.info(`Sending SMS to ${phoneNumber}`);
+    // this.logger.info(`Sending SMS to ${phoneNumber}`);
     if (process.env.NODE_ENV === "production") {
       this.twilioClient.messages
         .create({

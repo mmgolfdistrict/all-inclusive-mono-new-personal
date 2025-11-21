@@ -5,5 +5,5 @@ export const OpenSection = [
   "offers-sent",
   "offers-received",
   "transaction-history",
-  "cashouts",
+  "withdrawal",
 ];

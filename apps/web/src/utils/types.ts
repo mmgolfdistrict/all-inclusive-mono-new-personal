@@ -94,7 +94,7 @@ export type InviteFriend = {
   email: string;
   slotId: string;
   bookingId: string;
-  currentlyEditing: boolean;
+  currentlyEditing?: boolean;
   emailOrPhoneNumber?: string;
 };
 
@@ -121,24 +121,25 @@ export type CartProduct = {
   display_price: string; //$4.00
   product_data: {
     metadata:
-    | FirstHandProduct
-    | SecondHandProduct
-    | SensibleProduct
-    | AuctionProduct
-    | CharityProduct
-    | Offer
-    | MarkupProduct
-    | ConvenienceFeeProduct
-    | TaxProduct
-    | CartFeeMetaData
-    | WeatherGuaranteeTaxPercentMetaData
-    | MarkupTaxPercentMetaData
-    | GreenFeeTaxPercentMetaData
-    | CartFeeTaxPercentMetaData
-    | FirstHandGroupProduct
-    | MerchandiseProduct
-    | MerchandiseTaxPercentMetaData
-    | MerchandiseWithTaxOverride;
+      | FirstHandProduct
+      | SecondHandProduct
+      | SensibleProduct
+      | AuctionProduct
+      | CharityProduct
+      | Offer
+      | MarkupProduct
+      | ConvenienceFeeProduct
+      | TaxProduct
+      | CartFeeMetaData
+      | WeatherGuaranteeTaxPercentMetaData
+      | MarkupTaxPercentMetaData
+      | GreenFeeTaxPercentMetaData
+      | CartFeeTaxPercentMetaData
+      | FirstHandGroupProduct
+      | MerchandiseProduct
+      | MerchandiseTaxPercentMetaData
+      | MerchandiseWithTaxOverride
+      | AdvancedBookingFees;
   };
 };
 
@@ -232,17 +233,21 @@ interface MerchandiseItemWithTax extends MerchandiseItem {
   merchandiseTaxPercent: number;
 }
 
+export interface AdvancedBookingFees {
+  type: "advanced_booking_fees_per_player";
+}
+
 export type MaxReservationResponse =
   | {
-    success: boolean;
-    message?: string;
-  }
+      success: boolean;
+      message?: string;
+    }
   | undefined;
 
 export type CountryData = {
-  dialCode: string,
-  format: string,
-  iso2: string,
-  name: string,
-  priority: number
+  dialCode: string;
+  format: string;
+  iso2: string;
+  name: string;
+  priority: number;
 };

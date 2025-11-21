@@ -4,27 +4,27 @@ import { resetPasswordSchema } from "../../../shared/src/schema/reset-password-s
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
-  inviteUser: protectedProcedure
+  inviteUsers: protectedProcedure
     .input(
       z.object({
-        emailOrPhone: z.string(),
-        teeTimeId: z.string(),
-        bookingSlotId: z.string(),
-        slotPosition: z.number(),
+        invites: z.array(
+          z.object({
+            emailOrPhoneNumber: z.string(),
+            teeTimeId: z.string(),
+            bookingSlotId: z.string(),
+            slotPosition: z.number(),
+          })
+        ),
         redirectHref: z.string(),
+        courseId: z.string().optional(),
+        color1: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getUserService()
-        .inviteUser(
-          ctx.session.user.id,
-          input.emailOrPhone,
-          input.teeTimeId,
-          input.bookingSlotId,
-          input.slotPosition,
-          input.redirectHref
-        );
+        .inviteUsers(ctx.session.user.id, input.invites, input.redirectHref, input.courseId,
+          input.color1);
     }),
   getInvitedUsers: protectedProcedure
     .input(
@@ -100,6 +100,7 @@ export const userRouter = createTRPCRouter({
         phoneNumber: z.string().optional(),
         phoneNotifications: z.boolean().optional(),
         emailNotification: z.boolean().optional(),
+        color1: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -109,22 +110,35 @@ export const userRouter = createTRPCRouter({
     .input(
       z.object({
         teeTimeId: z.string(),
+        bookingId: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
       return await ctx.serviceFactory
         .getUserService()
-        .getBookingsOwnedForTeeTime(input.teeTimeId, ctx?.session?.user?.id);
+        .getBookingsOwnedForTeeTime(input.teeTimeId, ctx?.session?.user?.id, input.bookingId);
     }),
   forgotPasswordRequest: publicProcedure.input(forgotPasswordSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory
       .getUserService()
-      .forgotPasswordRequest(input.redirectHref, input.email, input.ReCAPTCHA, input.courseProviderId);
+      .forgotPasswordRequest(
+        input.redirectHref,
+        input.email,
+        input.ReCAPTCHA,
+        input.courseProviderId,
+        input.color1
+      );
   }),
   executeForgotPassword: publicProcedure.input(resetPasswordSchema).mutation(async ({ ctx, input }) => {
     return await ctx.serviceFactory
       .getUserService()
-      .executeForgotPassword(input?.courseId, input.userId, input.verificationToken, input.password);
+      .executeForgotPassword(
+        input?.courseId,
+        input.userId,
+        input.verificationToken,
+        input.password,
+        input.color1
+      );
   }),
   getUpcomingTeeTimesForUser: publicProcedure
     .input(z.object({ userId: z.string(), courseId: z.string() }))
@@ -188,19 +202,13 @@ export const userRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return await ctx.serviceFactory.getUserService().addCourseUser(input.userId, input.courseId);
     }),
-    getCountryCode: publicProcedure
-      .input(
-        z.object({})
-      )
-      .query(async ({ ctx }) => {
-        const ipAddress = ctx?.userIpAddress;
-        return await ctx.serviceFactory.getIpInfoService().getIpInfoData(ipAddress);
-    }),
-    validatePhoneNumber: publicProcedure
-      .input(
-        z.object({ phoneNumber: z.string() })
-      )
-      .query(async ({ ctx, input }) => {
-        return await ctx.serviceFactory.getPhoneService().validate(input.phoneNumber);
+  getCountryCode: publicProcedure.input(z.object({})).query(async ({ ctx }) => {
+    const ipAddress = ctx?.userIpAddress;
+    return await ctx.serviceFactory.getIpInfoService().getIpInfoData(ipAddress);
+  }),
+  validatePhoneNumber: publicProcedure
+    .input(z.object({ phoneNumber: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await ctx.serviceFactory.getPhoneService().validate(input.phoneNumber);
     }),
 });

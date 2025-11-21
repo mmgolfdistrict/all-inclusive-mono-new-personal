@@ -37,19 +37,11 @@ export const Confirmation = ({
   const { course } = useCourseContext();
   const params = useParams();
   const router = useRouter();
+  const courseId = course?.id;
   useEffect(() => {
     const handlePopState = () => {
-      // console.log(params.course);
-      // void router.replace(`/${params.course}`);
-      // console.log("button pressed");
-      if (typeof params.course === 'string') {
-      console.log(params.course);
-      void router.replace(`/${params.course}`);
-      console.log("button pressed");
-    } else {
-      console.log("Course param missing or invalid");
-      void router.replace('/dashboard'); // fallback route
-    }
+      console.log("Back button pressed>>>>>>", courseId);
+      router.push(`/${courseId}`);
     };
     window.addEventListener('popstate', handlePopState);
     return () => {
@@ -60,14 +52,14 @@ export const Confirmation = ({
     router.replace(`/${course?.id}/my-tee-box`);
   }
   function handleNavigationForCollectPayment() {
-    router.replace(`/${course?.id}/my-tee-box/?bookingId=${bookingId}&collectPayment=${isValidForCollectPayment}`)
+    router.replace(`/${course?.id}/my-tee-box/?bookingId=${bookingId}&collectPayment=true`)
   }
   return (
     <section className="mx-auto flex w-full flex-col gap-4 bg-white px-3 py-2 text-center md:max-w-[80vw] md:rounded-xl md:p-6 md:py-4">
       <div className="container mx-auto p-4">
         <div className="flex flex-wrap">
           <div className="w-full md:w-1/2 p-4">
-            <h1 className="text-[24px] md:text-[32px]">
+            <h1 className="text-[1.5rem] md:text-[2rem]">
               Your Reservation Details
             </h1>
             {isLoadingBookingData ? (
@@ -113,24 +105,27 @@ export const Confirmation = ({
                 </div>
                 {bookingData && (bookingData?.playerCount ?? 0) > 1 ? (
                   <div className="flex  flex-col items-center justify-center gap-2 md:flex-row">
-                    {/* <Link
-                      href={`/${course?.id}/my-tee-box/?bookingId=${bookingId}&collectPayment=${isValidForCollectPayment}`}
-                      className="w-full md:w-fit md:min-w-[250px]"
-                      data-testid="go-to-my-tee-box-button-id"
-                    >
-                      <FilledButton className="w-full">Collect Payment</FilledButton>
-                    </Link> */}
-                    <div className="w-full md:w-fit md:min-w-[250px] ">
+                    <div className="w-full md:w-fit md:min-w-[15.625rem] ">
                       <FilledButton
                         onClick={handleNavigationForCollectPayment}
-                        className="w-full">Collect Payment</FilledButton>
+                        className="w-full">Request Payment</FilledButton>
                     </div>
                   </div>
                 ) : null}
+                <div className="mt-5">
+                  <span className="text-primary-gray font-semibold text-center text-justify">
+                    Collect the payment from your players in your tee time.
+                  </span>
+                </div>
+                <div className="mt-5">
+                  <span className="text-blue-500 font-semibold text-center text-justify">
+                    Your credit card statement should show <strong>FI *GOLF DISTRICT</strong>
+                  </span>
+                </div>
                 {isEmailSend ? (
                   <Fragment>
                     <div>
-                      <span className="text-yellow-600 font-semibold text-center ">
+                      <span className="text-yellow-600 font-semibold text-center text-justify">
                         Your booking is confirmed though we are unable to send
                         the email. Rest assured our customer service
                         representative will call you shortly
@@ -144,15 +139,24 @@ export const Confirmation = ({
             )}
           </div>
           <div className="w-full md:w-1/2 p-4">
-            <h1 className="text-[24px] md:text-[32px]">
+            <h1 className="text-[1.5rem] md:text-[2rem]">
               Thanks for your purchase
             </h1>
-            <p className="text-[14px] text-primary-gray md:text-[16px]">
+            <div className="flex justify-center items-center w-full my-3">
+              <FilledButton
+                onClick={handleNavigationGotoMyTeeBox}
+                className="min-w-[250px]"
+              >
+                Go To My Tee Box
+              </FilledButton>
+            </div>
+
+            <p className="text-[14px] text-primary-gray md:text-[16px] text-justify">
               Your tee time will be viewable in My Tee Box. Please note that all
               purchases are final. You can manage or update the players in your
               party at any time before the round.
             </p>
-            <p className="text-[14px] text-primary-gray md:text-[16px]">
+            <p className="text-[14px] text-primary-gray md:text-[16px] text-justify">
               Add golfers to your tee time by entering their names, selecting
               them by their Golf District handle, or inviting them via email.
             </p>
@@ -161,7 +165,12 @@ export const Confirmation = ({
       </div>
       {course?.supportsPlayerNameChange && (
         <div>
-          <InviteFriends teeTimeId={teeTimeId} isConfirmationPage />
+          <InviteFriends
+            teeTimeId={teeTimeId}
+            groupId={bookingData?.groupId ?? undefined}
+            isConfirmationPage
+            bookingId={bookingId}
+          />
         </div>
       )}
       <div>
@@ -171,7 +180,7 @@ export const Confirmation = ({
           <br />
           <br />
         </div>
-        <div className="flex w-full flex-col items-center justify-center mb-4 text-[14px] md:text-[16px]">
+        <div className="flex w-full flex-col items-center justify-center mb-4 text-[0.875rem] md:text-[1rem]">
           <p className="text-red text-center">
             You should receive a confirmation email. If you don’t see the
             confirmation email within the next 5 mins, please check your Junk
@@ -181,22 +190,10 @@ export const Confirmation = ({
         </div>
         <div className="flex gap-2 justify-center" >
           <div className="flex flex-col items-center justify-center gap-2 md:flex-row">
-            {/* <Link
-              href={`/${course?.id}/my-tee-box`}
-              className="w-full md:w-fit md:min-w-[250px]"
-              data-testid="go-to-my-tee-box-button-id"
-            >
-              <FilledButton className="w-full">Go To My Tee Box</FilledButton>
-            </Link> */}
-            <div className="w-full md:w-fit md:min-w-[250px] ">
-              <FilledButton
-                onClick={handleNavigationGotoMyTeeBox}
-                className="w-full">Go To My Tee Box</FilledButton>
-            </div>
           </div>
         </div>
       </div>
-      <p className="mt-4 text-[14px] text-primary-gray md:text-[16px] font-semibold text-center">
+      <p className="mt-4 text-[0.875rem] text-primary-gray md:text-[1rem] font-semibold text-center">
         Tip: If you know you can’t make your time, the earlier you can list, the
         greater the chance it sells.
       </p>

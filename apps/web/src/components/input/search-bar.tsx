@@ -9,13 +9,13 @@ interface SearchProps extends InputHTMLAttributes<HTMLInputElement> {
 export const SearchBar = ({ className, ...rest }: SearchProps) => {
   return (
     <>
-      <div className="relative hidden w-full md:block md:max-w-[250px] lg:max-w-[350px]">
+      <div className="relative hidden w-full md:block md:max-w-[15.625rem] lg:max-w-[21.875rem]">
         <RoundedInput
           placeholder="Search by location, course, date, etc."
           className={className ?? ""}
           {...rest}
         />
-        <Search className="absolute left-4 top-3.5 h-[14px] w-[14px]" />
+        <Search className="absolute left-4 top-3.5 h-[0.875rem] w-[0.875rem]" />
       </div>
     </>
   );

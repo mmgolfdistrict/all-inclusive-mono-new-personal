@@ -49,8 +49,8 @@ const InvitedTeeTime = () => {
                     className="w-full border-b border-stroke text-primary-gray"
                   >
                     <td className="flex items-center gap-2 px-4 py-3">
-                      <Avatar src={course?.logo} />
-                      <div className="whitespace-nowrap underline text-secondary-black">
+                      <Avatar src={course?.logo} isRounded={false} />
+                      <div className="whitespace-nowrap text-secondary-black">
                         {item?.courseName}
                       </div>
                     </td>

@@ -9,13 +9,15 @@ import { useFiltersContext } from "~/contexts/FiltersContext";
 import { useDraggableScroll } from "~/hooks/useDraggableScroll";
 import { api } from "~/utils/api";
 import { dayMonthDate, dayMonthDateV2 } from "~/utils/formatters";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { TeeTime } from "../cards/tee-time";
 import { Info } from "../icons/info";
 import { LeftChevron } from "../icons/left-chevron";
 import { Tooltip } from "../tooltip";
 import { TeeTimeSkeleton } from "./tee-time-skeleton";
 import dayjs from "dayjs";
+import { useAppContext } from "~/contexts/AppContext";
+import { SafeContent } from "~/utils/safe-content";
 
 export const DailyTeeTimesDesktopV2 = ({
     minDate,
@@ -41,36 +43,37 @@ export const DailyTeeTimesDesktopV2 = ({
     const [date, setDate] = useState<string>(dates[0] ?? '');
     const [isAtStart, setIsAtStart] = useState(true);
     const [isAtEnd, setIsAtEnd] = useState(false);
-    const { course } = useCourseContext();
+    const { course, getAllowedPlayersForTeeTime } = useCourseContext();
     const courseId = course?.id;
+    const { entity } = useAppContext();
     useEffect(() => {
         setDate(dates[0] ?? '')
-    }, [dateType ,minDate])
+    }, [dateType, minDate])
 
     const { data: courseException } =
-    api.courseException.getCourseException.useQuery({
-      courseId: courseId ?? "",
-    });
+        api.courseException.getCourseException.useQuery({
+            courseId: courseId ?? "",
+        });
 
-  const getCourseException = (playDate: string): null | NotificationObject => {
-    let flag = false;
-    let msg: NotificationObject | null = null;
-    courseException?.forEach((ce) => {
-      const startDate = new Date(ce.startDate);
-      const endDate = new Date(ce.endDate);
-      const dateToCheck = new Date(playDate);
-      if (dateToCheck > startDate && dateToCheck < endDate) {
-        flag = true;
-        msg = ce;
-      }
-    });
-    if (flag) {
-      return msg;
-    }
-    return null;
-  };
+    const getCourseException = (playDate: string): null | NotificationObject => {
+        let flag = false;
+        let msg: NotificationObject | null = null;
+        courseException?.forEach((ce) => {
+            const startDate = new Date(ce.startDate);
+            const endDate = new Date(ce.endDate);
+            const dateToCheck = new Date(playDate);
+            if (dateToCheck > startDate && dateToCheck < endDate) {
+                flag = true;
+                msg = ce;
+            }
+        });
+        if (flag) {
+            return msg;
+        }
+        return null;
+    };
 
- const courseExceptions = getCourseException(date)
+    const courseExceptions = getCourseException(date)
 
     const {
         showUnlisted,
@@ -84,10 +87,7 @@ export const DailyTeeTimesDesktopV2 = ({
     const teeTimeStartTime = startTime[0];
     const teeTimeEndTime = startTime[1];
 
-    const { data: allowedPlayers } =
-        api.course.getNumberOfPlayersByCourse.useQuery({
-            courseId: courseId ?? "",
-        });
+    const allowedPlayers = useMemo(() => getAllowedPlayersForTeeTime(), [course]);
 
     const numberOfPlayers = allowedPlayers?.numberOfPlayers[0];
 
@@ -221,15 +221,6 @@ export const DailyTeeTimesDesktopV2 = ({
         }
     }, [overflowRef]);
 
-    const getTextColor = (type) => {
-        if (type === "FAILURE") return "red";
-        if (type === "SUCCESS") return "primary";
-        if (type === "WARNING") return "primary-gray";
-    };
-    // if (!isLoading && isFetchedAfterMount && allTeeTimes.length === 0) {
-    //   return null;
-    // }
-
     return (
         <div className="flex flex-col gap-1 md:gap-4 bg-white px-4 py-2 md:rounded-xl md:px-8 md:py-6">
             <div className="relative" >
@@ -242,7 +233,7 @@ export const DailyTeeTimesDesktopV2 = ({
                         aria-label="Scroll Left"
                     // disabled={isAtStart}
                     >
-                        <LeftChevron fill="#40942A" className="w-[16px]" />
+                        <LeftChevron fill={entity?.color1} className="w-[1rem]" />
                     </button>
                 </div>
                 <div
@@ -272,7 +263,7 @@ export const DailyTeeTimesDesktopV2 = ({
                             ? Array.from({ length: 16 }).map((_, idx) => (
                                 <li
                                     key={idx}
-                                    className="p-4 min-w-[160px] border rounded-lg text-center bg-gray-200 animate-pulse"
+                                    className="p-4 min-w-[10rem] border rounded-lg text-center bg-gray-200 animate-pulse"
                                 >
                                     <div className="h-6 w-[50%] bg-gray-300 rounded-md mx-auto animate-pulse"></div>
                                 </li>
@@ -283,9 +274,9 @@ export const DailyTeeTimesDesktopV2 = ({
                                 return (
                                     <button
                                         key={idx}
-                                        className={`p-4 min-w-[160px] border rounded-lg text-center cursor-pointer ${isSelected ? "bg-primary text-white" : ""
+                                        className={`p-4 min-w-[10rem] border rounded-lg text-center cursor-pointer ${isSelected ? "bg-primary text-white" : ""
                                             }`}
-                                            onClick={() => setDate(elm)}
+                                        onClick={() => setDate(elm)}
                                     >
                                         <div className={`text-gray-700 ${isSelected ? "text-white" : ""}`}>
                                             {dayMonthDateV2(elm)}
@@ -298,21 +289,21 @@ export const DailyTeeTimesDesktopV2 = ({
                 <div className="absolute z-[2] md:block top-1/2 -translate-y-1/2 flex items-center justify-center -right-1 md:-right-6">
                     <button
                         onClick={scrollRight}
-                        className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtEnd || dates.length <= 5 ?'hidden' : ""}`}
+                        className={`flex h-fit items-center justify-center rounded-full bg-white p-2 shadow-overflow-indicator ${isAtEnd || dates.length <= 5 ? 'hidden' : ""}`}
                         data-testid="tee-time-right-chevron-id"
                         aria-label="Scroll Right"
                     >
-                        <LeftChevron fill="#40942A" className="w-[16px] rotate-180" />
+                        <LeftChevron fill={entity?.color1} className="w-[1rem] rotate-180" />
                     </button>
                 </div>
             </div>
             <div className="flex flex-wrap justify-between gap-2 unmask-time">
                 {isLoading ? (
-                    <div className="h-8 min-w-[150px] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
+                    <div className="h-8 min-w-[9.375rem] w-[20%] bg-gray-200 rounded-md  animate-pulse unmask-time" />
                 ) : (
                     <div
                         id="tee-time-box"
-                        className="text-[16px] md:text-[20px] unmask-time"
+                        className="text-base md:text-xl unmask-time"
                         data-testid="date-group-id"
                         data-qa={dayMonthDate(date)}
                     >
@@ -321,27 +312,29 @@ export const DailyTeeTimesDesktopV2 = ({
                 )}
 
                 {courseExceptions && (
-          <div className="flex-1 flex items-center gap-1">
-            <p
-              className={`text-${getTextColor(
-                courseExceptions.displayType
-              )} inline text-left text-[13px] md:text-lg`}
-            >
-              {courseExceptions.shortMessage}
-            </p>
+                    <div className="flex-1 flex items-center gap-1">
+                        <p
+                            style={{
+                                backgroundColor: courseExceptions.bgColor,
+                                color: courseExceptions.color,
+                            }}
+                            className="inline text-left text-[0.8125rem] md:text-lg"
+                        >
+                            {courseExceptions.shortMessage}
+                        </p>
 
-            {courseExceptions.longMessage && (
-              <Tooltip
-                className="text-left"
-                trigger={
-                  <span className="cursor-pointer" title="More Info">
-                    <Info className="h-4 md:h-5" />
-                  </span>
-                }
-                content={courseExceptions.longMessage}
-              />
-            )}
-          </div>
+                        {courseExceptions.longMessage && (
+                            <Tooltip
+                                className="text-left"
+                                trigger={
+                                    <span className="cursor-pointer" title="More Info">
+                                        <Info className="h-4 md:h-5" />
+                                    </span>
+                                }
+                                content={SafeContent({ htmlContent: courseExceptions.longMessage })}
+                            />
+                        )}
+                    </div>
                 )}
 
                 {isLoadingWeather && !weather ? (
@@ -350,7 +343,7 @@ export const DailyTeeTimesDesktopV2 = ({
                     <div className="flex items-center gap-1">
                         <div>{WeatherIcons[weather?.iconCode ?? ""]}</div>
                         <div
-                            className="text-[12px] md:text-[16px] unmask-temperature"
+                            className="text-xs md:text-base unmask-temperature"
                             data-testid="weather-degrees-id"
                             data-qa={weather?.temperature}
                         >

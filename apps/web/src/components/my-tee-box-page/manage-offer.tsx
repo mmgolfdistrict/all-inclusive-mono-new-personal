@@ -19,6 +19,7 @@ import { Item } from "../course-page/filters";
 import { Close } from "../icons/close";
 import { Players } from "../icons/players";
 import { type OfferSentType } from "./offers-sent";
+import { useAppContext } from "~/contexts/AppContext";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -38,6 +39,7 @@ export const ManageOffer = ({
   const [listingPrice, setListingPrice] = useState<number>(300);
   const [players, setPlayers] = useState<PlayerType>("1");
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
 
   useEffect(() => {
     if (selectedOffer?.offer?.golfers) {
@@ -94,7 +96,11 @@ export const ManageOffer = ({
   }, [listingPrice, players]);
 
   const updateOffer = () => {
-    toast.success("Offer updated successfully");
+    toast.success("Offer updated successfully", {
+      progressStyle: {
+        background: entity?.color1,
+      },
+    });
     setIsManageOfferOpen(false);
   };
 
@@ -109,9 +115,8 @@ export const ManageOffer = ({
       )}
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isManageOfferOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${isManageOfferOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
@@ -193,13 +198,12 @@ export const ManageOffer = ({
                       value={value}
                       dataTestId="player-item-id"
                       dataQa={value}
-                      className={`${
-                        index === 0
-                          ? "rounded-l-full border-b border-l border-t border-stroke"
-                          : index === PlayerOptions.length - 1
+                      className={`${index === 0
+                        ? "rounded-l-full border-b border-l border-t border-stroke"
+                        : index === PlayerOptions.length - 1
                           ? "rounded-r-full border border-stroke"
                           : "border-b border-l border-t border-stroke"
-                      } px-[1.75rem]`}
+                        } px-[1.75rem]`}
                       label={value}
                     />
                   ))}

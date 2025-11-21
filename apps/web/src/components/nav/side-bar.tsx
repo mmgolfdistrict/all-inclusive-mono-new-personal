@@ -18,6 +18,7 @@ import { Search } from "../icons/search";
 import { PoweredBy } from "../powered-by";
 import { PathsThatNeedRedirectOnLogout } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
+import { GroupBooking } from "../icons/group-booking";
 
 type SideBarProps = {
   isSideBarOpen: boolean;
@@ -84,38 +85,47 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
       logAudit(async () => {
         localStorage.clear();
         sessionStorage.clear();
-        session.data = null;
-        session.status = "unauthenticated";
-        await session.update(null);
+        try {
+          const cacheKeys = await caches.keys();
+          await Promise.all(cacheKeys.map((key) => caches.delete(key)));
+          console.log("All caches cleared.");
+        } catch (error) {
+          console.error("Error clearing caches:", error);
+        }
+        if (document.cookie) {
+          document.cookie.split(";").forEach((cookie) => {
+            const cookieName = cookie.split("=")[0]?.trim();
+            if (cookieName) {
+              document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
+            }
+          });
+        }
         if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
           const data = await signOut({
-            callbackUrl: `/${courseId}/login`,
-            //callbackUrl:pathname,
+            callbackUrl: `/${courseId}`,
             redirect: false,
           });
           router.push(data.url);
           return;
+        } else {
+          await signOut();
         }
-        const data = await signOut({
-          callbackUrl: `/${courseId}/login`,
-          redirect: false,
-        });
-        router.push(data.url);
       });
       localStorage.removeItem("googlestate");
+      localStorage.removeItem("linkedinstate");
     } catch (error) {
       console.log(error);
     } finally {
       localStorage.removeItem("googlestate");
+      toggleSidebar();
     }
   };
   return (
     <>
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed left-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[320px] md:-translate-x-[105%]  ${
-          isSideBarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`!duration-400 fixed left-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[20rem] md:-translate-x-[105%]  ${isSideBarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex  items-center justify-between px-2 py-2">
@@ -140,7 +150,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               aria-label="sidebarToggle"
               data-testid="close-button-id"
             >
-              <Close className="h-[25px] w-[25px]" />
+              <Close className="h-[1.5625rem] w-[1.5625rem]" />
             </button>
           </div>
           <div className="flex h-full flex-col justify-between overflow-y-auto">
@@ -148,7 +158,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               <NavItem
                 href={`/${courseId}`}
                 text="Find"
-                icon={<Search className="w-[16px]" />}
+                icon={<Search className="w-4" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}
                 data-testid="tee-time-course-id"
@@ -158,7 +168,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 <NavItem
                   href={`/${courseId}/notify-me`}
                   text="Waitlist"
-                  icon={<Megaphone className="w-[16px]" />}
+                  icon={<Megaphone className="w-4" />}
                   className="border-t border-stroke-secondary p-2 md:p-4"
                   onClick={toggleSidebar}
                   data-testid="notify-me-id"
@@ -169,7 +179,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 <NavItem
                   href={`/${courseId}/group-booking`}
                   text="Group Booking"
-                  icon={<Megaphone className="w-[16px]" />}
+                  icon={<GroupBooking className="w-4" />}
                   className="border-t border-stroke-secondary p-2 md:p-4"
                   data-testid="group-booking-id"
                   data-test={courseId}
@@ -180,7 +190,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                 <NavItem
                   href={`/${courseId}/auctions`}
                   text="Auctions"
-                  icon={<Auction className="w-[16px]" />}
+                  icon={<Auction className="w-4" />}
                   className="border-t border-stroke-secondary p-2 md:p-4"
                   onClick={toggleSidebar}
                   data-testid="auction-id"
@@ -190,7 +200,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               <NavItem
                 href={`/${courseId}/my-tee-box`}
                 text="Sell"
-                icon={<Marketplace className="w-[16px]" />}
+                icon={<Marketplace className="w-4" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}
                 data-testid="my-tee-box-id"
@@ -199,7 +209,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               <NavItem
                 href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
                 text="My Tee Times"
-                icon={<Calendar className="w-[16px]" />}
+                icon={<Calendar className="w-4" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}
                 data-testid="my-tee-box-id"
@@ -219,9 +229,9 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                   }}
                   icon={
                     <div className="relative">
-                      <MyOffers className="w-[20px]" />
+                      <MyOffers className="w-5" />
                       {unreadOffers && unreadOffers > 0 ? (
-                        <div className="absolute -right-3.5 -top-2 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[10px] font-semibold text-white">
+                        <div className="absolute -right-3.5 -top-2 flex h-5 w-5 min-w-fit select-none items-center justify-center rounded-full border-2 border-white bg-alert-red p-1 text-[0.625rem] font-semibold text-white">
                           {unreadOffers}
                         </div>
                       ) : null}
@@ -235,26 +245,23 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
             </div>
             {user && session.status === "authenticated" ? (
               <div className="flex flex-col">
-                <NavItem
-                  href={`/${courseId}/profile/${user?.id}`}
-                  text={
-                    <div className="flex items-center gap-2">
-                      <Avatar
-                        src={imageUrl ?? "/defaults/default-profile.webp"}
-                        name={user?.name}
-                      />
-                      <div className="flex flex-col">
-                        <p className="font-bold">{user?.name}</p>
-                        <p>{user?.email}</p>
-                        <div className="text-primary-gray">@{user?.name}</div>
-                      </div>
-                    </div>
-                  }
-                  className="border-t border-stroke-secondary p-4"
-                  onClick={toggleSidebar}
+                <div
+                  className="border-t border-stroke-secondary p-4 cursor-default"
                   data-testid="user-name-id"
                   data-test={user?.id}
-                />
+                >
+                  <div className="flex items-center gap-2">
+                    <Avatar
+                      src={imageUrl ?? "/defaults/default-profile.webp"}
+                      name={user?.name}
+                    />
+                    <div className="flex flex-col text-xs">
+                      <p className="font-bold text-center">{user?.name}</p>
+                      <p className="text-center">{user?.email}</p>
+                      <div className="text-primary-gray text-center">@{user?.name}</div>
+                    </div>
+                  </div>
+                </div>
                 <NavItem
                   href={`/${courseId}/account-settings/${user?.id}`}
                   text="Account Settings"
@@ -280,7 +287,6 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                   data-test={courseId}
                 />
                 <NavItem
-                  href="/"
                   text="Log Out"
                   className="border-b border-t border-stroke-secondary p-4"
                   onClick={logOutUser}

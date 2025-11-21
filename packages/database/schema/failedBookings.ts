@@ -20,5 +20,5 @@ export const failedBooking = mySqlTable('failedBooking', {
         .notNull(),
 });
 
-export type SelectAppRelease = InferSelectModel<typeof failedBooking>;
-export type InsertAppRelease = InferInsertModel<typeof failedBooking>;
+export type SelectFailedBooking = InferSelectModel<typeof failedBooking>;
+export type InsertFailedBooking = InferInsertModel<typeof failedBooking>;

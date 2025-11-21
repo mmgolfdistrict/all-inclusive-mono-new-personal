@@ -15,6 +15,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, getPromoCodePrice } from "~/utils/formatters";
 import type {
+  AdvancedBookingFees,
   AuctionProduct,
   CartFeeMetaData,
   CartProduct,
@@ -34,12 +35,16 @@ import type {
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "usehooks-ts";
 import { useAppContext } from "~/contexts/AppContext";
 
+dayjs.extend(customParseFormat)
+
 const currentDate = formatQueryDate(new Date());
+const DEFAULT_TEE_TIME_EXPIRATION_TIME = 30;
 
 export default function Checkout({
   params,
@@ -250,7 +255,8 @@ export default function Checkout({
       | FirstHandGroupProduct
       | MerchandiseProduct
       | MerchandiseTaxPercentMetaData
-      | MerchandiseWithTaxOverride =
+      | MerchandiseWithTaxOverride
+      | AdvancedBookingFees =
       saleType === "first_hand"
         ? {
           type: "first_hand",
@@ -579,6 +585,22 @@ export default function Checkout({
       }
     }
 
+    if (teeTimeData?.advancedBookingFeesPerPlayer) {
+      localCart.push({
+        name: "Golf District Tee Time",
+        id: teeTimeId ?? data?.teeTimeId,
+        price: teeTimeData.advancedBookingFeesPerPlayer,
+        image: "",
+        currency: "USD", //USD
+        display_price: formatMoney(teeTimeData.advancedBookingFeesPerPlayer),
+        product_data: {
+          metadata: {
+            type: "advanced_booking_fees_per_player",
+          },
+        },
+      });
+    }
+
     return localCart;
   }, [
     sensibleData,
@@ -623,6 +645,21 @@ export default function Checkout({
   const marginTop =
     notificationsCount > 0 ? `${notificationsCount * 10}px` : "0";
 
+  const isTeeTimeExpired = useMemo(() => {
+    if (data) {
+      const currentTime = dayjs.utc(dayjs().format("YYYY-MM-DD HH:mm:ss"), "YYYY-MM-DD HH:mm:ss");
+      const teeTimeDate = dayjs.utc(data.date, "YYYY-MM-DD HH:mm:ss");
+      return teeTimeDate.diff(currentTime, "minutes") < DEFAULT_TEE_TIME_EXPIRATION_TIME;
+    }
+  }, [data])
+
+  useEffect(() => {
+    if (isTeeTimeExpired && !isErrorBookingCancelled && !errorMessage) {
+      setErrorMessage("This tee time has expired and is no longer for sale. Play has already started.");
+      setIsErrorBookingCancelled(true);
+    }
+  }, [isTeeTimeExpired]);
+
   if (isError && error) {
     return (
       <div
@@ -630,7 +667,7 @@ export default function Checkout({
         style={{ height }}
       >
         <div className="text-center">Error: {error?.message}</div>
-        <Link href="/" className="underline">
+        <Link href={`/${course?.id}`} className="underline">
           Return to home
         </Link>
       </div>
@@ -644,7 +681,7 @@ export default function Checkout({
         style={{ height }}
       >
         <div className="text-center">Error: {errorMessage}</div>
-        <Link href="/" className="underline">
+        <Link href={`/${course?.id}`} className="underline">
           Return to home
         </Link>
       </div>
@@ -689,11 +726,11 @@ export default function Checkout({
           </div>
           <div className="md:w-2/5">
             {isLoading || !data || data === null ? (
-              <div className="flex justify-center items-center h-[200px] w-full md:min-w-[370px]">
-                <Spinner className="w-[50px] h-[50px]" />
+              <div className="flex justify-center items-center h-[12.5rem] w-full md:min-w-[23.125rem]">
+                <Spinner className="w-[3.125rem] h-[3.125rem]" />
               </div>
             ) : !isLoading && isError && error ? (
-              <div className="text-center h-[200px] flex items-center justify-center rounded-xl bg-white p-6">
+              <div className="text-center h-[12.5rem] flex items-center justify-center rounded-xl bg-white p-6">
                 {error?.message ?? "An error occurred fetching checkout data"}
               </div>
             ) : (

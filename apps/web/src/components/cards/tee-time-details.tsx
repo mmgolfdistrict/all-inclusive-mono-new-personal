@@ -30,21 +30,24 @@ export const TeeTimeDetails = ({
   teeTimeId: string;
   props?: ComponentProps<"div">;
 }) => {
-  const { course } = useCourseContext();
-  const courseId = course?.id;
+  const { course, getAllowedPlayersForTeeTime } = useCourseContext();
   const { setActivePage } = useAppContext();
   setActivePage("tee-time-details")
 
   const { data, isLoading, error, isError, refetch } =
     api.searchRouter.getTeeTimeById.useQuery({ teeTimeId: teeTimeId });
 
-  const { data: allowedPlayers } =
-    api.course.getNumberOfPlayersByCourse.useQuery({
-      courseId: courseId ?? "",
-      time: data?.time,
-      date: data?.date ?? "",
-      availableSlots: data?.availableSlots,
-    });
+  const allowedPlayers = useMemo(() => getAllowedPlayersForTeeTime(
+    data?.time,
+    data?.date,
+    data?.availableSlots
+  ), [
+    data?.time,
+    data?.date,
+    data?.availableSlots,
+    course
+  ]);
+
   const numberOfPlayers = allowedPlayers?.numberOfPlayers;
 
   const [players, setPlayers] = useState<string>(
@@ -96,10 +99,10 @@ export const TeeTimeDetails = ({
         path: `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${players}`,
         createdAt: new Date().toISOString(),
       });
-      void router.push(`/${course?.id}/login`);
+      router.push(`/${course?.id}/login`);
       return;
     } else {
-      void router.push(
+       router.push(
         `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${players}`
       );
     }

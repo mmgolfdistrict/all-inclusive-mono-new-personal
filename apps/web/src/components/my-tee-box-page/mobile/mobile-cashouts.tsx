@@ -73,7 +73,7 @@ export const MobileCashouts = () => {
     const datetime = selectedReceipt?.createdDateTime || '';
     const docDefinition = {
       content: [
-        { text: "Cash out Reciept", style: "header", alignment: "center" },
+        { text: "Withdrawal Reciept", style: "header", alignment: "center" },
         { canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 }] },
         {
           table: {
@@ -117,7 +117,7 @@ export const MobileCashouts = () => {
       }
     };
 
-    pdfMake.createPdf(docDefinition).download("cashout-receipt.pdf");
+    pdfMake.createPdf(docDefinition).download("withdrawal-receipt.pdf");
   };
 
   return (

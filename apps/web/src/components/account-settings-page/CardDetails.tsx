@@ -23,7 +23,7 @@ const CardDetails: React.FC<CardDetailsProps> = ({
           onClick={onRemove}
           className="border border-alert-red px-3 rounded-md"
         >
-          <Trashcan fill="#EE2020" className="w-[20px] h-[20px]" />
+          <Trashcan fill="#EE2020" className="w-[1.25rem] h-[1.25rem]" />
         </button>
       </div>
     )}

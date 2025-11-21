@@ -11,6 +11,7 @@ import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
 import { Players } from "../icons/players";
 import { type OfferSentType } from "./offers-sent";
+import { useAppContext } from "~/contexts/AppContext";
 
 type SideBarProps = {
   isCancelOfferOpen: boolean;
@@ -31,6 +32,7 @@ export const CancelOffer = ({
   });
   const cancel = api.teeBox.cancelOffer.useMutation();
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
 
   const cancelOffer = async () => {
     const offerId = selectedOffer?.offer.offerId ?? "";
@@ -48,7 +50,11 @@ export const CancelOffer = ({
       });
 
       await refetch();
-      toast.success("Offer cancelled successfully");
+      toast.success("Offer cancelled successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
       setIsCancelOfferOpen(false);
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error cancelling offer");
@@ -66,9 +72,8 @@ export const CancelOffer = ({
       )}
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isCancelOfferOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:max-w-[31.25rem] md:h-screen ${isCancelOfferOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
@@ -83,7 +88,7 @@ export const CancelOffer = ({
               aria-label="sidebarToggle"
               data-testid="close-button-id"
             >
-              <Close className="h-[25px] w-[25px]" />
+              <Close className="h-[1.5625rem] w-[1.5625rem]" />
             </button>
           </div>
           <div className="flex h-full flex-col justify-between overflow-y-auto">
@@ -116,14 +121,13 @@ export const CancelOffer = ({
               </div>
             </div>
             <div className="flex flex-col gap-4 px-4 pb-6">
-              <div className="text-center text-[14px] font-[300] text-primary-gray">
+              <div className="text-center text-sm font-[300] text-primary-gray">
                 All sales are final.
               </div>
               <div className="flex flex-col gap-2">
                 <FilledButton
-                  className={`w-full ${
-                    cancel.isLoading ? "animate-pulse" : ""
-                  }`}
+                  className={`w-full ${cancel.isLoading ? "animate-pulse" : ""
+                    }`}
                   disabled={cancel.isLoading}
                   onClick={cancelOffer}
                   data-testid="cancel-offer-button-id"
@@ -188,7 +192,7 @@ const TeeTimeItem = ({
           Owned by <span className="font-semibold">{ownedByName}</span>
         </div>
       </Link>
-      <div className="flex gap-4 text-[14px]">
+      <div className="flex gap-4 text-sm">
         <div className="w-[40px] ">
           <Players className="ml-auto w-[30px]" />
         </div>

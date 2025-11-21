@@ -10,10 +10,12 @@ import { OutlineButton } from "../buttons/outline-button";
 import { Close } from "../icons/close";
 import { Trashcan } from "../icons/trashcan";
 import { Spinner } from "../loading/spinner";
+import { useAppContext } from "~/contexts/AppContext";
 
 export const PaymentInfoMangeProfile = () => {
   const { cards, refetch, isLoading } = usePaymentMethods();
   const removeCard = api.checkout.removePaymentMethod.useMutation();
+  const { entity } = useAppContext();
 
   const removeMethod = async (paymentMethodId: string) => {
     if (!paymentMethodId) return;
@@ -21,7 +23,11 @@ export const PaymentInfoMangeProfile = () => {
     try {
       await removeCard.mutateAsync({ paymentMethodId });
       await refetch();
-      toast.success("Card removed successfully");
+      toast.success("Card removed successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
     } catch (error) {
       toast.error((error as Error)?.message ?? "Error removing card");
     }
@@ -32,15 +38,15 @@ export const PaymentInfoMangeProfile = () => {
       id="payment-method"
       className="flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4"
     >
-      <h1 className="pb-6 text-[18px] md:text-[24px]">Saved Credit Cards</h1>
+      <h1 className="pb-6 text-[1.125rem] md:text-[1.5rem]">Saved Credit Cards</h1>
       <div className="flex flex-col gap-2">
         {cards && cards.length > 0 ? (
           cards.map((card, idx) => (
             <CardDisplay removeMethod={removeMethod} card={card} key={idx} />
           ))
         ) : isLoading ? (
-          <div className="flex justify-center items-center h-full min-h-[200px]">
-            <Spinner className="w-[50px] h-[50px]" />
+          <div className="flex justify-center items-center h-full min-h-[12.5rem]">
+            <Spinner className="w-[3.125rem] h-[3.125rem]" />
           </div>
         ) : (
           <div className="text-center">No cards on file.</div>
@@ -81,7 +87,7 @@ const CardDisplay = ({
           onClick={() => setConfirmStatus(true)}
           className="border border-alert-red px-3 rounded-md"
         >
-          <Trashcan fill="#EE2020" className="w-[20px] h-[20px]" />
+          <Trashcan fill="#EE2020" className="w-[1.25rem] h-[1.25rem]" />
         </button>
       </div>
 
@@ -95,9 +101,8 @@ const CardDisplay = ({
         )}
         <aside
           // ref={sidebar}
-          className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-            confirmStatus ? "translate-x-0" : "translate-x-full"
-          }`}
+          className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[31.25rem] md:h-[100dvh] ${confirmStatus ? "translate-x-0" : "translate-x-full"
+            }`}
         >
           <div className="relative flex h-full flex-col">
             <div className="flex items-center justify-between p-4">
@@ -111,13 +116,13 @@ const CardDisplay = ({
                 className="z-[2]"
                 aria-label="sidebarToggle"
               >
-                <Close className="h-[25px] w-[25px]" />
+                <Close className="h-[1.5625rem] w-[1.5625rem]" />
               </button>
             </div>
             <div className="flex h-full flex-col justify-between overflow-y-auto">
               <div className="flex flex-col gap-6 px-0 sm:px-4">
                 <div>
-                  <div className="mt-6  pb-4 text-center text-2xl font-[300] md:text-xl">
+                  <div className="mt-6  pb-4 text-justify text-2xl font-[300] md:text-xl">
                     Are you sure you want to delete this credit card?
                   </div>
                   <div>

@@ -1,5 +1,8 @@
 "use client";
 
+import type {
+    SearchObject
+} from "@golf-district/shared";
 import {
     formatDate,
     formatQueryDate,
@@ -12,8 +15,9 @@ import { CheckoutBreadcumbs } from "~/components/nav/checkout-breadcrumbs";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
-import { formatMoney, getPromoCodePrice } from "~/utils/formatters";
+import { formatMoney, getPromoCodePrice, getTime } from "~/utils/formatters";
 import type {
+    AdvancedBookingFees,
     AuctionProduct,
     CartFeeMetaData,
     CartProduct,
@@ -33,12 +37,15 @@ import type {
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "usehooks-ts";
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.extend(customParseFormat);
 const currentDate = formatQueryDate(new Date());
+const DEFAULT_TEE_TIME_EXPIRATION_TIME = 30;
 
 export default function CheckoutGroupBooking({
     params,
@@ -53,10 +60,11 @@ export default function CheckoutGroupBooking({
     const playerCount = searchParams?.playerCount;
 
     const { course } = useCourseContext();
+    const timezoneCorrection = course?.timezoneCorrection;
 
     const [isSessionLoading, setIsSessionLoading] = useState(true);
-    // const [isErrorBookingCancelled, setIsErrorBookingCancelled] = useState(false);
-    // const [errorMessage, setErrorMessage] = useState("");
+    const [hasErrorOccured, setHasErrorOccured] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     const {
         shouldAddSensible,
@@ -107,7 +115,37 @@ export default function CheckoutGroupBooking({
             }
             return teeTimes;
         }
-    }, [teeTimeData])
+    }, [teeTimeData]);
+
+    const allocatePlayersAcrossTeeTimes = (group: SearchObject[], totalPlayers: number): { label: string; count: number }[] => {
+        const teeTimesSorted = group.sort((a, b) => a.time - b.time);
+
+        let remaining = totalPlayers;
+        const allocations: { label: string; count: number }[] = [];
+
+        for (const t of teeTimesSorted) {
+            if (remaining <= 0) break;
+            const capacity = Math.max(0, t.availableSlots);
+            let count = Math.min(remaining, capacity);
+
+            if (remaining === 5 && totalPlayers % 4 === 1) {
+                count = 3;
+            }
+
+            if (count > 0) {
+                allocations.push({ label: getTime(t.date, timezoneCorrection), count });
+                remaining -= count;
+            }
+        }
+
+        return allocations;
+    };
+
+    const getPlayersPerSlotLabelFull = (group: SearchObject[], totalPlayers: number): string => {
+        const allocations = allocatePlayersAcrossTeeTimes(group, totalPlayers);
+        const parts = allocations.map((a) => `${a.label} (${a.count})`.replace(/ /g, "\u00A0"));
+        return parts.join(" • ");
+    };
 
     let isError = isErrorTeeTime, error;
 
@@ -177,6 +215,7 @@ export default function CheckoutGroupBooking({
             | MerchandiseProduct
             | MerchandiseTaxPercentMetaData
             | MerchandiseWithTaxOverride
+            | AdvancedBookingFees
             = {
             type: "first_hand_group",
             tee_time_ids: teeTimesSelectedForBooking.map((teeTime) => teeTime.teeTimeId),
@@ -298,8 +337,8 @@ export default function CheckoutGroupBooking({
                 image: "", //
                 currency: "USD", //USD
                 display_price: formatMoney(
-                    course?.markupFeesFixedPerPlayer
-                        ? course?.markupFeesFixedPerPlayer / 100
+                    firstTeeTime?.markupFees
+                        ? firstTeeTime?.markupFees / 100
                         : 0
                 ),
                 product_data: {
@@ -495,6 +534,23 @@ export default function CheckoutGroupBooking({
                 });
             }
         }
+
+        if (firstTeeTime?.advancedBookingFeesPerPlayer) {
+            localCart.push({
+                name: "Golf District Tee Time",
+                id: teeTimeIds ?? "",
+                price: firstTeeTime.advancedBookingFeesPerPlayer,
+                image: "",
+                currency: "USD", //USD
+                display_price: formatMoney(firstTeeTime.advancedBookingFeesPerPlayer),
+                product_data: {
+                    metadata: {
+                        type: "advanced_booking_fees_per_player",
+                    },
+                },
+            });
+        }
+
         return localCart;
     }, [
         sensibleData,
@@ -538,6 +594,21 @@ export default function CheckoutGroupBooking({
         }
     }, [teeTimeData])
 
+    const isTeeTimeExpired = useMemo(() => {
+        if (firstTeeTime) {
+            const currentTime = dayjs.utc(dayjs().format("YYYY-MM-DD HH:mm:ss"), "YYYY-MM-DD HH:mm:ss");
+            const teeTimeDate = dayjs.utc(firstTeeTime.date, "YYYY-MM-DD HH:mm:ss");
+            return teeTimeDate.diff(currentTime, "minutes") < DEFAULT_TEE_TIME_EXPIRATION_TIME;
+        }
+    }, [firstTeeTime])
+
+    useEffect(() => {
+        if (isTeeTimeExpired && !hasErrorOccured && !errorMessage) {
+            setErrorMessage("This tee time has expired and is no longer for sale. Play has already started.");
+            setHasErrorOccured(true);
+        }
+    }, [isTeeTimeExpired]);
+
     if (isError && error) {
         return (
             <div
@@ -545,7 +616,21 @@ export default function CheckoutGroupBooking({
                 style={{ height }}
             >
                 <div className="text-center">Error: {error?.message}</div>
-                <Link href="/" className="underline">
+                <Link href={`/${course?.id}`} className="underline">
+                    Return to home
+                </Link>
+            </div>
+        );
+    }
+
+    if (hasErrorOccured) {
+        return (
+            <div
+                className={`flex justify-center flex-col items-center`}
+                style={{ height }}
+            >
+                <div className="text-center">Error: {errorMessage}</div>
+                <Link href={`/${course?.id}`} className="underline">
                     Return to home
                 </Link>
             </div>
@@ -587,15 +672,17 @@ export default function CheckoutGroupBooking({
                             isSensibleInvalid={isSensibleInvalid}
                             privacyPolicyAndTCByCourseUrl={privacyPolicyAndTCByCourseUrl}
                             isGroupBooking={true}
+                            getPlayersPerSlotLabelFull={getPlayersPerSlotLabelFull}
+                            selectedTeeTimes={teeTimesSelectedForBooking}
                         />
                     </div>
                     <div className="md:w-2/5">
                         {isLoadingTeeTime || !firstTeeTime || firstTeeTime === null ? (
-                            <div className="flex justify-center items-center h-[200px] w-full md:min-w-[370px]">
-                                <Spinner className="w-[50px] h-[50px]" />
+                            <div className="flex justify-center items-center h-[12.5rem] w-full md:min-w-[23.125rem]">
+                                <Spinner className="w-[3.125rem] h-[3.125rem]" />
                             </div>
                         ) : !isLoadingTeeTime && isError && error ? (
-                            <div className="text-center h-[200px] flex items-center justify-center rounded-xl bg-white p-6">
+                            <div className="text-center h-[12.5rem] flex items-center justify-center rounded-xl bg-white p-6">
                                 {error?.message ?? "An error occurred fetching checkout data"}
                             </div>
                         ) : (

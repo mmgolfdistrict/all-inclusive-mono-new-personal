@@ -31,6 +31,7 @@ import { Modal } from "../modal/modal";
 import { useMediaQuery } from "usehooks-ts";
 import type { SaleTypeOption } from "../input/sale-type-select";
 import { SaleTypeSelector } from "../input/sale-type-select";
+import { useAppContext } from "~/contexts/AppContext";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -113,7 +114,7 @@ const ListTeeTimeDetail = ({
   needsRedirect,
 }: ListTeeTimeDetailsProps) => {
   const availableSlots = selectedTeeTime?.golfers.length || 0;
-
+  const { entity } = useAppContext();
   const [listingPrice, setListingPrice] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
@@ -319,6 +320,7 @@ const ListTeeTimeDetail = ({
           listPrice: listingPrice,
           endTime: new Date(selectedTeeTime?.date),
           slots: parseInt(players),
+          color1: entity?.color1,
         })
       } else {
         const saleTypeParams = getSaleTypeParams(saleType)
@@ -327,6 +329,7 @@ const ListTeeTimeDetail = ({
           listPrice: listingPrice,
           endTime: new Date(selectedTeeTime?.date),
           slots: parseInt(players),
+          color1: entity?.color1,
           ...saleTypeParams
         });
       }
@@ -338,10 +341,14 @@ const ListTeeTimeDetail = ({
             className="flex w-fit items-center gap-1 text-primary"
           >
             <div>View listed tee times</div>
-            <DownChevron fill={"#40942A"} className="w-[14px] -rotate-90" />
+            <DownChevron fill={"#40942A"} className="w-[0.875rem] -rotate-90" />
           </Link>
         </div>
-      );
+        , {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
       if (needsRedirect) {
         return router.push(
           `/${selectedTeeTime?.courseId}/my-tee-box?section=my-listed-tee-times`
@@ -375,12 +382,12 @@ const ListTeeTimeDetail = ({
         <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
           <label
             htmlFor="listingPrice"
-            className="text-[16px] text-primary-gray md:text-[18px]"
+            className="text-base text-primary-gray md:text-lg"
           >
             Enter listing price per golfer
           </label>
           <div className="relative">
-            <span className="absolute left-1 top-1 text-[24px] md:text-[32px]">
+            <span className="absolute left-1 top-1 text-2xl md:text-4xl">
               $
             </span>
             <input
@@ -394,7 +401,7 @@ const ListTeeTimeDetail = ({
               onFocus={handleFocus}
               onChange={handleListingPrice}
               onBlur={handleBlur}
-              className="mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6"
+              className="mx-auto max-w-[18.75rem] rounded-lg bg-secondary-white px-4 py-1 text-center text-2xl font-semibold outline-none md:text-4xl pl-6"
               data-testid="listing-price-id"
             />
           </div>
@@ -403,7 +410,7 @@ const ListTeeTimeDetail = ({
         <div className={`flex  flex-col gap-1 text-center`}>
           <label
             htmlFor="spots"
-            className="text-[16px] text-primary-gray md:text-[18px]"
+            className="text-base text-primary-gray md:text-lg"
           >
             Select number of spots to list
           </label>
@@ -451,7 +458,7 @@ const ListTeeTimeDetail = ({
               shouldDisplayValue={true}
             />}
         </div>
-        <div className="bg-secondary-white">
+        <div className="text-justify bg-secondary-white">
           If you purchased weather protection, you will receive a full
           refund. Any remaining owned rounds for this time will be subject
           to raincheck policy.
@@ -472,9 +479,9 @@ const ListTeeTimeDetail = ({
           <div className="font-[300] text-primary-gray">
             Your Listing Price{" "}
             <Tooltip
-              trigger={<Info className="h-[14px] w-[14px]" />}
+              trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
               content={
-                <div className="max-w-[220px] text-sm break-words">
+                <div className="max-w-[13.75rem] text-sm break-words">
                   Buyer sees a slightly higher amount. These buyer/seller fees help keep the lights on at Golf District and to continuously provide better service.
                 </div>
               }
@@ -488,9 +495,9 @@ const ListTeeTimeDetail = ({
           <div className="font-[300] text-primary-gray">
             Service Fee{" "}
             <Tooltip
-              trigger={<Info className="h-[14px] w-[14px]" />}
+              trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
               content={
-                <div className="max-w-[200px] text-sm break-words">
+                <div className="max-w-[12.5rem] text-sm break-words">
                   This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times
                 </div>
               }
@@ -504,7 +511,7 @@ const ListTeeTimeDetail = ({
           <div className="font-[300] text-primary-gray">
             Weather Guarantee Refund{" "}
             <Tooltip
-              trigger={<Info className="h-[14px] w-[14px]" />}
+              trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
               content="Weather guarantee amount to be refunded"
             />
           </div>
@@ -514,20 +521,20 @@ const ListTeeTimeDetail = ({
             )}
           </div>
         </div>
-          {course?.supportsSellingMerchandise || (selectedTeeTime?.totalMerchandiseAmount ?? 0) > 0 ? <div className="flex justify-between">
-            <div className="font-[300] text-primary-gray">
-              Merchandise Purchase Refund{" "}
-              <Tooltip
-                trigger={<Info className="h-[14px] w-[14px]" />}
-                content="Merchandise Purchase amount to be refunded"
-              />
-            </div>
-            <div className="text-secondary-black">
-              {formatMoney(
-                (selectedTeeTime?.totalMerchandiseAmount ?? 0) / 100
-              )}
-            </div>
-          </div> : null}
+        {course?.supportsSellingMerchandise || (selectedTeeTime?.totalMerchandiseAmount ?? 0) > 0 ? <div className="flex justify-between">
+          <div className="font-[300] text-primary-gray">
+            Merchandise Purchase Refund{" "}
+            <Tooltip
+              trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
+              content="Merchandise Purchase amount to be refunded"
+            />
+          </div>
+          <div className="text-secondary-black">
+            {formatMoney(
+              (selectedTeeTime?.totalMerchandiseAmount ?? 0) / 100
+            )}
+          </div>
+        </div> : null}
         <div className="flex justify-between">
           <div className="font-[300] text-primary-gray">
             You Receive after Sale
@@ -536,7 +543,7 @@ const ListTeeTimeDetail = ({
             {formatMoney(totalPayout)}
           </div>
         </div>
-        <div className="text-center text-[14px] font-[300] text-primary-gray">
+        <div className="text-center text-sm font-[300] text-primary-gray">
           All sales are final.
         </div>
         <div className="flex flex-col gap-2">
@@ -586,9 +593,9 @@ const TeeTimeItem = ({
           </div>
         </div>
       </div>
-      <div className="flex gap-4 text-[14px]">
-        <div className="w-[40px] ">
-          <Players className="ml-auto w-[30px]" />
+      <div className="flex gap-4 text-sm">
+        <div className="w-[2.5rem] ">
+          <Players className="ml-auto w-[1.875rem]" />
         </div>
         {golferCount} {golferCount === 1 ? "golfer" : "golfers"}
       </div>

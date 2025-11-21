@@ -72,7 +72,8 @@ export type ProductData =
   | FirstHandGroupProduct
   | MerchandiseProduct
   | MerchandiseTaxPercentProduct
-  | MerchandiseWithTaxOverride;
+  | MerchandiseWithTaxOverride
+  | AdvancedBookingFeesProduct;
 
 export interface BaseProduct {
   name: string; // teeTime-course-time
@@ -245,6 +246,14 @@ export interface MerchandiseWithTaxOverride extends BaseProduct {
       merchandiseItems: MerchandiseItemWithTax[];
       priceWithoutTax: number;
       taxAmount: number;
+    };
+  };
+}
+
+export interface AdvancedBookingFeesProduct extends BaseProduct {
+  product_data: {
+    metadata: {
+      type: "advanced_booking_fees_per_player";
     };
   };
 }

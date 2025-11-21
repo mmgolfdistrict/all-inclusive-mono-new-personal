@@ -170,27 +170,45 @@ export class UserWaitlistService {
 
   createWaitlistNotifications = async (waitlistNotifications: CreateWaitlistNotifications) => {
     try {
+      let createdNotifications = 0;
+      let deletedNotifications = 0;
       for (const date of waitlistNotifications.dates) {
         const [insertNotifications, deleteNotifications] = await this.calculateOverlappingNotifications({
           ...waitlistNotifications,
           date,
         });
 
+        createdNotifications += insertNotifications.length;
+        deletedNotifications += deleteNotifications.length;
+
         if (insertNotifications.length > 0) {
           await this.insertWaitlistNotifications(insertNotifications);
         }
 
         if (deleteNotifications.length > 0) {
-          // const deletedNotificationsPromises = deleteNotifications.map(async (notificationId) => {
-          //   return await this.deleteWaitlistNotification(notificationId);
-          // });
-          // await Promise.all(deletedNotificationsPromises);
-
           await this.deleteWaitlistNotifications(deleteNotifications);
         }
       }
 
-      return "Notifications created successfully";
+      if (
+        (createdNotifications > 0 && deletedNotifications > 0) ||
+        (createdNotifications > 0 && deletedNotifications === 0)
+      ) {
+        return {
+          message: "Notifications created successfully",
+          noChanges: false,
+        };
+      } else if (createdNotifications === 0 && deletedNotifications > 0) {
+        return {
+          message: "Notifications updated successfully",
+          noChanges: false,
+        };
+      } else {
+        return {
+          message: "Notification Already Exists",
+          noChanges: true,
+        };
+      }
     } catch (error: any) {
       this.logger.error(error);
       loggerService.errorLog({
@@ -303,7 +321,8 @@ export class UserWaitlistService {
     time: number,
     courseId: string,
     userId?: string,
-    listingId?: string
+    listingId?: string,
+    color1?: string
   ) => {
     try {
       if (!date || !time) {
@@ -395,6 +414,7 @@ export class UserWaitlistService {
           subDomainURL: notification.subDomainURL,
           courseName: notification.courseName,
           listingId,
+          color1,
         };
         if (listingId) {
           await this.sendQstashMessage(data, notificationDelay?.toString());

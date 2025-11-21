@@ -43,7 +43,6 @@ export default async function CoursePageLayout({
   const courseId = params.course;
 
   const courseData = (await getCourseById(courseId)) as FullCourseType;
-
   const courseImages = await getCourseImages(courseId);
 
   // const nicInfos = getNICDetails();

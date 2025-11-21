@@ -3,8 +3,7 @@ import {
   type SensibleDataToMountCompType,
 } from "~/utils/types";
 import { CheckoutItem } from "../cards/checkout-item";
-import { Info } from "../icons/info";
-import { Tooltip } from "../tooltip";
+import { useMediaQuery } from "usehooks-ts";
 
 export const OrderSummary = ({
   teeTime,
@@ -13,6 +12,8 @@ export const OrderSummary = ({
   isSensibleInvalid,
   privacyPolicyAndTCByCourseUrl,
   isGroupBooking = false,
+  getPlayersPerSlotLabelFull,
+  selectedTeeTimes
 }: {
   teeTime: SearchObject | null | undefined;
   isLoading: boolean;
@@ -23,20 +24,16 @@ export const OrderSummary = ({
     termsAndConditionsURL: string | null;
   };
   isGroupBooking?: boolean;
+  getPlayersPerSlotLabelFull?: (group: SearchObject[], totalPlayers: number) => string;
+  selectedTeeTimes?: SearchObject[]
 }) => {
+  const isMobile = useMediaQuery("(max-width: 768px)");
   return (
-    <section className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4">
-      <h1 className="text-center md:text-start">Order Summary</h1>
-      <div className="rounded-md bg-gray-300 p-2 text-black">
-        <h2 className="text-lg">
-          Plans change. No worries! Resell your time.{" "}
-          <Tooltip
-            className="!text-black"
-            trigger={<Info color="#000000" className="h-[14px] w-[14px]" />}
-            content="Easily resell your tee time through our Golf District platforms. Tee times bought and resold through Golf District—an approved technology partner—are verified and supported because they sync directly with the golf course’s official tee sheet. Reselling through unaffiliated platforms may not be compatible with course systems and could result in an invalid booking."
-          />
-        </h2>
-      </div>
+    <section
+      className={isMobile ? "px-4" : ""}
+    // className="mx-auto flex w-full h-fit flex-col gap-4 bg-white px-3 py-2 md:rounded-xl md:p-6 md:py-4"
+    >
+      <h1 className="text-center text-start mb-3">Order Summary</h1>
 
       <div className="flex flex-col gap-4">
         <CheckoutItem
@@ -45,10 +42,12 @@ export const OrderSummary = ({
           isSensibleInvalid={isSensibleInvalid}
           sensibleDataToMountComp={sensibleDataToMountComp}
           isGroupBooking={isGroupBooking}
+          getPlayersPerSlotLabelFull={getPlayersPerSlotLabelFull}
+          selectedTeeTimes={selectedTeeTimes}
         />
       </div>
       <h2 className="italic">
-        This purchase in non-refundable. All fees are included. Please send your
+        This purchase is non-refundable. All fees are included. Please send your
         feedback to{" "}
         <a href="mailto:support@golfdistrict.com">support@golfdistrict.com</a>.
       </h2>

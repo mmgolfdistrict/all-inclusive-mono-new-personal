@@ -29,8 +29,8 @@ export const GoBack = ({
         {...props}
         data-testid="left-chevron-id"
       >
-        <LeftChevron className="h-[14px] w-[14px]" />
-        <div className="text-[14px] text-primary">{text}</div>
+        <LeftChevron className="h-[0.875rem] w-[0.875rem]" />
+        <div className="text-[0.875rem] text-primary">{text}</div>
       </button>
     </Link>
   );

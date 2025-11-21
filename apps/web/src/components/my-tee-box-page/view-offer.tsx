@@ -13,6 +13,7 @@ import { Close } from "../icons/close";
 import { Info } from "../icons/info";
 import { Tooltip } from "../tooltip";
 import { type OfferType } from "./offers-received";
+import { useAppContext } from "~/contexts/AppContext";
 
 type SideBarProps = {
   isViewOfferOpen: boolean;
@@ -39,7 +40,7 @@ export const ViewOffer = ({
     ).toString(),
     intervalMs: 60000,
   });
-
+  const { entity } = useAppContext();
   const accept = api.teeBox.acceptOffer.useMutation();
   const reject = api.teeBox.rejectOffer.useMutation();
   const { course } = useCourseContext();
@@ -60,7 +61,11 @@ export const ViewOffer = ({
       });
       if (res.success) {
         await refetch();
-        toast.success("Offer accepted successfully");
+        toast.success("Offer accepted successfully", {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         setIsViewOfferOpen(false);
       } else {
         toast.error(res?.message ?? "Error accepting offer");
@@ -86,7 +91,11 @@ export const ViewOffer = ({
       });
       if (res.success) {
         await refetch();
-        toast.success("Offer declined successfully");
+        toast.success("Offer declined successfully", {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         setIsViewOfferOpen(false);
       } else {
         toast.error(res?.message ?? "Error declining offer");
@@ -124,9 +133,8 @@ export const ViewOffer = ({
       )}
       <aside
         // ref={sidebar}
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${
-          isViewOfferOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[90dvh] w-[80vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-[100dvh] ${isViewOfferOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between p-4">
@@ -231,9 +239,8 @@ export const ViewOffer = ({
               </div>
               <div className="flex flex-col gap-2">
                 <FilledButton
-                  className={`w-full ${
-                    accept.isLoading ? "animate-pulse" : ""
-                  }`}
+                  className={`w-full ${accept.isLoading ? "animate-pulse" : ""
+                    }`}
                   disabled={accept.isLoading}
                   onClick={acceptOffer}
                   data-testid="accept-button-id"

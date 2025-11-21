@@ -23,8 +23,8 @@ export const registerSchema = z
     // }),
     email: z
       .string({ required_error: "Email is required" })
-      .email({ message: "Invalid email" })
-      .min(1, "Email is required"),
+      .min(1, { message: "Email is required" })
+      .email({ message: "Invalid email" }),
     phoneNumberCountryCode: z.number().min(1, { message: "Phone number country code is required" }),
     phoneNumber: z
       .string({ required_error: "Phone number is required" })
@@ -50,6 +50,7 @@ export const registerSchema = z
     redirectHref: z.string().url(),
     ReCAPTCHA: z.string().optional(),
     courseId: z.string().optional(),
+    color1: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ["confirmPassword"],

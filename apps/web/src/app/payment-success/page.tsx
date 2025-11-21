@@ -5,43 +5,20 @@ import { api } from "~/utils/api";
 import { useSearchParams } from "next/navigation";
 import React, { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useCourseContext } from "~/contexts/CourseContext";
+import { useAppContext } from "~/contexts/AppContext";
 const SplitPaymentSuccessPage = () => {
   const router = useRouter();
+  const { course } = useCourseContext();
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("payment_id") || "";
   const referencePaymentId = searchParams.get("finixReferencePaymentId") || "";
   const paymentStatus = searchParams.get("status");
   const [errorMessage, setErrorMessage] = useState("");
   const isSuccess = paymentStatus === "succeeded";
+  const { entity } = useAppContext();
   const { data: result, isLoading: isLoading } =
-    api.checkout.updateSplitPaymentStatus.useQuery({ paymentId: paymentId, referencePaymentId: referencePaymentId });
-  const saveCashOutResult =
-    api.checkout.saveSplitPaymentAmountIntoCashOut.useMutation();
-  const saveCashOut = async () => {
-    try {
-      if (!result) {
-        return;
-      }
-      if (result.error || result.amount === "" || result.bookingId === "") {
-        setErrorMessage(result?.message);
-        return;
-      }
-      const result1 = await saveCashOutResult.mutateAsync({
-        amount: Number(result?.amount),
-        bookingId: result?.bookingId || "",
-      });
-      console.log("result1", result1);
-      return result1;
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  useEffect(() => {
-    void saveCashOut().then((data) => {
-      console.log("data", data);
-    });
-  }, [result]);
-
+    api.checkout.updateSplitPaymentStatus.useQuery({ paymentId: paymentId, referencePaymentId: referencePaymentId, courseLogo: course?.logo || "", color1: entity?.color1 ?? "#000000" });
   return (
     <Fragment>
       <div className="flex items-center justify-center h-screen bg-gray-100">

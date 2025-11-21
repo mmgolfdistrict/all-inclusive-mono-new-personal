@@ -12,7 +12,7 @@ import { SkeletonRow } from "../skeleton-row";
 import { TxnDetails } from "../txn-details";
 import { type TxnHistoryType } from "../transaction-history";
 
-export const MobileTransactionHistory = () => {
+const MobileTransactionHistory = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isTxnDetailsOpen, setIsTxnDetailsOpen] = useState<boolean>(false);
@@ -216,3 +216,5 @@ const TableCard = ({
     </div>
   );
 };
+
+export default MobileTransactionHistory;

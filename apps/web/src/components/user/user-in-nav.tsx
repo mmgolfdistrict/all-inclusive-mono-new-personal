@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Avatar } from "../avatar";
 import { DownChevron } from "../icons/down-chevron";
+import { useAppContext } from "~/contexts/AppContext";
 
 export const PathsThatNeedRedirectOnLogout = [
   "/account-settings",
@@ -19,6 +20,7 @@ export const PathsThatNeedRedirectOnLogout = [
 export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   const { user } = useUserContext();
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
   const courseId = course?.id;
   const pathname = usePathname();
   const router = useRouter();
@@ -105,16 +107,15 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
               }
               name={user?.name}
             />
-            <DownChevron className="w-[12px]" fill={"#40942A"} />
+            <DownChevron className="w-[12px]" fill={entity?.color1} />
           </div>
         </DropdownMenu.Trigger>
 
         <DropdownMenu.Portal>
           <DropdownMenu.Content
             sideOffset={5}
-            className={`z-20 mr-5 min-w-[300px] overflow-y-auto rounded-xl border border-stroke bg-white shadow-md ${
-              alwaysShow ? "block" : "hidden md:block"
-            }`}
+            className={`z-20 mr-5 min-w-[300px] overflow-y-auto rounded-xl border border-stroke bg-white shadow-md ${alwaysShow ? "block" : "hidden md:block"
+              }`}
           >
             <div className="flex items-center flex-col px-4 py-3 border-b border-stroke">
               <p className="text-sm unmask-userdetails">{user?.email}</p>

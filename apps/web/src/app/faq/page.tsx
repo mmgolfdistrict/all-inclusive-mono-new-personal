@@ -26,14 +26,14 @@ export default function FAQ({
     (courseGlobalNotification ? courseGlobalNotification.length : 0);
 
   const marginTop =
-    notificationsCount > 0 ? `${notificationsCount * 40}px` : "0";
+    notificationsCount > 0 ? `${notificationsCount * 2.5}rem` : "0";
 
   return (
     <main className="bg-secondary-white py-4 md:py-6 mt-20">
-      <div style={{ marginTop }} className="mx-auto flex items-center justify-between px-4 md:max-w-[1360px] md:px-6">
+      <div style={{ marginTop }} className="mx-auto flex items-center justify-between px-4 md:max-w-[100rem] md:px-6">
         <GoBack href="" usePrevRoute={true} text={`Back`} />
       </div>
-      <section className="mx-auto flex w-full flex-col pt-4 md:max-w-[1360px] md:gap-4 md:px-6">
+      <section className="mx-auto flex w-full flex-col pt-4 px-4 md:max-w-[100rem] md:gap-4 md:px-6">
         <h1 className="pb-4 text-left text-2xl text-secondary-black md:pb-0 md:text-3xl">
           Help
         </h1>
@@ -47,7 +47,7 @@ export default function FAQ({
         <h3 className="pb-4 text-left text-xl text-primary-gray md:pb-0 md:text-2xl">
           General Questions
         </h3>
-        <section className="mx-auto flex w-full flex-col gap-4 md:max-w-[1174px]">
+        <section className="mx-auto flex w-full flex-col gap-4 md:max-w-[78rem]">
           <AccordionRoot defaultValue="item-1">
             <AccordionItem title="What is Golf District?" value="item-1">
               Golf District is the world&apos;s first marketplace to buy and
@@ -90,7 +90,7 @@ export default function FAQ({
         <h3 className="pb-4 text-left text-xl text-primary-gray md:pb-0 md:text-2xl">
           Booking and Selling
         </h3>
-        <section className="mx-auto flex w-full flex-col gap-4 md:max-w-[1174px]">
+        <section className="mx-auto flex w-full flex-col gap-4 md:max-w-[78rem]">
           <AccordionRoot defaultValue="item-2">
             <AccordionItem title="Can I cancel a purchase?" value="item-4">
               No, all purchases are final to protect users and maintain market
@@ -136,7 +136,7 @@ export default function FAQ({
         <h3 className="pb-4 text-left text-xl text-primary-gray md:pb-0 md:text-2xl">
           Account Security and Privacy
         </h3>
-        <section className="mx-auto flex w-full flex-col gap-4 md:max-w-[1174px]">
+        <section className="mx-auto flex w-full flex-col gap-4 md:max-w-[78rem]">
           <AccordionRoot defaultValue="item-3">
             <AccordionItem
               title="How can I keep my Golf District account secure?"

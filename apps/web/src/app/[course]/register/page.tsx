@@ -36,6 +36,7 @@ import CountryDropdown from "~/components/dropdown/country-dropdown";
 import type { Country } from "~/components/dropdown/country-dropdown";
 import { allCountries } from "country-telephone-data";
 import type { CountryData } from "~/utils/types";
+import { useAppContext } from "~/contexts/AppContext";
 
 const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: CountryData) => ({
   name,
@@ -46,6 +47,7 @@ const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: Count
 
 export default function RegisterPage() {
   const { course } = useCourseContext();
+  const { entity } = useAppContext();
   const {
     register,
     handleSubmit,
@@ -54,6 +56,7 @@ export default function RegisterPage() {
     setError,
     control,
     getValues,
+    trigger,
     formState: { errors },
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
@@ -66,7 +69,10 @@ export default function RegisterPage() {
   const debouncedLocation = useDebounce<string>(city, 500);
   const recaptchaRef = createRef<ReCAPTCHA>();
   const registerUser = api.register.register.useMutation();
-  const { data: uName } = api.register.generateUsername.useQuery(6);
+  const {
+    data: uName,
+    refetch: refetchUsername,
+  } = api.register.generateUsername.useQuery(6);
   const [rotate, setRotate] = useState<boolean>(false);
   const [password] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -83,6 +89,14 @@ export default function RegisterPage() {
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
     libraries,
   });
+
+  useEffect(() => {
+    // Clear potentially autofilled fields when component mounts
+    setValue("email", "");
+    setValue("password", "");
+    setValue("confirmPassword", "");
+    setValue("username", "");
+  }, [setValue]);
 
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -139,44 +153,35 @@ export default function RegisterPage() {
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
-    if (place?.address_components) {
-      const addressComponents = place.address_components;
+    if (!place?.address_components) return;
 
-      const getAddressComponent = (type: string): string => {
-        return (
-          addressComponents.find((component) => component.types.includes(type))
-            ?.long_name || ""
-        );
-      };
+    const getComponent = (type: string) =>
+      place?.address_components?.find((c) => c.types.includes(type))?.long_name || "";
 
-      const streetNumber = getAddressComponent("street_number");
-      const route = getAddressComponent("route");
-      const address1 = `${streetNumber} ${route}`.trim();
-      const address2 = getAddressComponent("sublocality");
-      let state = getAddressComponent("administrative_area_level_1");
-      const city = getAddressComponent("locality");
-      const zipcode = getAddressComponent("postal_code");
-      const country = getAddressComponent("country");
+    const streetNumber = getComponent("street_number");
+    const route = getComponent("route");
+    const subpremise = getComponent("subpremise");
+    const sublocality = getComponent("sublocality");
+    const locality =
+      getComponent("locality") ||
+      getComponent("sublocality_level_1") ||
+      getComponent("administrative_area_level_2");
+    const state = getComponent("administrative_area_level_1");
+    const zipcode = getComponent("postal_code");
+    const zipcodeSuffix = getComponent("postal_code_suffix");
+    const country = getComponent("country");
 
-      state = normalizeString(state);
+    const address1 = [streetNumber, route].filter(Boolean).join(" ");
+    const address2 = [subpremise, sublocality].filter(Boolean).join(", ");
+    const fullZip = zipcodeSuffix ? `${zipcode}-${zipcodeSuffix}` : zipcode;
 
-      let countryByCode = country;
-      if (country === "United States") {
-        countryByCode = "USA";
-      }
-
-      if (inputRef?.current) {
-        inputRef.current.value = address1;
-      }
-
-      // Type guard before passing to setValue
-      if (typeof address1 === "string") setValue("address1", address1);
-      if (typeof address2 === "string") setValue("address2", address2);
-      if (typeof state === "string") setValue("state", state);
-      if (typeof city === "string") setValue("city", city);
-      if (typeof zipcode === "string") setValue("zipcode", zipcode);
-      if (typeof country === "string") setValue("country", countryByCode);
-    }
+    setValue("address1", address1);
+    setValue("address2", address2);
+    setValue("city", locality);
+    setValue("state", state);
+    setValue("zipcode", fullZip);
+    setValue("country", country === "United States" ? "USA" : country);
+    void trigger(["address1", "address2", "city", "state", "zipcode", "country"]);
   };
 
   useEffect(() => {
@@ -271,6 +276,56 @@ export default function RegisterPage() {
     }
   }, [recaptchaRef]);
 
+  const countryAliases: Record<string, string[]> = {
+    USA: [
+      "USA",
+      "United States",
+      "United States of America",
+      "US",
+      "U.S.",
+      "U.S.A",
+      "America"
+    ],
+    Canada: [
+      "Canada",
+      "CA",
+      "C.A.",
+      "Canadian"
+    ]
+  };
+
+  const cleanCity = (city: string, state: string, country: string) => {
+    if (!city) return "";
+
+    let result = city.trim();
+
+    // Do NOT clean if the entire city is exactly equal to the state
+    // Example: city="New York", state="New York"
+    if (result.toLowerCase() === state.toLowerCase()) {
+      return state; // return as is
+    }
+
+    // Remove state only when it's an EXTRA part of the string
+    if (state) {
+      const stateRegex = new RegExp(state, "i");
+      if (result.toLowerCase().includes(state.toLowerCase())) {
+        result = result.replace(stateRegex, "");
+      }
+    }
+
+    // Remove country + aliases
+    if (country) {
+      const aliases = countryAliases[country] || [country];
+
+      aliases.forEach(alias => {
+        const aliasRegex = new RegExp(alias, "i");
+        result = result.replace(aliasRegex, "");
+      });
+    }
+
+    return result.replace(/\s+/g, " ").trim();
+  };
+
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
     setIsSubmitting(true);
     if (profanityCheckData?.isProfane) {
@@ -290,7 +345,9 @@ export default function RegisterPage() {
       const response = await registerUser.mutateAsync({
         ...data,
         // country: "USA",
+        city: cleanCity(data.city, data.state, data.country),
         courseId: course?.id,
+        color1: entity?.color1,
       });
       if (response?.error) {
         await recaptchaRef.current?.executeAsync();
@@ -323,10 +380,10 @@ export default function RegisterPage() {
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
-      <h1 className="pb-4 text-center text-[24px] md:pb-6 md:pt-8 md:text-[32px]">
+      <h1 className="pb-4 text-center text-[1.5rem] md:pb-6 md:pt-8 md:text-[2rem]">
         Create an Account
       </h1>
-      <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[500px] sm:rounded-xl sm:p-6">
+      <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[31.25rem] sm:rounded-xl sm:p-6">
         <p>
           Using social login like Google or Facebook? Go to the login page and
           select the respective social icon to login. The below form is not
@@ -390,6 +447,7 @@ export default function RegisterPage() {
                 name="email"
                 error={errors.email?.message}
                 data-testid="register-email-id"
+                autoComplete="off"
                 inputRef={(e) => {
                   field.ref(e);
                 }}
@@ -404,13 +462,13 @@ export default function RegisterPage() {
                 <div className="flex gap-1">
                   <label
                     htmlFor="phoneNumber"
-                    className="text-[14px] text-primary-gray"
+                    className="text-[0.875rem] text-primary-gray"
                   >
                     Phone Number
                     <span className="text-red"> *</span>
                   </label>
                 </div>
-                <div className="flex rounded-lg bg-secondary-white px-1 text-[14px] text-gray-500 outline-none text-ellipsis h-12">
+                <div className="flex rounded-lg bg-secondary-white px-1 text-[0.875rem] text-gray-500 outline-none text-ellipsis h-12">
                   <CountryDropdown defaultCountry={currentCountry} items={countries} onSelect={handleSelectCountry} />
                   <Input
                     {...field}
@@ -421,7 +479,11 @@ export default function RegisterPage() {
                     placeholder="9988776655"
                     id="phoneNumber"
                     name="phoneNumber"
-                    onChange={handlePhoneNumberChange}
+                    onChange={(e) => {
+                      field.onChange(e); // Update react-hook-form
+                      handlePhoneNumberChange(e);
+                      void trigger("phoneNumber"); // Immediately validate this field
+                    }}
                     value={getValues("phoneNumber")}
                     data-testid="profile-phone-number-id"
                     autoComplete="off"
@@ -431,12 +493,12 @@ export default function RegisterPage() {
                   />
                 </div>
                 {errors.phoneNumber && (
-                  <p className="text-[12px] text-red">
+                  <p className="text-[0.75rem] text-red">
                     {errors.phoneNumber.message}
                   </p>
                 )}
                 {errors.phoneNumberCountryCode && (
-                  <p className="text-[12px] text-red">
+                  <p className="text-[0.75rem] text-red">
                     {errors.phoneNumberCountryCode.message}
                   </p>
                 )}
@@ -462,6 +524,7 @@ export default function RegisterPage() {
                   data-testid="register-user-name-id"
                   showInfoTooltip={true}
                   content="Handle must all be in lower case or numeric and must contain a minimum of 6 characters and maximum of 64 characters. Handle cannot contain special characters other than dot(.) and underscore(_) and any form of profanity or racism related content. Golf District reserves the right to change your handle to a random handle at any time if it violates our terms of service."
+                  autoComplete="off"
                   inputRef={(e) => {
                     field.ref(e);
                   }}
@@ -473,14 +536,14 @@ export default function RegisterPage() {
                 e.preventDefault();
                 genUsername();
                 setRotate(true);
-                setTimeout(() => {
-                  setRotate(false);
-                }, 1000);
+                setTimeout(() => setRotate(false), 1000);
+                void refetchUsername();
               }}
-              className={`mb-1  ${rotate ? "animate-spin" : ""}`}
+              className={`${rotate ? "animate-spin" : ""} ${errors.username?.message ? "mb-[1.625rem]" : "mb-1"
+                }`}
               data-testid="register-user-name-refresh-id"
             >
-              <Refresh className="h-[14px] w-[14px]" />
+              <Refresh className="h-[0.875rem] w-[0.875rem]" />
             </IconButton>
           </div>
           {/* <Input
@@ -577,7 +640,7 @@ export default function RegisterPage() {
               <div>
                 <label
                   htmlFor="state"
-                  style={{ fontSize: "14px", color: "rgb(109 119 124" }}
+                  style={{ fontSize: "0.875rem", color: "rgb(109 119 124" }}
                 >
                   State <span className="text-red"> *</span>
                 </label>
@@ -593,7 +656,7 @@ export default function RegisterPage() {
                     field.ref(e);
                   }}
                   sx={{
-                    fontSize: "14px",
+                    fontSize: "0.875rem",
                     color: "rgb(109 119 124)",
                     backgroundColor: "rgb(247, 249, 250)",
                     border: "none",
@@ -624,7 +687,7 @@ export default function RegisterPage() {
                     </MenuItem>
                   ))}
                 </Select>
-                {errors?.state?.message && <p className="text-[12px] text-red">{errors?.state?.message}</p>}
+                {errors?.state?.message && <p className="text-[0.75rem] text-red">{errors?.state?.message}</p>}
               </div>
             )}
           />
@@ -684,7 +747,7 @@ export default function RegisterPage() {
               <div>
                 <label
                   htmlFor="country"
-                  style={{ fontSize: "14px", color: "rgb(109 119 124)" }}
+                  style={{ fontSize: "0.875rem", color: "rgb(109 119 124)" }}
                 >
                   Country <span className="text-red"> *</span>
                 </label>
@@ -700,7 +763,7 @@ export default function RegisterPage() {
                     field.ref(e);
                   }}
                   sx={{
-                    fontSize: "14px",
+                    fontSize: "0.875rem",
                     color: "rgb(109 119 124)",
                     backgroundColor: "rgb(247, 249, 250)",
                     border: "none",
@@ -730,7 +793,7 @@ export default function RegisterPage() {
                   <MenuItem value="Canada">Canada</MenuItem>
                 </Select>
                 {errors.country && (
-                  <span style={{ fontSize: "12px", color: "red" }}>
+                  <span style={{ fontSize: "0.75rem", color: "red" }}>
                     {errors.country.message}
                   </span>
                 )}
@@ -759,6 +822,7 @@ export default function RegisterPage() {
                   name="password"
                   error={errors.password?.message}
                   data-testid="register-password-id"
+                  autoComplete="new-password"
                   inputRef={(e) => {
                     field.ref(e);
                   }}
@@ -771,20 +835,21 @@ export default function RegisterPage() {
                 e.preventDefault();
                 setShowPassword(!showPassword);
               }}
-              className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+              className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors.password?.message ? "pb-10" : ""
+                }`}
               data-testid="register-show-password-id"
             >
               {showPassword ? (
-                <Hidden className="h-[14px] w-[14px]" />
+                <Hidden className="h-[0.875rem] w-[0.875rem]" />
               ) : (
-                <Visible className="h-[14px] w-[14px]" />
+                <Visible className="h-[0.875rem] w-[0.875rem]" />
               )}
             </IconButton>
           </div>
           {passwordFeedback && passwordFeedback.length > 0 ? (
             <ul className={`flex flex-col gap-2 list-disc pl-4`}>
               {passwordFeedback?.map((advice, idx) => (
-                <li className="text-[12px] text-red" key={`${idx}+passsword`}>
+                <li className="text-[0.75rem] text-red" key={`${idx}+passsword`}>
                   {advice}
                 </li>
               ))}
@@ -806,6 +871,7 @@ export default function RegisterPage() {
                   name="confirmPassword"
                   error={errors.confirmPassword?.message}
                   data-testid="register-confirm-password-id"
+                  autoComplete="new-password"
                   inputRef={(e) => {
                     field.ref(e);
                   }}
@@ -817,13 +883,14 @@ export default function RegisterPage() {
                 e.preventDefault();
                 setShowConfirmPassword(!showConfirmPassword);
               }}
-              className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%]`}
+              className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors.confirmPassword?.message ? "pb-10" : ""
+                }`}
               data-testid="register-show-confirm-password-id"
             >
               {showConfirmPassword ? (
-                <Hidden className="h-[14px] w-[14px]" />
+                <Hidden className="h-[0.875rem] w-[0.875rem]" />
               ) : (
-                <Visible className="h-[14px] w-[14px]" />
+                <Visible className="h-[0.875rem] w-[0.875rem]" />
               )}
             </IconButton>
           </div>
@@ -842,7 +909,7 @@ export default function RegisterPage() {
           )}
           {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY &&
             errors.ReCAPTCHA?.message && (
-              <p className="text-[12px] text-red">
+              <p className="text-[0.75rem] text-red">
                 {errors.ReCAPTCHA?.message}
               </p>
             )}
@@ -857,7 +924,7 @@ export default function RegisterPage() {
           </FilledButton>
         </form>
       </section>
-      <div className="pt-4 text-center text-[14px] text-primary-gray">
+      <div className="pt-4 text-center text-[0.875rem] text-primary-gray">
         Already have an account?{" "}
         <Link
           className="text-primary"

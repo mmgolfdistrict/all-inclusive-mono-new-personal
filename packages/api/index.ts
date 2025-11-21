@@ -61,7 +61,13 @@ export const getCourseById = async (courseId: string) => {
   try {
     return await courseService.getCourseById(courseId);
   } catch (error) {
-    console.log(error);
+    console.error("Course Fetch Error:", error);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    } else {
+      console.error("Non-Error thrown:", error);
+    }
   }
 };
 

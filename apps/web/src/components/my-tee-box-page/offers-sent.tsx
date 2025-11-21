@@ -43,7 +43,7 @@ export type OfferSentType = {
   };
 };
 
-export const OffersSent = () => {
+const OffersSent = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isCancelOfferOpen, setIsCancelOfferOpen] = useState<boolean>(false);
@@ -77,7 +77,7 @@ export const OffersSent = () => {
 
   if (isError && error) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         {error?.message ?? "An error occurred fetching tee times"}
       </div>
     );
@@ -85,7 +85,7 @@ export const OffersSent = () => {
 
   if ((!data || data.length === 0) && !isLoading && !isError && !error) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         No offers sent
       </div>
     );
@@ -93,7 +93,7 @@ export const OffersSent = () => {
 
   return (
     <>
-      <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-[14px] md:pb-3">
+      <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-sm md:pb-3">
         <table className="w-full table-auto  overflow-auto">
           <thead className="top-0 table-header-group">
             <tr className="text-left">
@@ -105,30 +105,30 @@ export const OffersSent = () => {
               <TableHeader text="" className="text-right" />
             </tr>
           </thead>
-          <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
+          <tbody className={`max-h-[18.75rem] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
-                  .fill(null)
-                  .map((_, idx) => <SkeletonRow key={idx} />)
+                .fill(null)
+                .map((_, idx) => <SkeletonRow key={idx} />)
               : data.map((i, idx) => (
-                  <TableRow
-                    course={i.offer.details.courseName}
-                    date={i.offer.details.teeTimeDate!}
-                    iconSrc={i.offer.details.courseImage}
-                    key={idx}
-                    offerPrice={i.offer.offerAmount ?? 0}
-                    golfers={Number(i.offer.golfers) ?? 0}
-                    ownedBy={i.offer.ownedBy.name ?? ""}
-                    ownedByImage={i.offer.ownedBy.image ?? ""}
-                    ownedById={i.offer.ownedBy.userId ?? ""}
-                    status={i.offer.status ?? ""}
-                    courseId={i.offer.courseId}
-                    teeTimeId={i.offer.details.teeTimeId ?? ""}
-                    timezoneCorrection={course?.timezoneCorrection}
-                    openCancelOffer={() => openCancelOffer(i)}
-                    openManageOffer={() => openManageOffer(i)}
-                  />
-                ))}
+                <TableRow
+                  course={i.offer.details.courseName}
+                  date={i.offer.details.teeTimeDate!}
+                  iconSrc={i.offer.details.courseImage}
+                  key={idx}
+                  offerPrice={i.offer.offerAmount ?? 0}
+                  golfers={Number(i.offer.golfers) ?? 0}
+                  ownedBy={i.offer.ownedBy.name ?? ""}
+                  ownedByImage={i.offer.ownedBy.image ?? ""}
+                  ownedById={i.offer.ownedBy.userId ?? ""}
+                  status={i.offer.status ?? ""}
+                  courseId={i.offer.courseId}
+                  teeTimeId={i.offer.details.teeTimeId ?? ""}
+                  timezoneCorrection={course?.timezoneCorrection}
+                  openCancelOffer={() => openCancelOffer(i)}
+                  openManageOffer={() => openManageOffer(i)}
+                />
+              ))}
           </tbody>
         </table>
       </div>
@@ -202,7 +202,7 @@ const TableRow = ({
           data-test={teeTimeId}
           data-qa={courseId}
         >
-          <Avatar src={iconSrc} />
+          <Avatar src={iconSrc} isRounded={false} />
           <div className="flex flex-col">
             <div className="whitespace-nowrap underline text-secondary-black">
               {course}
@@ -223,7 +223,7 @@ const TableRow = ({
           data-test={ownedById}
           data-qa={courseId}
         >
-          <Avatar src={ownedByImage} />
+          <Avatar src={ownedByImage} isRounded={false} />
           <div className="text-primary-gray">{ownedBy}</div>
         </Link>
       </td>
@@ -259,3 +259,5 @@ const TableRow = ({
     </tr>
   );
 };
+
+export default OffersSent;

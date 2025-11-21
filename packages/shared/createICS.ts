@@ -13,51 +13,56 @@ export interface Event {
   // location: string;
 }
 
-const createICS = (event: Event): string => {
-  const convertToUTCString = (dtStr: string, nextDay?: boolean): string => {
-    const dt = new Date(dtStr);
-    if (nextDay) {
-      dt.setDate(dt.getDate() + 1);
-    }
+const createICS = (event: Event, sequence = 0): string => {
+  // Converts a date string into ICS-compliant UTC format (YYYYMMDDTHHmmssZ)
+  const formatToUTC = (dateString: string): string => {
+    const dt = new Date(dateString);
     const year = dt.getUTCFullYear();
-    const month = (dt.getUTCMonth() + 1).toString().padStart(2, "0");
-    const day = dt.getUTCDate().toString().padStart(2, "0");
-    const utcStr = `${year}${month}${day}`;
-    return utcStr;
+    const month = String(dt.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(dt.getUTCDate()).padStart(2, "0");
+    const hours = String(dt.getUTCHours()).padStart(2, "0");
+    const minutes = String(dt.getUTCMinutes()).padStart(2, "0");
+    const seconds = String(dt.getUTCSeconds()).padStart(2, "0");
+    return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
   };
 
-  const getTimeFromString = (inputString: string) => {
-    const time = inputString.substring(11, 19);
-    return time;
+  // If no endDate provided, add 1 hour to startDate
+  const calculateEndDate = (start: string, end?: string): string => {
+    if (end) return end;
+    const dt = new Date(start);
+    dt.setHours(dt.getHours() + 1);
+    return dt.toISOString();
   };
+
+  const dtEnd = calculateEndDate(event.startDate, event.endDate);
 
   const content = `
-    BEGIN:VCALENDAR
-    PRODID:${new Date().getTime()}
-    VERSION:2.0
-    METHOD:REQUEST
-    BEGIN:VEVENT
-    UID:unique-id@example.com
-    DTSTAMP:${convertToUTCString(`${event.startDate}`)}
-    DTSTART:${convertToUTCString(`${event.startDate}`)}
-    DTEND:${convertToUTCString(`${event.startDate}`, true)}
-    SUMMARY:Golf Reservation at ${event.name}
-    LOCATION:${event.playTime} At ${event.address}
-    DESCRIPTION: GOLFdistrict Reservation : ${event.reservationId} , Course Reservation : ${
-    event.courseReservation
-  },  Number of Players :  ${event.numberOfPlayer}
-    ORGANIZER:mailto:${process.env.SENDGRID_EMAIL}
-    BEGIN:VALARM
-    ACTION:DISPLAY
-    TRIGGER:-PT18H
-    DESCRIPTION:Reminder
-    END:VALARM
-    ATTENDEE;RSVP=TRUE;PARTSTAT=NEEDS-ACTION;CN="Attendee Name":mailto:${event.email}
-    END:VEVENT
-    END:VCALENDAR  
-    `
-    .trim()
-    .replace(/\n\s*/g, "\n");
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//GolfDistrict//Booking//EN
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:${event.reservationId || "no-id"}-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 15)}@golfdistrict.com
+SEQUENCE:${sequence}
+DTSTAMP:${formatToUTC(event.startDate)}
+DTSTART:${formatToUTC(event.startDate)}
+DTEND:${formatToUTC(dtEnd)}
+SUMMARY:${event.name ?? "Golf Reservation"}
+LOCATION:${event.address ?? "Not Provided"}
+DESCRIPTION:Reservation ID: ${event.reservationId ?? "N/A"}, Players: ${event.numberOfPlayer ?? "N/A"
+    }
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+ORGANIZER;CN=Golf District:MAILTO:${process.env.SENDGRID_EMAIL ?? "noreply@golfdistrict.com"
+    }
+ATTENDEE;CN=Guest;RSVP=TRUE:MAILTO:${event.email ?? ""}
+END:VEVENT
+END:VCALENDAR
+  `.trim();
+
   return content;
 };
 

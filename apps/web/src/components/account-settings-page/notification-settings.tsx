@@ -8,10 +8,12 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Switch } from "../buttons/switch";
+import { useAppContext } from "~/contexts/AppContext";
 
 export const NotificationSettings = () => {
   const [isByPhone, setIsByPhone] = useState<boolean>(true);
   const [isByEmail, setIsByEmail] = useState<boolean>(true);
+  const { entity } = useAppContext();
   const updateUser = api.user.updateUser.useMutation();
   const [isMutating, setIsMutating] = useState<boolean>(false);
   const { course } = useCourseContext();
@@ -44,15 +46,20 @@ export const NotificationSettings = () => {
       await updateUser.mutateAsync({
         phoneNotifications: newValue,
         courseId,
+        color1: entity?.color1,
       });
       await refetch();
-      toast.success("Phone notifications updated successfully");
+      toast.success("Phone notifications updated successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
       setIsMutating(false);
     } catch (error) {
       setIsMutating(false);
       toast.error(
         (error as Error).message ??
-          "An error occurred updating phone notifications"
+        "An error occurred updating phone notifications"
       );
     }
   };
@@ -66,15 +73,20 @@ export const NotificationSettings = () => {
       await updateUser.mutateAsync({
         emailNotification: newValue,
         courseId,
+        color1: entity?.color1,
       });
       await refetch();
-      toast.success("Email notifications updated successfully");
+      toast.success("Email notifications updated successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
       setIsMutating(false);
     } catch (error) {
       setIsMutating(false);
       toast.error(
         (error as Error).message ??
-          "An error occurred updating email notifications"
+        "An error occurred updating email notifications"
       );
     }
   };
@@ -86,8 +98,8 @@ export const NotificationSettings = () => {
       id="notifications-account-settings"
     >
       <div>
-        <h3 className="text-[18px] md:text-[24px]">Notifications</h3>
-        <p className=" text-[14px] text-primary-gray md:text-[16px]">
+        <h3 className="text-[1.125rem] md:text-[1.5rem]">Notifications</h3>
+        <p className="text-justify text-[0.875rem] text-primary-gray md:text-[1rem]">
           Set how you&apos;d like your receive notifications about your tee
           times.
         </p>
@@ -98,7 +110,7 @@ export const NotificationSettings = () => {
           setValue={updatePhoneNotifications}
           data-testid={`update-phone-not-notification-id`}
         />
-        <div className="text-[12px] text-primary-gray md:text-[14px]">
+        <div className="text-justify text-[0.75rem] text-primary-gray md:text-[0.875rem]">
           By phone (messaging rates may apply)
         </div>
       </div>
@@ -109,7 +121,7 @@ export const NotificationSettings = () => {
           setValue={updateEmailNotifications}
           data-testid={`update-email-not-notification-id`}
         />
-        <div className="text-[12px] text-primary-gray md:text-[14px]">
+        <div className="text-[0.75rem] text-primary-gray md:text-[0.875rem]">
           By email
         </div>
       </div>
@@ -127,9 +139,7 @@ export const Item = ({
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
-        className ?? ""
-      }`}
+      className={`bg-white px-4 py-2 text-left text-[0.875rem] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""}`}
     >
       {value}
     </ToggleGroup.Item>

@@ -31,25 +31,25 @@ export const Input = ({
   return (
     <div className={`flex flex-col gap-1 ${className ?? ""}`}>
       <div className="flex gap-1">
-        <label className="text-[14px] text-primary-gray" htmlFor={props.id}>
+        <label className="text-[0.875rem] text-primary-gray" htmlFor={props.id}>
           {label}
           {required && <span className="text-red ml-1">*</span>}
         </label>
         {showInfoTooltip && (
           <Tooltip
-            trigger={<Info className="h-[20px] w-[20px]" />}
+            trigger={<Info className="h-[1.25rem] w-[1.25rem]" />}
             content={content}
           />
         )}
       </div>
       {additionalContent && (
-        <p className="text-[12px] text-blue-500">
+        <p className="text-[0.75rem] text-blue-500">
           (Type and select from below auto complete to auto populate)
         </p>
       )}
       {autoComplete && inputRef ? (
         <input
-          className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
+          className={`rounded-lg bg-secondary-white px-4 py-3 text-[0.875rem] text-gray-500 outline-none text-ellipsis`}
           // @ts-ignore
           {...register(name)}
           {...props}
@@ -58,7 +58,7 @@ export const Input = ({
         />
       ) : inputRef ? (
         <input
-          className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
+          className={`rounded-lg bg-secondary-white px-4 py-3 text-[0.875rem] text-gray-500 outline-none text-ellipsis`}
           // @ts-ignore
           {...register(name)}
           {...props}
@@ -66,14 +66,14 @@ export const Input = ({
         />
       ) : (
         <input
-          className={`rounded-lg bg-secondary-white px-4 py-3 text-[14px] text-gray-500 outline-none text-ellipsis`}
+          className={`rounded-lg bg-secondary-white px-4 py-3 text-[0.875rem] text-gray-500 outline-none text-ellipsis`}
           // @ts-ignore
           {...register(name)}
           {...props}
         />
       )}
 
-      {error && <p className="text-[12px] text-red">{error}</p>}
+      {error && <p className="text-[0.75rem] text-red">{error}</p>}
     </div>
   );
 };

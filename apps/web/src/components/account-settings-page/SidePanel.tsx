@@ -14,9 +14,8 @@ const SidePanel: FC<SidePanelProps> = ({ isOpen, children }) => {
         </div>
       )}
       <aside
-        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[100vh] w-[70vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[500px] md:h-screen ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`!duration-400 fixed right-0 top-1/2 z-20 flex h-[100vh] w-[70vw] -translate-y-1/2 flex-col overflow-y-hidden border border-stroke bg-white shadow-lg transition-all ease-linear sm:w-[31.25rem] md:h-screen ${isOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         {children}
       </aside>

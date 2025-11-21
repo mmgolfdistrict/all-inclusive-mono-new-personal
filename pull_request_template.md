@@ -19,6 +19,8 @@
 
 ### Have you updated the [.env.sample](.env.sample) file with new or changed environment variables?: Yes / No
 
+### Have you updated the [environment variable documentation](https://golfdistrict.atlassian.net/wiki/spaces/ENG/pages/255229979/Environment+Variables) file with new or changed environment variables?: Yes / No
+
 ## Database Changes
 
 ### Any DB schema changes?: Yes / No

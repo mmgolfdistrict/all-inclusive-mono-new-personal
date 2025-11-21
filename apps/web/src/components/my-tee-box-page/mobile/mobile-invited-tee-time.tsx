@@ -16,7 +16,7 @@ const MobileInvitedTeeTime = () => {
 
   if (isError && error) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         {error?.message ?? "An error occurred fetching invited tee times"}
       </div>
     );
@@ -24,14 +24,14 @@ const MobileInvitedTeeTime = () => {
 
   if ((!data || data.length === 0) && !isLoading && !isError && !error) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         Invited tee times not available
       </div>
     );
   }
 
   return (
-    <div className="relative flex max-w-full flex-col overflow-auto text-[14px] m-2 px-1">
+    <div className="relative flex max-w-full flex-col overflow-auto text-sm m-2 px-1">
       {!isLoading && data?.map((item, index) => {
         return (
           <div

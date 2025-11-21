@@ -35,6 +35,7 @@ import type { Country } from "~/components/dropdown/country-dropdown";
 import { allCountries } from "country-telephone-data";
 import type { CountryData } from "~/utils/types";
 import { PhoneNumberUtil } from "google-libphonenumber";
+import { useAppContext } from "~/contexts/AppContext";
 
 const phoneUtil = PhoneNumberUtil.getInstance();
 const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: CountryData) => ({
@@ -70,7 +71,7 @@ export const EditProfileForm = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean | undefined>(false);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-
+  const { entity } = useAppContext();
   const [city, setCity] = useState(getValues("city"));
 
   const { update } = useSession();
@@ -423,13 +424,16 @@ export const EditProfileForm = () => {
       const response = await updateUser.mutateAsync({
         ...dataToUpdate,
         courseId,
+        color1: entity?.color1,
       });
-
+      // if (!response?.error) {
+      await update({ name: data?.name });
+      // }
       if (response?.error) {
         toast.error(response.message);
         return;
       }
-      if (profilePhoto && profilePhoto !== defaultProfilePhoto) {
+      if (profilePhoto && assetIds.profilePictureId && profilePhoto !== defaultProfilePhoto) {
         setProfilePhoto(null);
         await update({ image: assetIds.profilePictureId });
         setAssetIds((prev) => ({ ...prev, profilePictureId: "" }));
@@ -444,7 +448,11 @@ export const EditProfileForm = () => {
       }
       await refetchMe();
       await refetch();
-      toast.success("Profile updated successfully");
+      toast.success("Profile updated successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
     } catch (error) {
       if (error?.message === "Handle already exists") {
         setError("handle", {
@@ -476,7 +484,7 @@ export const EditProfileForm = () => {
 
   return (
     <section className="mx-auto flex h-fit w-full flex-col bg-white px-3 py-2  md:rounded-xl md:p-6 md:py-4" id="account-info-account-settings">
-      <h1 className="pb-6  text-[18px]  md:text-[24px]">Account Information</h1>
+      <h1 className="pb-6  text-[1.125rem]  md:text-[1.5rem]">Account Information</h1>
       <form
         className="flex flex-col gap-2 unmask-userdetails"
         onSubmit={handleSubmit(onSubmit)}
@@ -532,13 +540,13 @@ export const EditProfileForm = () => {
               <div className="flex gap-1">
                 <label
                   htmlFor="phoneNumber"
-                  className="text-[14px] text-primary-gray"
+                  className="text-[0.875rem] text-primary-gray"
                 >
                   Phone Number
                   <span className="text-red"> *</span>
                 </label>
               </div>
-              <div className="flex rounded-lg bg-secondary-white px-1 text-[14px] text-gray-500 outline-none text-ellipsis h-12">
+              <div className="flex rounded-lg bg-secondary-white px-1 text-[0.875rem] text-gray-500 outline-none text-ellipsis h-12">
                 <CountryDropdown defaultCountry={currentCountry} items={countries} onSelect={handleSelectCountry} />
                 <Input
                   {...field}
@@ -558,12 +566,12 @@ export const EditProfileForm = () => {
                 />
               </div>
               {errors.phoneNumber && (
-                <p className="text-[12px] text-red">
+                <p className="text-[0.75rem] text-red">
                   {errors.phoneNumber.message}
                 </p>
               )}
               {errors.phoneNumberCountryCode && (
-                <p className="text-[12px] text-red">
+                <p className="text-[0.75rem] text-red">
                   {errors.phoneNumberCountryCode.message}
                 </p>
               )}
@@ -676,7 +684,7 @@ export const EditProfileForm = () => {
             <div>
               <label
                 htmlFor="state"
-                style={{ fontSize: "14px", color: "rgb(109 119 124" }}
+                style={{ fontSize: "0.875rem", color: "rgb(109 119 124" }}
               >
                 State
                 <span className="text-red"> *</span>
@@ -694,7 +702,7 @@ export const EditProfileForm = () => {
                 }}
                 value={field.value || ""}
                 sx={{
-                  fontSize: "14px",
+                  fontSize: "0.875rem",
                   color: "rgb(109 119 124)",
                   backgroundColor: "rgb(247, 249, 250)",
                   border: "none",
@@ -710,7 +718,7 @@ export const EditProfileForm = () => {
                   </MenuItem>
                 ))}
               </Select>
-              {errors?.state?.message && <p className="text-[12px] text-red">{errors?.state?.message}</p>}
+              {errors?.state?.message && <p className="text-[0.75rem] text-red">{errors?.state?.message}</p>}
             </div>
           )}
         />
@@ -770,7 +778,7 @@ export const EditProfileForm = () => {
             <div>
               <label
                 htmlFor="country"
-                style={{ fontSize: "14px", color: "rgb(109 119 124)" }}
+                style={{ fontSize: "0.875rem", color: "rgb(109 119 124)" }}
               >
                 Country
                 <span className="text-red"> *</span>
@@ -787,7 +795,7 @@ export const EditProfileForm = () => {
                   field.ref(e);
                 }}
                 sx={{
-                  fontSize: "14px",
+                  fontSize: "0.875rem",
                   color: "rgb(109 119 124)",
                   backgroundColor: "rgb(247, 249, 250)",
                   border: "none",
@@ -817,7 +825,7 @@ export const EditProfileForm = () => {
                 <MenuItem value="Canada">Canada</MenuItem>
               </Select>
               {errors.country && (
-                <span style={{ fontSize: "12px", color: "red" }}>
+                <span style={{ fontSize: "0.75rem", color: "red" }}>
                   {errors.country.message}
                 </span>
               )}

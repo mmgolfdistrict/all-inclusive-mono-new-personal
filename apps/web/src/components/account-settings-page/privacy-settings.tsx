@@ -7,6 +7,7 @@ import { api } from "~/utils/api";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { useAppContext } from "~/contexts/AppContext";
 
 const Options = ["PUBLIC", "PRIVATE"];
 type OptionsType = "PUBLIC" | "PRIVATE";
@@ -14,6 +15,7 @@ type OptionsType = "PUBLIC" | "PRIVATE";
 export const PrivacySettings = () => {
   const [privacy, setPrivacy] = useState<OptionsType>("PRIVATE");
   const { userId } = useParams();
+  const { entity } = useAppContext();
   const updateUser = api.user.updateUser.useMutation();
   const [isMutating, setIsMutating] = useState<boolean>(false);
   const { course } = useCourseContext();
@@ -38,15 +40,20 @@ export const PrivacySettings = () => {
       await updateUser.mutateAsync({
         profileVisibility: value,
         courseId,
+        color1: entity?.color1,
       });
       await refetch();
-      toast.success("Privacy settings updated successfully");
+      toast.success("Privacy settings updated successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
       setIsMutating(false);
     } catch (error) {
       setIsMutating(false);
       toast.error(
         (error as Error).message ??
-          "An error occurred updating privacy settings"
+        "An error occurred updating privacy settings"
       );
     }
   };
@@ -57,8 +64,8 @@ export const PrivacySettings = () => {
       style={{ height: "49%" }}
     >
       <div>
-        <h3 className="text-[18px]  md:text-[24px]">Privacy Settings</h3>
-        <p className=" text-[14px] text-primary-gray md:text-[16px]">
+        <h3 className="text-[1.125rem]  md:text-[1.5rem]">Privacy Settings</h3>
+        <p className="text-justify text-[0.875rem] text-primary-gray md:text-[1rem]">
           Set how you&apos;d like your profile information to appear.
         </p>
       </div>
@@ -78,21 +85,19 @@ export const PrivacySettings = () => {
               key={index}
               value={value}
               choosePrivacy={choosePrivacy}
-              className={`${
-                index === 0
-                  ? "rounded-l-full border-b border-l border-t border-stroke"
-                  : index === Options.length - 1
+              className={`${index === 0
+                ? "rounded-l-full border-b border-l border-t border-stroke"
+                : index === Options.length - 1
                   ? "rounded-r-full border-b border-r border-t border-stroke"
                   : "border border-stroke"
-              } px-[2.65rem] ${
-                isMutating
+                } px-[2.65rem] ${isMutating
                   ? "pointer-events-none animate-pulse cursor-not-allowed"
                   : ""
-              }}`}
+                }}`}
             />
           ))}
         </ToggleGroup.Root>
-        <div className="text-[12px] text-primary-gray md:text-[14px]">
+        <div className="text-[0.75rem] text-primary-gray md:text-[0.875rem]">
           {privacy === "PUBLIC"
             ? "Everything is visible, including tee time history."
             : "Your handle is public when you list a time for sale. All other information is not public."}
@@ -115,9 +120,8 @@ export const Item = ({
     <ToggleGroup.Item
       value={value}
       onClick={() => void choosePrivacy(value)}
-      className={`bg-white px-4 py-2 text-left capitalize text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${
-        className ?? ""
-      }`}
+      className={`bg-white px-4 py-2 text-left capitalize text-[0.875rem] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white ${className ?? ""
+        }`}
       data-testid="toggle-item-id"
       data-qa={value}
     >

@@ -22,11 +22,12 @@ import { useCourseContext } from "~/contexts/CourseContext";
 import type { DateType, GolferType, HoleType } from "~/contexts/FiltersContext";
 import { useFiltersContext } from "~/contexts/FiltersContext";
 import { api } from "~/utils/api";
-import { debounceFunction } from "~/utils/debounce";
 import { googleAnalyticsEvent } from "~/utils/googleAnalyticsUtils";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "usehooks-ts";
+import { OutlineButton } from "../buttons/outline-button";
+import { useAppContext } from "~/contexts/AppContext";
 
 interface DayValue {
   year: number;
@@ -94,6 +95,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
     const [selectedDayMobile, setSelectedDayMobile] = useState(selectedDay);
     const router = useRouter();
     const isMobile = useMediaQuery("(max-width: 768px)");
+    const { entity } = useAppContext();
 
     const highestPrice = useMemo(() => {
       if (!course) return 0;
@@ -251,11 +253,11 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
       const defaultDateOptions = [
         "All",
         "Today",
-        "This Week",
+        // "This Week",
         "This Weekend",
-        "This Month",
+        // "This Month",
         "Furthest Day Out To Book",
-        "Custom",
+        "Select Dates",
       ];
 
       const specialEventOptions: string[] =
@@ -306,12 +308,12 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                       ?.iconUrl || "no-icon"
                   }
                   label={
-                    value === "Custom" ? (
+                    value === "Select Dates" ? (
                       <div className="w-full flex justify-between">
                         <span>{value}</span>
                         <span>
                           {isMobile
-                            ? dateTypeMobile === "Custom" && (
+                            ? dateTypeMobile === "Select Dates" && (
                               <>
                                 {selectedDayMobile.from
                                   ? formatDate(selectedDayMobile.from)
@@ -321,7 +323,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                                   : ""}
                               </>
                             )
-                            : dateType === "Custom" && (
+                            : dateType === "Select Dates" && (
                               <>
                                 {selectedDay.from
                                   ? formatDate(selectedDay.from)
@@ -342,15 +344,15 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                   className={`${index === 0
                     ? "rounded-t-2xl border border-stroke"
                     : index === DateOptions.length - 1 &&
-                      dateType === "Custom"
+                      dateType === "Select Dates"
                       ? "border-l border-r border-stroke"
                       : index === DateOptions.length - 1
                         ? "rounded-b-2xl border-b border-l border-r border-stroke"
                         : "border-b border-l border-r border-stroke"
                     }`}
                 />
-                {(dateTypeMobile === "Custom" || dateType === "Custom") &&
-                  value === "Custom" ? (
+                {(dateTypeMobile === "Select Dates" || dateType === "Select Dates") &&
+                  value === "Select Dates" ? (
                   <>
                     <div className="custom_calendar unmask-time">
                       <Calendar
@@ -359,20 +361,17 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                         onChange={
                           isMobile ? setSelectedDayMobile : setSelectedDay
                         }
-                        colorPrimary="#40942A"
+                        colorPrimary={entity ? entity?.color1 : "#40942A"}
                         minimumDate={minimumDate}
                         maximumDate={maximumDate}
                       // disabledDays={blackOutDays}
                       />
                       <div
-                        className={`z-50 text-sm w-full flex justify-center flex-wrap p-0 px-4 pb-4 `}
+                        className={`z-50 text-sm w-full flex flex-col items-center p-0 px-4 pb-4`}
                       >
                         {specialEvents?.map((event, i) => (
                           <>
-                            <button
-                              key={i}
-                              className={`inline-block mt-1 ${isMobile ? "mx-4" : "mx-2"
-                                }`}
+                            <OutlineButton
                               onClick={() => {
                                 const startDate = new Date(event.startDate);
                                 const endDate = new Date(event.endDate);
@@ -381,9 +380,17 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                                   to: dateToDayValue(endDate),
                                 });
                               }}
-                            >
+                              key={i}
+                              className="mb-2 flex items-center justify-center w-full">
+                              <Image
+                                src={event?.iconUrl || ""}
+                                alt={event.eventName}
+                                width={22}
+                                height={22}
+                                className="mr-2 h-5 w-5"
+                              />
                               {event.eventName}
-                            </button>
+                            </OutlineButton>
                           </>
                         ))}
                       </div>
@@ -484,10 +491,10 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                 dataTestId="filter-switch-not-for-sale-make-an-offer-id"
               />
               <div className="flex items-center gap-1 text-primary-gray">
-                <Hidden className="h-[17px] w-[20px]" />
-                <div className="text-[15px]">Not for Sale, Make an Offer</div>
+                <Hidden className="h-[1.0625rem] w-[1.25rem]" />
+                <div className="text-[0.9375rem]">Not for Sale, Make an Offer</div>
                 <Tooltip
-                  trigger={<Info className="h-[14px] w-[14px]" />}
+                  trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
                   content="Includes unlisted tee times if checked"
                 />
               </div>
@@ -500,17 +507,17 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
             dataTestId="filter-switch-include-cart-id"
           />
           <div className="flex items-center gap-1 text-primary-gray">
-            <GolfCart className="h-[17px] w-[20px]" />
-            <div className="text-[15px]">Includes Cart</div>
+            <GolfCart className="h-[1.0625rem] w-[1.25rem]" />
+            <div className="text-[0.9375rem]">Includes Cart</div>
             <Tooltip
-              trigger={<Info className="h-[14px] w-[14px]" />}
+              trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
               content="The cart fee is included in the greens fee when toggled on. Purchasing without a cart may not be available."
             />
           </div>
         </div> */}
         </section>
 
-        <section className="flex flex-col gap-2" id="holes-filter">
+        {/* <section className="flex flex-col gap-2" id="holes-filter">
           <div>Holes</div>
           <ToggleGroup.Root
             type="single"
@@ -543,7 +550,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
               />
             ))}
           </ToggleGroup.Root>
-        </section>
+        </section> */}
 
         <section className="flex flex-col gap-2" id="golfers-filter">
           <div>Golfers</div>
@@ -584,7 +591,7 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
           </ToggleGroup.Root>
         </section>
 
-        <section className="flex flex-col gap-2" id="price-filter">
+        {/* <section className="flex flex-col gap-2" id="price-filter">
           <div className="flex items-center justify-between">
             <div>
               Price Range <span className="font-[300]">(per golfer)</span>
@@ -619,8 +626,8 @@ export const Filters = forwardRef<ChildComponentRef, FiltersProps>(
                 : `${localPriceRange?.[0]}-${localPriceRange?.[1]}`
             }
           />
-        </section>
-      </div>
+        </section> */}
+      </div >
     );
   }
 );
@@ -647,7 +654,7 @@ export const Item = ({
   return (
     <ToggleGroup.Item
       value={value}
-      className={`bg-white flex items-center px-4 py-2 text-left text-[14px] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white unmask-players ${className ?? ""
+      className={`bg-white flex items-center px-4 py-2 text-left text-[0.875rem] text-primary-gray transition-colors data-[state=on]:bg-primary data-[state=on]:text-white unmask-players ${className ?? ""}
         }`}
       data-testid={dataTestId}
       data-qa={dataQa}

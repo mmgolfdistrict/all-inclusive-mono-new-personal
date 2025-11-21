@@ -14,6 +14,7 @@ import { Players } from "../icons/players";
 import Flyout from "../modal/flyout";
 import { Modal } from "../modal/modal";
 import { useMediaQuery } from "usehooks-ts";
+import { useAppContext } from "~/contexts/AppContext";
 
 type SideBarProps = {
   isCancelListingOpen: boolean;
@@ -63,7 +64,7 @@ export const CancelListing = ({
   const cancel = api.teeBox.cancelListing.useMutation();
   const cancelGroupListing = api.teeBox.cancelGroupListing.useMutation();
   const isMobile = useMediaQuery("(max-width: 768px)");
-
+  const { entity } = useAppContext();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { course } = useCourseContext();
@@ -92,15 +93,21 @@ export const CancelListing = ({
     try {
       if (isGroupBooking) {
         await cancelGroupListing.mutateAsync({
-          groupId: groupBookingId ?? ""
+          groupId: groupBookingId ?? "",
+          color1: entity?.color1,
         })
       } else {
         await cancel.mutateAsync({
           listingId: listingId,
+          color1: entity?.color1,
         });
       }
       await refetch?.();
-      toast.success("Listing cancelled successfully");
+      toast.success("Listing cancelled successfully", {
+        progressStyle: {
+          background: entity?.color1,
+        },
+      });
       setIsCancelListingOpen(false);
       void logAudit();
       if (needRedirect) {
@@ -128,7 +135,7 @@ export const CancelListing = ({
         </LoadingContainer>}
         <div className="flex flex-col gap-6 px-0 sm:px-4">
           <div>
-            <div className="px-4 pb-4 text-center text-2xl font-[300] md:text-3xl">
+            <div className="px-4 pb-4 text-justify text-2xl font-[300] md:text-3xl">
               Are you sure you want to cancel this listing?
             </div>
             <TeeTimeItem
@@ -146,12 +153,12 @@ export const CancelListing = ({
             <div className="text-lg md:text-2xl">
               {formatMoney(pricePerGolfer ?? 0)}
             </div>
-            <div className="h-[1px] w-full bg-stroke" />
+            <div className="h-px w-full bg-stroke" />
             <div className="font-[300] text-primary-gray">
               Number of spots listed
             </div>
             <div className="text-lg md:text-2xl">{golferCount}</div>
-            <div className="h-[1px] w-full bg-stroke" />
+            <div className="h-px w-full bg-stroke" />
             <div className="font-[300] text-primary-gray">
               List type
             </div>
@@ -241,9 +248,9 @@ const TeeTimeItem = ({
           </div>
         </div>
       </div>
-      <div className="flex gap-4 text-[14px]">
-        <div className="w-[40px] ">
-          <Players className="ml-auto w-[30px]" />
+      <div className="flex gap-4 text-sm">
+        <div className="w-[2.5rem] ">
+          <Players className="ml-auto w-[1.875rem]" />
         </div>
         {golferCount} {golferCount === 1 ? "golfer" : "golfers"}
       </div>

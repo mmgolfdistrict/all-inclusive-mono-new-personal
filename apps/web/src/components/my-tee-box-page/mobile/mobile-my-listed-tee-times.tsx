@@ -12,7 +12,7 @@ import { type MyListedTeeTimeType } from "../my-listed-tee-times";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-export const MobileMyListedTeeTimes = () => {
+const MobileMyListedTeeTimes = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const searchParams = useSearchParams();
@@ -56,7 +56,7 @@ export const MobileMyListedTeeTimes = () => {
 
   if (isError && error) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         {error?.message ?? "An error occurred fetching tee times"}
       </div>
     );
@@ -69,7 +69,7 @@ export const MobileMyListedTeeTimes = () => {
     !error
   ) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         No listed tee times found
       </div>
     );
@@ -77,7 +77,7 @@ export const MobileMyListedTeeTimes = () => {
 
   return (
     <>
-      <div className="relative flex max-w-full flex-col overflow-auto text-[14px] m-2 px-1">
+      <div className="relative flex max-w-full flex-col overflow-auto text-sm m-2 px-1">
         {isLoading
           ? Array(3)
             .fill(null)
@@ -143,23 +143,18 @@ const TableCard = ({
           <tr className="border-b border-gray-300">
             <th scope="col" className="px-2 py-1">Course</th>
             <td>
-              <Link
-                href={`/${courseId}/${teeTimeId}/listing/${listingId}`}
-                className="flex items-center gap-2"
-                data-testid="course-listing-id"
-                data-test={listingId}
-                data-qa={teeTimeId}
+              <div className="flex items-center gap-2"
               >
                 <Avatar src={iconSrc} />
                 <div className="flex flex-col">
-                  <div className="whitespace-normal overflow-y-auto underline text-secondary-black">
+                  <div className="whitespace-normal overflow-y-auto text-secondary-black">
                     {course}
                   </div>
                   <div className="text-primary-gray unmask-time">
                     {formatTime(date, false, timezoneCorrection)}
                   </div>
                 </div>
-              </Link>
+              </div>
             </td>
           </tr>
           <tr className="border-b border-gray-300">
@@ -204,3 +199,5 @@ const TableCard = ({
     </div>
   );
 };
+
+export default MobileMyListedTeeTimes;

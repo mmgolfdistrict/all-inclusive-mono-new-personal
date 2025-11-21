@@ -25,6 +25,8 @@ import { Spinner } from "../loading/spinner";
 import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing";
 import { Tooltip } from "../tooltip";
 import { MakeAnOffer } from "../watchlist-page/make-an-offer";
+import { Share } from "../icons/share";
+import { useFiltersContext } from "~/contexts/FiltersContext";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -83,15 +85,20 @@ export const TeeTime = ({
 }) => {
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
-  const { course } = useCourseContext();
+  const { course, getAllowedPlayersForTeeTime } = useCourseContext();
   const courseId = course?.id;
-  const { data: allowedPlayers } =
-    api.course.getNumberOfPlayersByCourse.useQuery({
-      courseId: courseId ?? "",
-      time: items.time ?? "",
-      date: items.date ?? "",
-      availableSlots: availableSlots,
-    });
+  const { golfers } = useFiltersContext();
+
+  const allowedPlayers = useMemo(() => getAllowedPlayersForTeeTime(
+    items.time,
+    items.date,
+    availableSlots
+  ), [
+    items.time,
+    items.date,
+    availableSlots,
+    course
+  ]);
 
   const [selectedPlayers, setSelectedPlayers] = useState<string>("");
 
@@ -107,6 +114,7 @@ export const TeeTime = ({
       );
     }
   }, [
+    allowedPlayers.numberOfPlayers,
     allowedPlayers,
     courseId,
     items.time,
@@ -165,7 +173,7 @@ export const TeeTime = ({
       document.body.classList.remove("overflow-hidden");
     }
   }, [isMakeAnOfferOpen, isManageOpen]);
-  const { setPrevPath } = useAppContext();
+  const { entity, setPrevPath } = useAppContext();
 
   const toggleWatchlist = api.watchlist.toggleWatchlist.useMutation();
   const [optimisticLike, setOptimisticLike] = useState(isLiked);
@@ -238,7 +246,7 @@ export const TeeTime = ({
       return;
     }
     if (status === "FIRST_HAND") {
-      void router.replace(
+      void router.push(
         `/${course?.id}/checkout?teeTimeId=${teeTimeId}&playerCount=${selectedPlayers}`
       );
     }
@@ -264,7 +272,7 @@ export const TeeTime = ({
           return;
         }
       }
-      void router.replace(
+      void router.push(
         `/${course?.id}/checkout?listingId=${listingId}&playerCount=${selectedPlayers}`
       );
     }
@@ -318,6 +326,17 @@ export const TeeTime = ({
     // setIsManageOpen(true);
   };
 
+  // useEffect(() => {
+  //   if (golfers && golfers !== "Any") {
+  //     const golfersStr = golfers.toString();
+  //     if (selectedPlayers !== golfersStr) {
+  //       setSelectedPlayers(golfersStr);
+  //     }
+  //   } else if (golfers && golfers === "Any") {
+  //     setSelectedPlayers(numberOfPlayers[0] ?? "1");
+  //   }
+  // }, [golfers]);
+
   return (
     <>
       {children}
@@ -326,28 +345,27 @@ export const TeeTime = ({
         data-test={
           status === "SECOND_HAND" ? "secondary_listed" : "primary_listed"
         }
-        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[230px] md:min-w-[265px] ${className ?? ""
-          }`}
+        className={`md:rounded-xl rounded-lg bg-secondary-white w-fit min-w-[14.375rem] md:min-w-[16.5625rem] ${className ?? ""}`}
       >
         <div className="border-b border-stroke">
           <div className="flex justify-between py-1 px-2 md:px-3 md:p-3 items-center">
-            <div className="font-semibold text-[16px] md:text-[20px] unmask-time">
+            <div className="font-semibold text-base md:text-xl unmask-time">
               {showFullDate
                 ? formatTime(time, true, timezoneCorrection)
                 : getTime(time, timezoneCorrection)}
             </div>
             <div className="flex gap-2">
               {status === "UNLISTED" ? (
-                <Hidden className="w-[12px] md:w-[20px]" />
+                <Hidden className="w-[0.75rem] md:w-[1.25rem]" />
               ) : null}
               <Tooltip
                 trigger={
                   status === "SECOND_HAND" ? (
-                    <Spinner className="w-[40px] h-[40px]" />
+                    <Spinner className="w-[2.5rem] h-[2.5rem]" />
                   ) : (
                     <Avatar
                       src={soldByImage}
-                      className="!min-h-[40px] !min-w-[80px] max-h-[40px] max-w-[80px] h-[40px] w-[80px] md:min-h-[40px] md:min-w-[80px] md:max-h-[40px] md:max-w-[80px] md:h-[40px] md:w-[80px] lg:w-[80px] lg:h-[40px]"
+                      className="!min-h-[2.5rem] !min-w-[5rem] max-h-[2.5rem] max-w-[5rem] h-[2.5rem] w-[5rem] md:min-h-[2.5rem] md:min-w-[5rem] md:max-h-[2.5rem] md:max-w-[5rem] md:h-[2.5rem] md:w-[5rem] lg:w-[5rem] lg:h-[2.5rem]"
                       isRounded={false}
                     />
                   )
@@ -362,11 +380,11 @@ export const TeeTime = ({
             </div>
           </div>
         </div>
-        <div className={`flex flex-col gap-1 md:gap-4  p-2 md:p-3 text-[10px] md:text-[14px]`}>
+        <div className={`flex flex-col gap-1 md:gap-4  p-2 md:p-3 text-[0.625rem] md:text-[0.875rem]`}>
           {/* <div className="flex items-center gap-1">
             <Avatar
               src={soldByImage}
-              className="!min-h-[30px] !min-w-[30px] !max-h-[30px] !max-w-[30px] !h-[30px] !w-[30px] md:min-h-[40px] md:min-w-[40px] md:max-h-[40px] md:max-w-[40px] md:h-[40px] md:w-[40px]"
+              className="!min-h-[1.875rem] !min-w-[1.875rem] !max-h-[1.875rem] !max-w-[1.875rem] !h-[1.875rem] !w-[1.875rem] md:min-h-[2.5rem] md:min-w-[2.5rem] md:max-h-[2.5rem] md:max-w-[2.5rem] md:h-[2.5rem] md:w-[2.5rem]"
             />
             <div className="flex flex-col">
               <div className="whitespace-nowrap md:pr-1">
@@ -383,7 +401,7 @@ export const TeeTime = ({
                     //   >
                     <div
                       ref={(el) => (tooltipRefs.current[index] = el)}
-                      className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis"
+                      className="text-left whitespace-nowrap overflow-hidden w-[14.375rem] md:w-[12.5rem] text-ellipsis"
                     >
                       {soldByName}
                     </div>
@@ -398,7 +416,7 @@ export const TeeTime = ({
                   trigger={
                     <div
                       ref={(el) => (tooltipRefs.current[index] = el)}
-                      className="text-left whitespace-nowrap overflow-hidden w-[230px] md:w-[200px] text-ellipsis"
+                      className="text-left whitespace-nowrap overflow-hidden w-[14.375rem] md:w-[12.5rem] text-ellipsis"
                     >
                       {soldByName}
                     </div>
@@ -410,21 +428,21 @@ export const TeeTime = ({
           </div> */}
           <div className="flex flex-col gap-1 relative pt-1.5 md:pt-0">
             {isSuggested ? (
-              <div className="absolute -top-[.18rem] md:-top-3.5 text-[9px] md:text-[12px] text-primary-gray">
+              <div className="absolute -top-[.18rem] md:-top-3.5 text-[0.5625rem] md:text-[0.75rem] text-primary-gray">
                 Suggested
               </div>
             ) : null}
             <div className="flex items-center">
-              <div className="text-[14px] md:text-[16px] font-semibold text-secondary-black">
+              <div className="text-[0.875rem] md:text-base font-semibold text-secondary-black">
                 {formatMoney(price)}
               </div>
-              <div className="text-[12px] md:text-[14px] text-primary-gray">
+              <div className="text-[0.75rem] md:text-[0.875rem] text-primary-gray">
                 {" "}
                 /golfer
               </div>
             </div>
           </div>
-          <div className={`flex md:min-h-[31px] items-center gap-2`}>
+          <div className={`flex md:min-h-[1.9375rem] items-center gap-2`}>
             <div className="scale-75 md:scale-100">
               <OutlineClub />
             </div>
@@ -438,11 +456,7 @@ export const TeeTime = ({
                 availableSlots={
                   status === "SECOND_HAND" ? listedSlots || 0 : availableSlots
                 }
-                isDisabled={
-                  (status === "SECOND_HAND" && !allowSplit) ||
-                  allowedPlayers?.selectStatus === "ALL_PLAYERS"
-                }
-                className={`md:px-[1rem] md:py-[.25rem] md:!text-[14px] !text-[10px] px-[.75rem] py-[.1rem]`}
+                className={`md:px-[1rem] md:py-[.25rem] md:!text-[0.875rem] !text-[0.625rem] px-[.75rem] py-[.1rem]`}
                 teeTimeId={teeTimeId}
                 numberOfPlayers={numberOfPlayers ? (
                   !(status === "SECOND_HAND") ? numberOfPlayers : PlayersOptions.filter(player => player <= (listedSlots?.toString() ?? "0"))
@@ -461,47 +475,9 @@ export const TeeTime = ({
             )}
           </div>
 
-          {soldById === user?.id && session ? (
-            <FilledButton
-              onClick={openManage}
-              className="whitespace-nowrap"
-              data-testid="sell-button-id"
-              data-test={teeTimeId}
-              data-qa="Buy"
-              data-cy={time}
-            >
-              {status === "UNLISTED" ? "Sell" : "Manage"}
-            </FilledButton>
-          ) : (
-            <>
-              {isSuggested ? (
-                <FilledButton
-                  className="whitespace-nowrap !px-3 !min-w-[82px] md:min-w-[110px]"
-                  onClick={makeAnOffer}
-                  data-testid="make-an-offer-id"
-                  data-test={teeTimeId}
-                  data-qa="Make an Offer"
-                  data-cy={time}
-                >
-                  Make an Offer
-                </FilledButton>
-              ) : (
-                <FilledButton
-                  className="whitespace-nowrap !min-w-[82px] md:min-w-[110px] !py-[.28rem] md:py-1.5"
-                  onClick={buyTeeTime}
-                  data-testid="buy-tee-time-id"
-                  data-test={teeTimeId}
-                  data-qa="Buy"
-                  data-cy={time}
-                  id="buy-button"
-                >
-                  Buy
-                </FilledButton>
-              )}
-            </>
-          )}
-          <div className={`flex items-center justify-between gap-1`}>
-            {course?.supportsWatchlist ? (
+          <div className="flex items-center gap-2">
+            {/* Watchlist (Left of main button) */}
+            {course?.supportsWatchlist && (
               <div id="add-to-watchlist">
                 <OutlineButton
                   className="md:px-[.5rem] px-[0.375rem] py-[0.375rem] md:py-2"
@@ -511,37 +487,63 @@ export const TeeTime = ({
                   data-qa={optimisticLike}
                 >
                   <Heart
-                    className={`w-[13px] md:w-[18px]`}
-                    fill={optimisticLike ? "#40942A" : undefined}
+                    className="w-[0.8125rem] md:w-[1.125rem]"
+                    fill={optimisticLike ? entity?.color1 : undefined}
+                    stroke={entity?.color1}
                   />
                 </OutlineButton>
               </div>
-            ) : null}
+            )}
 
-            <div className="flex items-center gap-1">
-              <Link
-                href={href}
-                data-testid="details-button-id"
+            {/* Main Action Button */}
+            {soldById === user?.id && session ? (
+              <FilledButton
+                onClick={openManage}
+                className="whitespace-nowrap w-full"
+                data-testid="sell-button-id"
                 data-test={teeTimeId}
-                data-qa={"Details"}
+                data-qa="Buy"
                 data-cy={time}
-                id="tee-time-details-button"
               >
-                <OutlineButton className="!py-[.28rem] md:py-1.5">
-                  Details
-                </OutlineButton>
-              </Link>
-              <div id="share-tee-time-button">
-                <OutlineButton
-                  onClick={() => void share()}
-                  className="w-full whitespace-nowrap"
-                  data-testid="share-button-id"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    {isCopied ? <>Copied</> : <>Share</>}
-                  </div>
-                </OutlineButton>
-              </div>
+                {status === "UNLISTED" ? "Sell" : "Manage"}
+              </FilledButton>
+            ) : isSuggested ? (
+              <FilledButton
+                className="whitespace-nowrap !px-3 !min-w-[5.125rem] md:min-w-[6.875rem]  w-full"
+                onClick={makeAnOffer}
+                data-testid="make-an-offer-id"
+                data-test={teeTimeId}
+                data-qa="Make an Offer"
+                data-cy={time}
+              >
+                Make an Offer
+              </FilledButton>
+            ) : (
+              <FilledButton
+                className="whitespace-nowrap !min-w-[5.125rem] w-full md:min-w-[6.875rem] !py-[.28rem] md:py-1.5"
+                onClick={buyTeeTime}
+                data-testid="buy-tee-time-id"
+                data-test={teeTimeId}
+                data-qa="Buy"
+                data-cy={time}
+                id="buy-button"
+              >
+                Buy
+              </FilledButton>
+            )}
+
+            {/* Share (Right of main button) */}
+            <div id="share-tee-time-button">
+              <OutlineButton
+                onClick={() => void share()}
+                className={isCopied ? "whitespace-nowrap" : "md:px-[.5rem] px-[0.375rem] py-[0.375rem] md:py-2"}
+                data-testid="share-button-id"
+              >
+                {/* <div className="flex items-center justify-center gap-2">
+                  {isCopied ? "Copied" : "Share"}
+                </div> */}
+                {isCopied ? "Copied" : <Share fill={entity?.color1} />}
+              </OutlineButton>
             </div>
           </div>
           {isMakeAnOfferOpen && (
@@ -579,7 +581,7 @@ export const TeeTime = ({
                 listedSlotsCount: listedSlots ?? 1,
                 groupId: groupId ?? "",
                 totalMerchandiseAmount: 0
-            }}
+              }}
               refetch={refetch}
             />
           )}

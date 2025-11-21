@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "crypto";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { and, asc, desc, eq, gt, lt, or } from "@golf-district/database";
+import { and, asc, desc, eq, gt, inArray, lt, or } from "@golf-district/database";
 import type { Db } from "@golf-district/database";
 import { accounts } from "@golf-district/database/schema/accounts";
 import { assets } from "@golf-district/database/schema/assets";
@@ -54,6 +54,7 @@ export interface UserCreationData {
   country?: string;
   redirectHref?: string;
   ReCAPTCHA: string | undefined;
+  color1?: string;
 }
 
 interface UserUpdateData {
@@ -73,6 +74,7 @@ interface UserUpdateData {
   phoneNotifications?: boolean | null;
   emailNotifications?: boolean | null;
   courseId?: string;
+  color1?: string;
 }
 type TeeTimeEntry = {
   teeTimeId: string;
@@ -144,7 +146,7 @@ export class UserService {
    *   });
    */
   createUser = async (courseId: string | undefined, data: UserCreationData) => {
-    this.logger.info(`createUser called`);
+    // this.logger.info(`createUser called`);
     if (!isValidEmail(data.email)) {
       this.logger.warn(`Invalid email format: ${data.email}`);
       throw new Error("Invalid email format");
@@ -290,6 +292,7 @@ export class UserService {
         CourseURL,
         CourseName,
         HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+        color1: data?.color1,
       },
       []
     );
@@ -352,15 +355,19 @@ export class UserService {
     return invitedUsers;
   };
 
-  inviteUser = async (
+  inviteUsers = async (
     userId: string,
-    emailOrPhoneNumber: string,
-    teeTimeId: string,
-    bookingSlotId: string,
-    slotPosition: number,
-    redirectHref: string
+    invites: {
+      emailOrPhoneNumber: string;
+      teeTimeId: string;
+      bookingSlotId: string;
+      slotPosition: number;
+    }[],
+    redirectHref: string,
+    courseId?: string,
+    color1?: string
   ) => {
-    // Fetch user details
+    // Fetch user details once
     const [user] = await this.database
       .select({ handle: users.handle, name: users.name, email: users.email })
       .from(users)
@@ -371,75 +378,117 @@ export class UserService {
       throw new Error("User not found");
     }
 
-    // Prevent self-invite
-    if (user.email === emailOrPhoneNumber) {
-      throw new Error("You cannot invite yourself.");
-    }
-
-    // Fetch slot details to check availability
-    const [bookingSlot] = await this.database
-      .select({
-        bookingId: bookingslots.bookingId,
-        slotPosition: bookingslots.slotPosition,
-        externalSlotId: bookingslots.slotnumber,
-      })
-      .from(bookingslots)
-      .where(and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.slotnumber, bookingSlotId)));
-
-    if (!bookingSlot) {
-      throw new Error("Booking slot not available");
-    }
-
-    // Check if an invite with the same email already exists for the same teeTimeId
-    const [existingEmailInvite] = await this.database
-      .select({ id: invitedTeeTime.id })
-      .from(invitedTeeTime)
-      .where(and(eq(invitedTeeTime.email, emailOrPhoneNumber), eq(invitedTeeTime.teeTimeId, teeTimeId)));
-
-    if (existingEmailInvite) {
-      throw new Error("This email ID is already invited for this tee time for another slot.");
-    }
-
-    // Check if invite already exists and delete it if present
-    const [existingInvite] = await this.database
-      .select({ id: invitedTeeTime.id })
-      .from(invitedTeeTime)
-      .where(and(eq(invitedTeeTime.bookingSlotId, bookingSlotId), eq(invitedTeeTime.teeTimeId, teeTimeId)));
-
-    if (existingInvite) {
-      // Delete the existing invite before sending a new one
-      await this.database.delete(invitedTeeTime).where(eq(invitedTeeTime.id, existingInvite.id));
-    }
-
-    // Save new invitation
-    await this.database.insert(invitedTeeTime).values({
-      id: randomUUID(),
-      email: emailOrPhoneNumber,
-      teeTimeId: teeTimeId,
-      bookingId: bookingSlot.bookingId,
-      bookingSlotId: bookingSlot.externalSlotId,
-      slotPosition: bookingSlot.slotPosition,
-    });
-
-    // Determine invite method (email or phone)
     const phoneRegex = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/;
-    if (isValidEmail(emailOrPhoneNumber)) {
-      await this.notificationsService.sendEmail(
-        emailOrPhoneNumber,
-        "You've been invited to Golf District",
-        `<p>${user?.name?.split(
-          " "
-        )[0]} has invited you to Golf District. <a href="${redirectHref}/register" target="_blank">Create a new account</a>  or <a href="${redirectHref}/login" target="_blank">login with your existing account</a> to see the tee times you are part of.</p>`
-      );
-    } else if (phoneRegex.test(emailOrPhoneNumber)) {
-      await this.notificationsService.sendSMS(
-        emailOrPhoneNumber,
-        `${user?.name?.split(" ")[0]} has invited you to Golf District.`
-      );
-    } else {
-      throw new Error("Invalid email or phone number");
+    const results: { recipient: string; status: string; message?: string }[] = [];
+
+    // ✅ For loop starts here
+    for (const invite of invites) {
+      const { emailOrPhoneNumber, teeTimeId, bookingSlotId, slotPosition } = invite;
+
+      try {
+        // Prevent self-invite
+        if (user.email === emailOrPhoneNumber) {
+          throw new Error("You cannot invite yourself.");
+        }
+
+        // Fetch slot details
+        const [bookingSlot] = await this.database
+          .select({
+            bookingId: bookingslots.bookingId,
+            slotPosition: bookingslots.slotPosition,
+            externalSlotId: bookingslots.slotnumber,
+          })
+          .from(bookingslots)
+          .where(
+            and(eq(bookingslots.slotPosition, slotPosition), eq(bookingslots.slotnumber, bookingSlotId))
+          );
+
+        if (!bookingSlot) throw new Error("Booking slot not available");
+
+        // Check if email already invited for this tee time
+        const [existingEmailInvite] = await this.database
+          .select({ id: invitedTeeTime.id })
+          .from(invitedTeeTime)
+          .where(and(eq(invitedTeeTime.email, emailOrPhoneNumber), eq(invitedTeeTime.teeTimeId, teeTimeId)));
+
+        if (existingEmailInvite) {
+          throw new Error("This email/phone is already invited for this tee time for another slot.");
+        }
+
+        // ✅ Insert new invitation (missing in your version)
+        await this.database.insert(invitedTeeTime).values({
+          id: randomUUID(),
+          email: emailOrPhoneNumber,
+          teeTimeId: teeTimeId,
+          bookingId: bookingSlot.bookingId,
+          bookingSlotId: bookingSlot.externalSlotId,
+          slotPosition: bookingSlot.slotPosition,
+        });
+
+        // Fetch course info if available
+        let CourseLogoURL: string | undefined;
+        let CourseURL: string | undefined;
+        let CourseName: string | undefined;
+
+        if (courseId) {
+          const [course] = await this.database
+            .select({
+              key: assets.key,
+              extension: assets.extension,
+              websiteURL: courses.websiteURL,
+              name: courses.name,
+            })
+            .from(courses)
+            .where(eq(courses.id, courseId))
+            .leftJoin(assets, eq(assets.id, courses.logoId));
+
+          if (course?.key) {
+            CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course.key}.${course.extension}`;
+            CourseURL = course.websiteURL || "";
+            CourseName = course.name;
+          }
+        }
+
+        // Determine invite method
+        if (isValidEmail(emailOrPhoneNumber)) {
+          try {
+            await this.notificationsService.sendEmailByTemplate(
+              emailOrPhoneNumber,
+              "You've been invited to Golf District",
+              process.env.SENDGRID_INVITE_USER_TEMPLATE_ID!,
+              {
+                CustomerName: user?.name ?? "User",
+                CourseLogoURL,
+                CourseURL,
+                CourseName,
+                HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+                InviteRegisterURL: encodeURI(`${redirectHref}/register`),
+                InviteLoginURL: encodeURI(`${redirectHref}/login`),
+                color1: color1,
+              },
+              []
+            );
+          } catch (error) {
+            throw new Error("Error sending invite email");
+          }
+        } else if (phoneRegex.test(emailOrPhoneNumber)) {
+          await this.notificationsService.sendSMS(
+            emailOrPhoneNumber,
+            `${user?.name?.split(" ")[0]} has invited you to Golf District.`
+          );
+        } else {
+          throw new Error("Invalid email or phone number");
+        }
+
+        results.push({ recipient: emailOrPhoneNumber, status: "success" });
+      } catch (err: any) {
+        results.push({ recipient: emailOrPhoneNumber, status: "failed", message: err.message });
+      }
     }
+
+    return results;
   };
+
 
   /**
    * Retrieves bookings owned by a user for a specific tee time.
@@ -454,13 +503,15 @@ export class UserService {
    * const result = await getBookingsOwnedForTeeTime(teeTimeId, userId);
    * // result: { connectedUserIsOwner: true, bookings: ["bookingId1", "bookingId2"] }
    */
-  getBookingsOwnedForTeeTime = async (teeTimeId: string, userId?: string) => {
+  getBookingsOwnedForTeeTime = async (teeTimeId: string, userId?: string, bookingId?: string) => {
     if (!userId) {
       return {
         connectedUserIsOwner: false,
         bookings: [],
       };
     }
+    const teeTimeIds = teeTimeId.includes(",") ? teeTimeId.split(",").map((id) => id.trim()) : [teeTimeId];
+
     const data = await this.database
       .select({
         bookingId: bookings.id,
@@ -471,7 +522,14 @@ export class UserService {
       })
       .from(bookings)
       .leftJoin(bookingslots, eq(bookingslots.bookingId, bookings.id))
-      .where(and(eq(bookings.teeTimeId, teeTimeId), eq(bookings.ownerId, userId), eq(bookings.isActive, true)))
+      .where(
+        and(
+          inArray(bookings.teeTimeId, teeTimeIds),
+          eq(bookings.ownerId, userId),
+          eq(bookings.isActive, true),
+          ...(bookingId ? [eq(bookings.id, bookingId)] : [])
+        )
+      )
       .orderBy(asc(bookingslots.slotPosition))
       .execute()
       .catch((err) => {
@@ -489,6 +547,7 @@ export class UserService {
         });
         throw new Error("Error retrieving bookings");
       });
+
     if (!data || data.length == 0) {
       return {
         connectedUserIsOwner: false,
@@ -591,9 +650,10 @@ export class UserService {
     courseId: string | undefined,
     userId: string,
     token: string,
-    redirectHref: string
+    redirectHref: string,
+    color1?: string
   ) => {
-    this.logger.info(`verifyUserEmail called with userId: ${userId} and token: ${token}`);
+    // this.logger.info(`verifyUserEmail called with userId: ${userId} and token: ${token}`);
     const [user] = await this.database.select().from(users).where(eq(users.id, userId));
     if (!user) {
       this.logger.warn(`User not found: ${userId}`);
@@ -665,6 +725,7 @@ export class UserService {
             CourseName,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
             BuyTeeTimeURL: encodeURI(redirectHref),
+            color1: color1,
           },
           []
         );
@@ -723,7 +784,7 @@ export class UserService {
    *   });
    */
   updateUser = async (userId: string, data: UserUpdateData) => {
-    this.logger.info(`updateUser called for user: ${userId}`);
+    // this.logger.info(`updateUser called for user: ${userId}`);
 
     if (data.handle) {
       const isValid = await this.isValidHandle(data.handle);
@@ -877,6 +938,7 @@ export class UserService {
               CourseName: course?.name || "",
               HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
               CustomerFirstName: user.name?.split(" ")[0],
+              color1: data?.color1,
             },
             []
           )
@@ -966,7 +1028,7 @@ export class UserService {
    * @see {@link generateUtcTimestamp} for generating the verification token expiration timestamp.
    */
   requestEmailUpdate = async (userId: string, email: string): Promise<void> => {
-    this.logger.info(`requestEmailUpdate called with userId: ${userId}`);
+    // this.logger.info(`requestEmailUpdate called with userId: ${userId}`);
     if (!isValidEmail(email)) {
       this.logger.warn(`Invalid email format: ${email}`);
       throw new Error("Invalid email format");
@@ -1112,7 +1174,8 @@ export class UserService {
     redirectHref: string,
     handleOrEmail: string,
     ReCAPTCHA: string | undefined,
-    courseProviderId: string | undefined
+    courseProviderId: string | undefined,
+    color1?: string
   ): Promise<{ error: boolean; message: string }> => {
     let isNotRobot;
     if (ReCAPTCHA) {
@@ -1138,21 +1201,30 @@ export class UserService {
     let CourseName: string | undefined;
 
     if (courseProviderId) {
+      // First, fetch the course details
       const [course] = await this.database
         .select({
-          key: assets.key,
-          extension: assets.extension,
           websiteURL: courses.websiteURL,
           name: courses.name,
+          logoId: courses.logoId, // Fetch the logoId to use in the next query
         })
         .from(courses)
-        .leftJoin(assets, eq(assets.courseId, courseProviderId))
-        .where(eq(courses.logoId, assets.id));
+        .where(eq(courses.id, courseProviderId));
+      if (course) {
+        CourseURL = course.websiteURL || "";
+        CourseName = course.name || "";
+        // Now, fetch the asset details using the logoId
+        const [asset] = await this.database
+          .select({
+            key: assets.key,
+            extension: assets.extension,
+          })
+          .from(assets)
+          .where(eq(assets.id, course.logoId!));
 
-      if (course?.key) {
-        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
-        CourseURL = course?.websiteURL || "";
-        CourseName = course?.name || "";
+        if (asset?.key) {
+          CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${asset.key}.${asset.extension}`;
+        }
       }
     }
 
@@ -1277,6 +1349,7 @@ export class UserService {
       CourseURL,
       CourseName,
       HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+      color1: color1,
     };
 
     if (user.gdPassword) {
@@ -1366,9 +1439,10 @@ export class UserService {
     courseId: string | undefined,
     userId: string,
     token: string,
-    newPassword: string
+    newPassword: string,
+    color1?: string
   ): Promise<void> => {
-    this.logger.info(`executeForgotPassword called with userId: ${userId}`);
+    // this.logger.info(`executeForgotPassword called with userId: ${userId}`);
     if (isValidPassword(newPassword).score < 8) {
       this.logger.warn(`Invalid password format: ${newPassword}`);
       throw new Error("Invalid password format");
@@ -1428,34 +1502,30 @@ export class UserService {
     if (courseId) {
       const [course] = await this.database
         .select({
-          key: assets.key,
-          extension: assets.extension,
           websiteURL: courses.websiteURL,
           name: courses.name,
+          logoId: courses.logoId,
         })
         .from(courses)
-        .where(eq(courses.id, courseId))
-        .leftJoin(assets, eq(assets.id, courses.logoId))
-        .execute()
-        .catch((err) => {
-          this.logger.error(err);
-          loggerService.errorLog({
-            userId: userId,
-            url: `/UserService/executeForgotPassword`,
-            userAgent: "",
-            message: "ERROR_GETTING_COURSE",
-            stackTrace: `${err.stack}`,
-            additionalDetailsJSON: JSON.stringify({
-              courseId,
-            }),
-          });
-          return [];
-        });
+        .where(eq(courses.id, courseId));
 
-      if (course?.key) {
-        CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${course?.key}.${course?.extension}`;
-        CourseURL = course?.websiteURL || "";
-        CourseName = course?.name || "";
+      if (course) {
+        CourseURL = course.websiteURL || "";
+        CourseName = course.name || "";
+
+        if (course.logoId) {
+          const [asset] = await this.database
+            .select({
+              key: assets.key,
+              extension: assets.extension,
+            })
+            .from(assets)
+            .where(eq(assets.id, course.logoId));
+
+          if (asset?.key) {
+            CourseLogoURL = `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${asset.key}.${asset.extension}`;
+          }
+        }
       }
     }
 
@@ -1471,6 +1541,7 @@ export class UserService {
             CourseURL,
             CourseName,
             HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
+            color1: color1,
           },
           []
         );
@@ -1620,7 +1691,7 @@ export class UserService {
    * @see {@link containsBadWords} for the bad words filter logic.
    */
   isValidHandle = async (handle: string): Promise<boolean> => {
-    this.logger.info(`isValidHandle called with handle: ${handle}`);
+    // this.logger.info(`isValidHandle called with handle: ${handle}`);
     if (handle.length < 6 || handle.length > 64) {
       this.logger.debug(`Handle length is invalid: ${handle}`);
       //throw new Error("Handle length is invalid");
@@ -2113,7 +2184,7 @@ export class UserService {
     return Buffer.concat(chunks).toString("utf8");
   };
 
-  generateUsername = async (digit: number) => {
+  generateUsername = async (digit: number): Promise<string> => {
     // Generate a random buffer
     const buffer = randomBytes(3);
 
@@ -2132,7 +2203,7 @@ export class UserService {
     const isValid = await this.isValidHandle(handle);
 
     if (!isValid) {
-      this.generateUsername(digit);
+      return this.generateUsername(digit);  // ✅ must return here
     }
     return handle ? `golfdistrict${handle}` : "golfdistrict";
   };

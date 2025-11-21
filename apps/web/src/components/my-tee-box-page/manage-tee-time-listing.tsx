@@ -31,6 +31,7 @@ import { Modal } from "../modal/modal";
 import { useMediaQuery } from "usehooks-ts";
 import { SaleTypeSelector } from "../input/sale-type-select";
 import { SPLIT_TYPE_OPTIONS } from "./list-tee-time";
+import { useAppContext } from "~/contexts/AppContext";
 
 type PlayerType = "1" | "2" | "3" | "4";
 
@@ -74,7 +75,7 @@ export const ManageTeeTimeListing = ({
     const [sellerServiceFee, setSellerServiceFee] = useState<number>(0);
     const [minimumListingPrice, setMinimumListingPrice] = useState<number>(200);
     const [players, setPlayers] = useState<PlayerType>("1");
-
+    const { entity } = useAppContext();
     const [initialPrice, setInitialPrice] = useState<number | null>(null); // Initial price when sidebar opens
     const [initialPlayers, setInitialPlayers] = useState<PlayerType | null>(null); // Initial players when sidebar opens
     const [saleType, setSaleType] = useState<string>("whole");
@@ -159,14 +160,20 @@ export const ManageTeeTimeListing = ({
         if (selectedTeeTime?.groupId) {
           await cancelGroupListing.mutateAsync({
             groupId: selectedTeeTime?.groupId ?? "",
+            color1: entity?.color1,
           });
         } else {
           await cancel.mutateAsync({
             listingId: selectedTeeTime?.listingId,
+            color1: entity?.color1,
           });
         }
         await refetch?.();
-        toast.success("Listing cancelled successfully");
+        toast.success("Listing cancelled successfully", {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         setIsManageTeeTimeListingOpen(false);
         void logAudit();
       } catch (error) {
@@ -232,8 +239,8 @@ export const ManageTeeTimeListing = ({
       let totalPayoutForAllGolfers =
         (buyerListingPricePerGolfer - buyerFeePerGolfer - sellerFeePerGolfer) *
         parseInt(players) +
-      (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100 +
-      (selectedTeeTime?.totalMerchandiseAmount ?? 0) / 100;
+        (selectedTeeTime?.weatherGuaranteeAmount ?? 0) / 100 +
+        (selectedTeeTime?.totalMerchandiseAmount ?? 0) / 100;
 
       totalPayoutForAllGolfers =
         totalPayoutForAllGolfers <= 0 ? 0 : totalPayoutForAllGolfers;
@@ -280,7 +287,11 @@ export const ManageTeeTimeListing = ({
           listingId: selectedTeeTime?.listingId,
           endTime: new Date(selectedTeeTime?.date),
         });
-        toast.success("Tee time listing updated successfully");
+        toast.success("Tee time listing updated successfully", {
+          progressStyle: {
+            background: entity?.color1,
+          },
+        });
         if (needRedirect) {
           return router.push(
             `/${selectedTeeTime?.courseId}/my-tee-box?section=my-listed-tee-times`
@@ -348,6 +359,7 @@ export const ManageTeeTimeListing = ({
             listPrice: listingPrice,
             endTime: new Date(selectedTeeTime?.date),
             slots: parseInt(players),
+            color1: entity?.color1,
           });
         } else {
           await updateListingForBooking.mutateAsync({
@@ -357,7 +369,8 @@ export const ManageTeeTimeListing = ({
             updatedPrice: listingPrice,
             updatedSlots: parseInt(players),
             endTime: new Date(selectedTeeTime?.date),
-            allowSplit: saleType === "split" ? true : false
+            allowSplit: saleType === "split" ? true : false,
+            color1: entity?.color1,
           });
         }
         setIsManageTeeTimeListingOpen(false);
@@ -369,10 +382,14 @@ export const ManageTeeTimeListing = ({
               className="flex w-fit items-center gap-1 text-primary"
             >
               <div>View listed tee times</div>
-              <DownChevron fill={"#40942A"} className="w-[14px] -rotate-90" />
+              <DownChevron fill={"#40942A"} className="w-[0.875rem] -rotate-90" />
             </Link>
           </div>
-        );
+          , {
+            progressStyle: {
+              background: entity?.color1,
+            },
+          });
         setIsManageTeeTimeListingOpen(false);
         if (needRedirect) {
           return router.push(
@@ -409,13 +426,13 @@ export const ManageTeeTimeListing = ({
           <div className={`flex flex-col gap-1 text-center w-fit mx-auto`}>
             <label
               htmlFor="listingPrice"
-              className="text-[16px] text-primary-gray md:text-[18px]"
+              className="text-base text-primary-gray md:text-lg"
             >
               Listing price per golfer
             </label>
             <div className="relative">
               <span
-                className={`absolute left-1 top-1 text-[24px] md:text-[32px] ${selectedTeeTime?.listingId ===
+                className={`absolute left-1 top-1 text-[1.5rem] md:text-[2rem] ${selectedTeeTime?.listingId ===
                   selectedTeeTime?.listingIdFromRedis
                   ? "opacity-50 cursor-not-allowed"
                   : ""
@@ -430,7 +447,7 @@ export const ManageTeeTimeListing = ({
                 onFocus={handleFocus}
                 onChange={handleListingPrice}
                 onBlur={handleBlur}
-                className={`mx-auto max-w-[300px] rounded-lg bg-secondary-white px-4 py-1 text-center text-[24px] font-semibold outline-none md:text-[32px] pl-6 ${selectedTeeTime?.listingId ===
+                className={`mx-auto max-w-[18.75rem] rounded-lg bg-secondary-white px-4 py-1 text-center text-[1.5rem] font-semibold outline-none md:text-[2rem] pl-6 ${selectedTeeTime?.listingId ===
                   selectedTeeTime?.listingIdFromRedis
                   ? "opacity-50 cursor-not-allowed"
                   : ""
@@ -447,7 +464,7 @@ export const ManageTeeTimeListing = ({
           <div className={`flex  flex-col gap-1 text-center`}>
             <label
               htmlFor="spot"
-              className="text-[16px] text-primary-gray md:text-[18px]"
+              className="text-base text-primary-gray md:text-lg"
             >
               Number of spots listed
             </label>
@@ -492,7 +509,7 @@ export const ManageTeeTimeListing = ({
             </ToggleGroup.Root>
           </div>
 
-          {!selectedTeeTime?.isGroupBooking
+          {!selectedTeeTime?.groupId
             ? <SaleTypeSelector
               className="flex flex-col w-full mb-4"
               value={saleType}
@@ -509,7 +526,7 @@ export const ManageTeeTimeListing = ({
         </div>
         {selectedTeeTime?.listingId ===
           selectedTeeTime?.listingIdFromRedis && (
-            <div className="text-center text-[20px] text-red">
+            <div className="text-center text-xl text-red">
               Users are trying to buy this tee time and hence, editing is not
               allowed.
             </div>
@@ -527,8 +544,8 @@ export const ManageTeeTimeListing = ({
             <div className="font-[300] text-primary-gray">
               Service Fee{" "}
               <Tooltip
-                trigger={<Info className="h-[14px] w-[14px]" />}
-                content={<div className="max-w-[200px] text-sm break-words">This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times</div>}
+                trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
+                content={<div className="max-w-[12.5rem] text-sm break-words">This fee ensures ongoing enhancements to our service, ultimately offering golfers the best access to booking tee times</div>}
               />
             </div>
             <div className="text-secondary-black">
@@ -539,7 +556,7 @@ export const ManageTeeTimeListing = ({
             <div className="font-[300] text-primary-gray">
               Weather Guarantee Refund{" "}
               <Tooltip
-                trigger={<Info className="h-[14px] w-[14px]" />}
+                trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
                 content="Weather guarantee amount to be refunded"
               />
             </div>
@@ -554,7 +571,7 @@ export const ManageTeeTimeListing = ({
               <div className="font-[300] text-primary-gray">
                 Merchandise Purchase Refund{" "}
                 <Tooltip
-                  trigger={<Info className="h-[14px] w-[14px]" />}
+                  trigger={<Info className="h-[0.875rem] w-[0.875rem]" />}
                   content="Merchandise Purchase amount to be refunded"
                 />
               </div>
@@ -572,7 +589,7 @@ export const ManageTeeTimeListing = ({
               {formatMoney(totalPayout)}
             </div>
           </div>
-          <div className="text-center text-[14px] font-[300] text-primary-gray">
+          <div className="text-center text-sm font-[300] text-primary-gray">
             All sales are final.
           </div>
           <div className="flex flex-col gap-2">
@@ -683,9 +700,9 @@ const TeeTimeItem = ({
           </div>
         </div>
       </div>
-      <div className="flex gap-4 text-[14px]">
-        <div className="w-[40px] ">
-          <Players className="ml-auto w-[30px]" />
+      <div className="flex gap-4 text-[0.875rem]">
+        <div className="w-[2.5rem] ">
+          <Players className="ml-auto w-[1.875rem]" />
         </div>
         {golferCount} {golferCount === 1 ? "golfer" : "golfers"}
       </div>

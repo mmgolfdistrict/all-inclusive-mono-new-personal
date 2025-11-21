@@ -10,7 +10,7 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 export class CourseExceptionService {
-  constructor(private readonly database: Db) {}
+  constructor(private readonly database: Db) { }
 
   async getCourseException(courseId: string) {
     const courseData = await this.database
@@ -38,6 +38,8 @@ export class CourseExceptionService {
         displayType: courseException.displayType,
         startDate: courseException.startDate,
         endDate: courseException.endDate,
+        bgColor: courseException.bgColor,
+        color: courseException.color,
       })
       .from(courseException)
       .where(and(eq(courseException.courseId, courseId)))

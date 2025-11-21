@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useAppContext } from "~/contexts/AppContext";
@@ -12,13 +13,37 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { type ReactNode } from "react";
 import { Badge } from "../badge";
 import { FilledButton } from "../buttons/filled-button";
-import { Cashouts } from "./cashouts";
-import InvitedTeeTime from "./invited-tee-time";
-import { MyListedTeeTimes } from "./my-listed-tee-times";
-import { OffersReceived } from "./offers-received";
-import { OffersSent } from "./offers-sent";
 import { Owned } from "./owned";
-import { TransactionHistory } from "./transaction-history";
+
+const OffersReceived = dynamic(
+  () => import("./offers-received").then((mod) => mod.default),
+  { ssr: false }
+);
+
+const OffersSent = dynamic(
+  () => import("./offers-sent").then((mod) => mod.default),
+  { ssr: false }
+);
+
+const TransactionHistory = dynamic(
+  () => import("./transaction-history").then((mod) => mod.TransactionHistory),
+  { ssr: false }
+);
+
+const MyListedTeeTimes = dynamic(
+  () => import("./my-listed-tee-times").then((mod) => mod.MyListedTeeTimes),
+  { ssr: false }
+);
+
+const InvitedTeeTime = dynamic(
+  () => import("./invited-tee-time").then((mod) => mod.default),
+  { ssr: false }
+);
+
+const Cashouts = dynamic(
+  () => import("./cashouts").then((mod) => mod.Cashouts),
+  { ssr: false }
+);
 
 export const TableView = () => {
   const { course } = useCourseContext();
@@ -30,7 +55,7 @@ export const TableView = () => {
     : "owned";
   const { user } = useUserContext();
   const pathname = usePathname();
-  const { setPrevPath,setActivePage } = useAppContext();
+  const { setPrevPath, setActivePage } = useAppContext();
   setActivePage("my-tee-box")
 
   const { data: unreadOffers, refetch } =
@@ -59,7 +84,7 @@ export const TableView = () => {
 
   return (
     <Tabs.Root value={section ?? "owned"}>
-      <Tabs.List className="flex gap-10 overflow-x-auto border-b border-stroke bg-white px-6 pt-4 md:rounded-t-xl">
+      <Tabs.List className="flex gap-10 overflow-x-auto border-b border-stroke bg-white px-[1.5rem] pt-[1rem] md:rounded-t-xl">
         <TabTrigger id="sell-owned" value={"owned"}>
           Owned
         </TabTrigger>
@@ -85,7 +110,7 @@ export const TableView = () => {
             >
               Offers Received{" "}
               {unreadOffers && unreadOffers > 0 ? (
-                <Badge className="py-[.15rem] text-[12px]">
+                <Badge className="py-[.15rem] text-xs">
                   {unreadOffers}
                 </Badge>
               ) : null}
@@ -95,8 +120,8 @@ export const TableView = () => {
         <TabTrigger id="sell-transaction-history" value={"transaction-history"}>
           Transaction History
         </TabTrigger>
-        <TabTrigger id="sell-cash-out-history" value={"cashouts"}>
-          Cash out History
+        <TabTrigger id="sell-cash-out-history" value={"withdrawal"}>
+          Withdrawal History
         </TabTrigger>
       </Tabs.List>
       {!session ? (
@@ -157,7 +182,7 @@ export const TableView = () => {
             <TransactionHistory />
           </Tabs.Content>
           <Tabs.Content
-            value="cashouts"
+            value="withdrawal"
             className="bg-white p-2"
             id="sell-cash-out-history"
           >
@@ -190,7 +215,11 @@ const TabTrigger = ({
     >
       <Tabs.Trigger
         value={value}
-        className="flex items-center gap-2 whitespace-nowrap pb-4 text-[16px] text-secondary-black outline-none data-[state=active]:border-b-2 data-[state=active]:border-black md:text-[24px]"
+        className="flex items-center gap-2 whitespace-nowrap px-4 py-2 text-base text-secondary-black
+             data-[state=active]:border data-[state=active]:border-primary
+             data-[state=active]:rounded-lg data-[state=active]:text-primary
+             data-[state=active]:-mt-1
+             outline-none md:text-2xl"
       >
         {children}
       </Tabs.Trigger>

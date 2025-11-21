@@ -3,7 +3,7 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import { formatTime } from "~/utils/formatters";
+import { formatTime, getTime } from "~/utils/formatters";
 import { type InviteFriend } from "~/utils/types";
 import { useMemo, useState } from "react";
 import { Avatar } from "../../avatar";
@@ -14,10 +14,10 @@ import { ListTeeTime } from "../list-tee-time";
 import { ManageOwnedTeeTime } from "../manage-owned-tee-time";
 import { SkeletonRow } from "../skeleton-row";
 import { type OwnedTeeTime } from "../owned";
-import Link from "next/link";
 import { CollectPayment } from "../collect-payment";
+import dayjs from "dayjs";
 
-export const MobileOwned = () => {
+const MobileOwned = () => {
   const { course } = useCourseContext();
   const courseId = course?.id;
   const [isListTeeTimeOpen, setIsListTeeTimeOpen] = useState<boolean>(false);
@@ -27,14 +27,24 @@ export const MobileOwned = () => {
     useState<boolean>(false);
   const [isManageOwnedTeeTimeOpen, setIsManageOwnedTeeTimeOpen] =
     useState<boolean>(false);
-  const [sideBarClose, setIsSideBarClose] = useState<boolean>(false)
+  const [sideBarClose, setIsSideBarClose] = useState<boolean>(false);
+
+  const userTime = useMemo(() => {
+    const currentLocalTime = dayjs(new Date()).format("YYYY-MM-DDTHH:mm:ss"); // browser's current time in ISO format
+    return currentLocalTime;
+  }, []);
+
   const { data, isLoading, isError, error, refetch } =
     api.teeBox.getOwnedTeeTimes.useQuery(
       {
         courseId: courseId ?? "",
+        userTime: userTime ?? "",
       },
-      { enabled: !!courseId }
+      {
+        enabled: !!courseId && !!userTime // ensure userTime is set before triggering query
+      }
     );
+
 
   const [selectedTeeTime, setSelectedTeeTime] = useState<
     OwnedTeeTime | undefined
@@ -75,7 +85,7 @@ export const MobileOwned = () => {
 
   if (isError && error) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         {error?.message ?? "An error occurred fetching tee times"}
       </div>
     );
@@ -88,7 +98,7 @@ export const MobileOwned = () => {
     !error
   ) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         No owned tee times found
       </div>
     );
@@ -96,7 +106,7 @@ export const MobileOwned = () => {
 
   return (
     <>
-      <div className="relative flex max-w-full flex-col overflow-auto text-[14px] m-2 px-2">
+      <div className="relative flex max-w-full flex-col overflow-auto text-sm m-2 px-2">
         {isLoading
           ? Array(3)
             .fill(null)
@@ -126,6 +136,7 @@ export const MobileOwned = () => {
               isGroupBooking={i.isGroupBooking}
               isCollectPaymemtEnabled={Boolean(isCollectPaymemtEnabled)}
               collectPaymentList={() => collectPaymentList(i)}
+              teeTimeInfo={i.teeTimeInfo}
             />
           ))}
       </div>
@@ -188,7 +199,8 @@ const TableCard = ({
   bookingStatus,
   isGroupBooking,
   isCollectPaymemtEnabled,
-  collectPaymentList
+  collectPaymentList,
+  teeTimeInfo
 }: {
   course: string;
   date: string;
@@ -210,13 +222,25 @@ const TableCard = ({
   isGroupBooking: boolean;
   isCollectPaymemtEnabled: boolean;
   collectPaymentList: () => void;
+  teeTimeInfo?: {
+    time: string;
+    player: number;
+  }[]
 }) => {
-  const href = useMemo(() => {
-    if (isListed) {
-      return `/${courseId}/${teeTimeId}/listing/${listingId}`;
-    }
-    return `/${courseId}/${teeTimeId}/owner/${ownerId}`;
-  }, [courseId, teeTimeId, listingId, ownerId, isListed]);
+  const [_teeTimeId, _listingId, _ownerId] = [teeTimeId, listingId, ownerId];
+  const getPlayersPerSlotLabelFull = (): string => {
+    if (teeTimeInfo === undefined) return "";
+    const parts = teeTimeInfo.map((teeTime) => `${getTime(teeTime.time, timezoneCorrection)
+      } (${teeTime.player})`.replace(/ /g, "\u00A0"));
+    return parts.join(" • ");
+  };
+
+  // const href = useMemo(() => {
+  //   if (isListed) {
+  //     return `/${courseId}/${teeTimeId}/listing/${listingId}`;
+  //   }
+  //   return `/${courseId}/${teeTimeId}/owner/${ownerId}`;
+  // }, [courseId, teeTimeId, listingId, ownerId, isListed]);
 
   return (
     <div className="card w-full border border-gray-300 rounded-lg shadow-md my-2 py-2">
@@ -224,13 +248,13 @@ const TableCard = ({
         <table className="w-full text-sm text-left text-gray-500">
           <tbody className="text-xs text-gray-700 bg-gray-50">
             <tr className="border-b border-gray-300">
-              <th scope="col" className="px-2 py-1">Course</th>
+              <th scope="col" className="px-2 py-1 w-[40%]">Course</th>
               <td>
                 {isGroupBooking ? (
                   <div className="flex items-center gap-2">
                     <Avatar src={iconSrc} />
                     <div className="flex flex-col">
-                      <div className="whitespace-nowrap underline text-secondary-black">
+                      <div className="whitespace-nowrap text-secondary-black">
                         {course}
                       </div>
                       <div className="text-primary-gray unmask-time">
@@ -239,28 +263,23 @@ const TableCard = ({
                     </div>
                   </div>
                 ) : (
-                  <Link
-                    href={href}
-                    className="flex items-center gap-2"
-                    data-testid="course-tee-time-listing-id"
-                    data-test={teeTimeId}
-                    data-qa={courseId}
+                  <div className="flex items-center gap-2"
                   >
                     <Avatar src={iconSrc} />
                     <div className="flex flex-col">
-                      <div className="whitespace-normal overflow-y-auto underline text-secondary-black">
+                      <div className="whitespace-normal overflow-y-auto text-secondary-black">
                         {course}
                       </div>
                       <div className="text-primary-gray unmask-time">
                         {formatTime(date, false, timezoneCorrection)}
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 )}
               </td>
             </tr>
             <tr className="border-b border-gray-300">
-              <th scope="col" className="px-2 py-1">
+              <th scope="col" className="px-2 py-1 w-[40%]">
                 <p>Tee Time</p>
                 <p># of Golfers</p>
               </th>
@@ -280,8 +299,20 @@ const TableCard = ({
                 </div>
               </td>
             </tr>
+            {isGroupBooking ? <tr className="border-b border-gray-300 ">
+              <th scope="col" className="px-2 py-1 w-[40%]">
+                <p>Tee Time</p>
+                <p>Player Distribution</p>
+              </th>
+              <td>
+                <div className="block text-[0.75rem] text-wrap md:text-[0.875rem] text-primary-gray mt-1">
+                  {getPlayersPerSlotLabelFull()}
+                </div>
+              </td>
+            </tr>
+              : null}
             <tr className="border-b border-gray-300">
-              <th className="px-2 py-1">
+              <th className="px-2 py-1 w-[40%]">
                 <p>Status</p>
                 <p>Booking Status</p>
               </th>
@@ -296,25 +327,29 @@ const TableCard = ({
             </tr>
             <tr>
               <td className="whitespace-nowrap px-2 py-2" colSpan={2}>
-                <div className="flex w-full justify-center gap-2">
+                <div className="flex flex-col w-full gap-2">
+                  {/* Row 1: Request Payment */}
                   {golfers.length > 1 && isCollectPaymemtEnabled && (
-                    <div className="flex flex-col items-center justify-center min-h-[100px]">
+                    <div className="flex items-center w-full gap-3">
                       <FilledButton
-                        className="min-w-[145px] mt-5"
+                        className="w-1/2"
                         onClick={collectPaymentList}
                         data-testid="sell-button-id"
                         data-test={courseId}
                         data-qa={course}
                         id="sell-teetime-button"
                       >
-                        Collect payment
+                        Request payment
                       </FilledButton>
-                      <span className="text-xs text-gray-500 mt-1">Split Cost with your group</span>
+                      <span className="text-xs text-gray-500">Split Cost with your group</span>
                     </div>
                   )}
-                  {golfers.length > 1 && (
-                    <div className="flex flex-col items-center justify-center min-h-[100px]" id="manage-teetime-button">
+
+                  {/* Row 2: Invite Players + Sell / Cancel */}
+                  <div className="flex w-full gap-2">
+                    {golfers.length > 1 && (
                       <OutlineButton
+                        className="w-1/2"
                         onClick={openManageListTeeTime}
                         data-testid="manage-button-id"
                         data-test={courseId}
@@ -322,12 +357,11 @@ const TableCard = ({
                       >
                         Invite Players
                       </OutlineButton>
-                    </div>
-                  )}
-                  <div className="flex flex-col items-center justify-center min-h-[100px]">
+                    )}
+
                     {isListed ? (
                       <FilledButton
-                        className="min-w-[145px]"
+                        className="w-1/2"
                         onClick={openCancelListing}
                         data-testid="cancel-listing-button-id"
                         data-test={courseId}
@@ -337,7 +371,7 @@ const TableCard = ({
                       </FilledButton>
                     ) : (
                       <FilledButton
-                        className="min-w-[145px]"
+                        className="w-1/2"
                         onClick={openListTeeTime}
                         data-testid="sell-button-id"
                         data-test={courseId}
@@ -348,9 +382,11 @@ const TableCard = ({
                       </FilledButton>
                     )}
                   </div>
+
                 </div>
               </td>
             </tr>
+
 
           </tbody>
         </table>
@@ -358,3 +394,5 @@ const TableCard = ({
     </div>
   );
 };
+
+export default MobileOwned;

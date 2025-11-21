@@ -125,14 +125,14 @@ const MerchandiseCarousel: React.FC<MerchandiseCarouselProps> = ({
 
     return (
         <div className="relative" ref={componentContainerRef} >
-            {title && <div className='flex gap-1 items-center mb-3'>
+            {/* {title && <div className='flex gap-1 items-center mb-3'>
                 <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
                 <Tooltip
-                    trigger={<Info className="h-[20px] w-[20px] text-primary-gray" />}
+                    trigger={<Info className="h-[1.25rem] w-[1.25rem] text-primary-gray" />}
                     content="Prepaying for add-ons guarantees your availability for your rentals and may be cheaper than paying at the course."
                 />
             </div>
-            }
+            } */}
             <div
                 className="flex overflow-x-auto gap-4 pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
                 ref={scrollableContainerRef}
@@ -184,7 +184,7 @@ const MerchandiseInfoPopup: React.FC<MerchandiseInfoPopupProps> = ({
     return (
         <div
             ref={popupRef}
-            className="absolute z-10 bg-white border border-primary rounded-lg p-4 shadow-lg flex flex-col gap-2 w-full max-w-[460px]"
+            className="absolute z-10 bg-white border border-primary rounded-lg p-4 shadow-lg flex flex-col gap-2 w-full max-w-[28.75rem]"
             style={{
                 top: `${position.top}px`,
                 left: `${position.left}px`,
@@ -209,7 +209,7 @@ const MerchandiseInfoPopup: React.FC<MerchandiseInfoPopupProps> = ({
                         ) : null
                     }
                     <div className='flex flex-col gap-1'>
-                        <h3 className="text-md font-semibold text-gray-800 line-clamp-1">{item.caption}</h3>
+                        <h3 className="text-justify text-md font-semibold text-gray-800 line-clamp-1">{item.caption}</h3>
                         <p className="text-sm text-gray-600">
                             {item.tooltip}
                         </p>
@@ -220,7 +220,7 @@ const MerchandiseInfoPopup: React.FC<MerchandiseInfoPopupProps> = ({
                     className="text-gray-500 hover:text-gray-700"
                     aria-label="Close merchandise details"
                 >
-                    <Close className="h-[25px] w-[25px]" />
+                    <Close className="h-[1.5625rem] w-[1.5625rem]" />
                 </button>
             </div>
 

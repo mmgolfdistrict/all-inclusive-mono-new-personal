@@ -7,7 +7,7 @@ import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
 import { formatMoney, formatTime } from "~/utils/formatters";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ComponentProps } from "react";
+import { useEffect, useState, type ComponentProps, useMemo } from "react";
 import { toast } from "react-toastify";
 import { useCopyToClipboard } from "usehooks-ts";
 import { FilledButton } from "../buttons/filled-button";
@@ -33,8 +33,11 @@ export const ListedDetails = ({
   teeTimeId: string;
   props?: ComponentProps<"div">;
 }) => {
-  const { course } = useCourseContext();
+  const { course, getAllowedPlayersForTeeTime } = useCourseContext();
   const { setPrevPath } = useAppContext();
+  const allowedPlayers = useMemo(() => getAllowedPlayersForTeeTime(), [course]);
+
+  const numberOfPlayers = allowedPlayers?.numberOfPlayers;
   const [players, setPlayers] = useState<string>("1");
   const [, copy] = useCopyToClipboard();
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -45,7 +48,7 @@ export const ListedDetails = ({
     api.searchRouter.getListingById.useQuery({ listingId: listingId });
   const { refetch: refetchStillListed } = api.teeBox.checkIfTeeTimeStillListedByListingId.useQuery({
     listingId: listingId
-  }) 
+  })
   const getCache = api.cache.getCache.useMutation();
 
   const { user } = useUserContext();
@@ -191,12 +194,12 @@ export const ListedDetails = ({
               players={players}
               setPlayers={setPlayers}
               playersOptions={PlayersOptions}
-                  availableSlots={data?.availableSlots ?? 0}
-                  isDisabled={data?.allowSplit === false}
+              availableSlots={data?.availableSlots ?? 0}
+              isDisabled={data?.allowSplit === false}
               teeTimeId={teeTimeId}
-                  numberOfPlayers={PlayersOptions.map((player) => player <= (data?.availableSlots ?? 0).toString() ? player : "")}
+              numberOfPlayers={PlayersOptions.map((player) => player <= (data?.availableSlots ?? 0).toString() ? player : "")}
               status={"SECOND_HAND"}
-                  allowSplit={data?.allowSplit}
+              allowSplit={data?.allowSplit}
             />
           </div>
           <div className="flex flex-col flex-wrap justify-between gap-2 md:flex-row">

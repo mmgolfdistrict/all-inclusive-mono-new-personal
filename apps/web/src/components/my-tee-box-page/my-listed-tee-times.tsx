@@ -77,7 +77,7 @@ export const MyListedTeeTimes = () => {
 
   if (isError && error) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         {error?.message ?? "An error occurred fetching tee times"}
       </div>
     );
@@ -90,7 +90,7 @@ export const MyListedTeeTimes = () => {
     !error
   ) {
     return (
-      <div className="text-center h-[200px] flex items-center justify-center">
+      <div className="text-center h-[12.5rem] flex items-center justify-center">
         No listed tee times found
       </div>
     );
@@ -98,7 +98,7 @@ export const MyListedTeeTimes = () => {
 
   return (
     <>
-      <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-[14px] md:pb-3">
+      <div className="relative flex max-w-full flex-col gap-4  overflow-auto pb-2  text-sm md:pb-3">
         <table className="w-full table-auto  overflow-auto">
           <thead className="top-0 table-header-group">
             <tr className="text-left">
@@ -109,7 +109,7 @@ export const MyListedTeeTimes = () => {
               <TableHeader text="" className="text-right" />
             </tr>
           </thead>
-          <tbody className={`max-h-[300px] w-full flex-col overflow-scroll`}>
+          <tbody className={`max-h-[18.75rem] w-full flex-col overflow-scroll`}>
             {isLoading
               ? Array(3)
                 .fill(null)
@@ -188,23 +188,17 @@ const TableRow = ({
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
       <td className="gap-2 px-4 py-3">
-        <Link
-          href={`/${courseId}/${teeTimeId}/listing/${listingId}`}
-          className="flex items-center gap-2"
-          data-testid="course-listing-id"
-          data-test={listingId}
-          data-qa={teeTimeId}
-        >
-          <Avatar src={iconSrc} />
+        <div className="flex items-center gap-2">
+          <Avatar src={iconSrc} isRounded={false} />
           <div className="flex flex-col">
-            <div className="whitespace-nowrap underline text-secondary-black">
+            <div className="whitespace-nowrap text-secondary-black">
               {course}
             </div>
             <div className="text-primary-gray unmask-time">
               {formatTime(date, false, timezoneCorrection)}
             </div>
           </div>
-        </Link>
+        </div>
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         {formatMoney(listedPrice)}
