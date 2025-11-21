@@ -1,17 +1,18 @@
 "use client";
 
+// import { ConnectAccount } from "~/components/account-settings-page/connect-account";
 import { useSession } from "@golf-district/auth/nextjs-exports";
 import { AddCreditCard } from "~/components/account-settings-page/addCreditCard";
 import { BalanceHistory } from "~/components/account-settings-page/balance-history";
 import { EditProfileForm } from "~/components/account-settings-page/edit-profile-form";
 import { NotificationSettings } from "~/components/account-settings-page/notification-settings";
 import { PaymentInfoMangeProfile } from "~/components/account-settings-page/payment-info";
+// import { SavedBankDetails } from "~/components/account-settings-page/savedBankDetails";
 import { GoBack } from "~/components/buttons/go-back";
 import { ProfileDetails } from "~/components/profile-page/profile-details";
 import { useUser } from "~/hooks/useUser";
 import { useRouter } from "next/navigation";
 import { useAppContext } from "~/contexts/AppContext";
-import { useEffect } from "react";
 
 export default function ManangeProfile({
   params,
@@ -24,9 +25,22 @@ export default function ManangeProfile({
   const { status, data } = useSession();
   const { isLoading: isUserLoading, data: user } = useUser(userId);
   const { setActivePage } = useAppContext();
-  useEffect(() => {
-    setActivePage("account-settings");
-  }, [setActivePage]);
+  setActivePage("account-settings")
+
+  // const { data: systemNotifications } =
+  //   api.systemNotification.getSystemNotification.useQuery({});
+
+  // const { data: courseGlobalNotification } =
+  //   api.systemNotification.getCourseGlobalNotification.useQuery({
+  //     courseId: courseId ?? "",
+  //   });
+
+  // const notificationsCount =
+  //   (systemNotifications ? systemNotifications.length : 0) +
+  //   (courseGlobalNotification ? courseGlobalNotification.length : 0);
+
+  // const marginTop =
+  //   notificationsCount > 0 ? `mt-${notificationsCount * 6}` : "";
 
   if (
     status === "unauthenticated" ||
@@ -48,18 +62,26 @@ export default function ManangeProfile({
             <BalanceHistory userId={userId} />
           </div>
           <div className="w-full md:w-[50%] h-inherit">
-            <NotificationSettings data-testid="profile-notification" />
+            {/* <PrivacySettings /> */}
+            <NotificationSettings />
           </div>
+
+          {/* <ConnectAccount userId={userId} /> */}
         </div>
+        {/* <div className="flex h-full flex-col gap-4 md:flex-row">
+          <PrivacySettings />
+          <NotificationSettings />
+        </div> */}
         <div className="flex flex-col gap-4 md:flex-row">
           <div className="md:w-[50%]">
-            <EditProfileForm data-testid="profile-edit-form" />
+            <EditProfileForm />
           </div>
           <div className="flex flex-col gap-4 md:flex-col md:w-[50%]">
             <AddCreditCard />
             {!isUserLoading && user?.allowDeleteCreditCard ? (
               <PaymentInfoMangeProfile />
             ) : null}
+            {/* <SavedBankDetails /> */}
           </div>
         </div>
       </section>

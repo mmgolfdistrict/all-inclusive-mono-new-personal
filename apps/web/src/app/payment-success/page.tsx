@@ -17,26 +17,17 @@ const SplitPaymentSuccessPage = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const isSuccess = paymentStatus === "succeeded";
   const { entity } = useAppContext();
-  const { data: result, isLoading, error } =
-    api.checkout.updateSplitPaymentStatus.useQuery(
-      {
-        paymentId,
-        referencePaymentId,
-        courseLogo: course?.logo || "",
-        color1: entity?.color1 ?? "#000000",
-      },
-      {
-        onError: (err) => setErrorMessage(err.message || "Something went wrong."),
-      }
-    );
-
+  const { data: result, isLoading: isLoading } =
+    api.checkout.updateSplitPaymentStatus.useQuery({ paymentId: paymentId, referencePaymentId: referencePaymentId, courseLogo: course?.logo || "", color1: entity?.color1 ?? "#000000" });
   return (
     <Fragment>
       <div className="flex items-center justify-center h-screen bg-gray-100">
         {isLoading ? (
           <Loader size={100} />
         ) : errorMessage ? <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md text-center">
-          <h2 className="text-3xl font-bold mt-4 text-red">Payment Status</h2>
+          <h2 className="text-3xl font-bold mt-4 text-red">
+            Payment Status
+          </h2>
           <p className="text-gray-700 mt-2">{errorMessage}</p>
           <button
             onClick={() => {

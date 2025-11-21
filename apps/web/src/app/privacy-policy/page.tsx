@@ -31,7 +31,8 @@ export default function PrivacyPolicy({
 
   return (
     <>
-      <LoadingContainer data-testid="loading-container" isLoading={isLoading} loadingText="Loading...">
+      <LoadingContainer isLoading={isLoading}>
+        <div></div>
       </LoadingContainer>
       <div style={{ marginTop }} className="mx-auto flex items-center justify-between px-4 md:max-w-[100rem] md:px-6">
         <GoBack href="" usePrevRoute={true} text={`Back`} />
