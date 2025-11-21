@@ -175,7 +175,7 @@ export const CheckoutForm = ({
     };
   }, [router]);
 
-
+  const { data: failedBooking } = api.failedBooking.userHasFailedBooking.useQuery({ userId: user?.id || '' });
 
   useEffect(function getCurrentCountryCode() {
     const phoneNumber = userData?.phoneNumber;
@@ -1939,11 +1939,12 @@ export const CheckoutForm = ({
           ) : (
             ""
           ))}
+        {failedBooking?.isFailedBooking && (<p className="pb-2 text-red text-justify">{failedBooking?.message}</p>)}
         {nextAction?.type === "redirect_to_url" ? (
           <Fragment>
             <FilledButton
               className={`w-full rounded-full disabled:opacity-60`}
-              disabled={!hyper || !widgets || callingRef || !isChecked}
+              disabled={!hyper || !widgets || callingRef || !isChecked || failedBooking?.isFailedBooking}
               onClick={() => {
                 if (nextAction?.redirect_to_url) {
                   window.location.href = nextAction?.redirect_to_url;
@@ -1960,7 +1961,7 @@ export const CheckoutForm = ({
             type="submit"
             className={`w-full rounded-full disabled:opacity-60`}
             disabled={
-              isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername || !isChecked || isUpdatingPaymentIntent || !maxReservation?.success
+              isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername || !isChecked || isUpdatingPaymentIntent || !maxReservation?.success || failedBooking?.isFailedBooking
             }
             data-testid="pay-now-id"
           >
