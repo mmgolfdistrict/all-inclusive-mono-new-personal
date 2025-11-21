@@ -271,6 +271,7 @@ export class TokenizeService {
         cdnKey: assets.key,
         extension: assets.extension,
         timezoneCorrection: courses.timezoneCorrection,
+        timezoneISO: courses.timezoneISO,
       })
       .from(teeTimes)
       .where(isFirstHandGroupBooking ? inArray(teeTimes.id, teeTimeIds) : eq(teeTimes.id, providerTeeTimeId))
@@ -938,6 +939,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         playTime: this.extractTime(
           formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0)
         ),
+        courseTimeZone: existingTeeTime.timezoneISO ?? "",
       };
 
       template = {
@@ -975,6 +977,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         playTime: this.extractTime(
           formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0)
         ),
+        courseTimeZone: existingTeeTime.timezoneISO ?? "",
       };
 
       template = {
