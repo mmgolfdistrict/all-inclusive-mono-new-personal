@@ -223,7 +223,7 @@ export default function RegisterPage() {
   const handleCheckProfanity = async (text: string) => {
     if (!text) return;
     const data = await checkProfanity({ text });
-    if (data?.isProfane) {
+    if (data.isProfane) {
       setError("username", {
         message: "Handle not available.",
       });
@@ -327,12 +327,6 @@ export default function RegisterPage() {
   };
 
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
-    const onReCAPTCHAChange = (captchaCode: string | null | undefined) => {
-      if (!captchaCode) {
-        return;
-      }
-      setValue("ReCAPTCHA", captchaCode); // <-- This is the key line being verified by your test click
-    };
     setIsSubmitting(true);
     if (profanityCheckData?.isProfane) {
       setError("username", {
@@ -378,13 +372,11 @@ export default function RegisterPage() {
     setValue("ReCAPTCHA", captchaCode);
   };
 
-  const rmfPassword = watch("password");
-
   const passwordFeedback = useMemo(() => {
-    if (!rmfPassword) return; // Check the RHF value
-    const feedback = isValidPassword(rmfPassword).feedback;
+    if (!password) return;
+    const feedback = isValidPassword(password).feedback;
     return feedback;
-  }, [rmfPassword]);
+  }, [password]);
 
   return (
     <main className="bg-secondary-white py-4 md:py-6">
@@ -397,7 +389,7 @@ export default function RegisterPage() {
           select the respective social icon to login. The below form is not
           require for social logins.
         </p>
-        <form data-testid="register-form" className="flex flex-col gap-2" role="form" onSubmit={handleSubmit(onSubmit)}>
+        <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
           <Controller
             name="firstName"
             control={control}

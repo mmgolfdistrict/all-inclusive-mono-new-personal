@@ -1,6 +1,5 @@
 "use client";
 
-import React from 'react';
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import type { Dispatch, SetStateAction } from "react";
 import {

@@ -43,19 +43,14 @@ export const AddCard = ({ refetchCards }: { refetchCards: () => unknown }) => {
   const addCard = api.checkout.createPaymentMethod.useMutation();
 
   const onSubmit: SubmitHandler<CreditCardSchemaType> = async (data) => {
-    const cleanedInput = data.cardNumber.replace(/\D/g, "");
-
-    // Get last 4 digits safely
-    const inputLast4 = cleanedInput.slice(-4);
-
-    // Validate against existing cards
     let error = false;
 
-    cards.forEach(card => {
-      // Ensure stored value is string
-      const storedLast4 = String(card.card?.last4_digits).padStart(4, "0");
-
-      if (storedLast4 === inputLast4) {
+    cards.forEach((card) => {
+      if (
+        !error &&
+        card?.card?.last4_digits &&
+        data.cardNumber.endsWith(card?.card?.last4_digits)
+      ) {
         error = true;
       }
     });

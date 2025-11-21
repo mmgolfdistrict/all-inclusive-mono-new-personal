@@ -267,7 +267,9 @@ export const EditProfileForm = () => {
           : userData?.bannerPicture
       );
       setProfilePhoto(
-        userData?.profilePicture?.includes("/defaults/") ? null : userData?.profilePicture
+        userData?.profilePicture.includes("/defaults/")
+          ? null
+          : userData?.profilePicture
       );
     }
   }, [isLoading, userData]);

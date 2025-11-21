@@ -1,4 +1,3 @@
-import React from 'react';
 import { TeeTimeSkeleton } from "./tee-time-skeleton";
 
 export const Skeleton = () => (
