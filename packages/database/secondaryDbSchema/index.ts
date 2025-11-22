@@ -19,7 +19,6 @@ import { userReminderNotificationAuditLogs } from "./userReminderNotificationAud
 import * as userWaitlistAuditLogs from "./userWaitlistAuditLogs";
 import * as userWaitlistRecords from "./userWaitlistRecords";
 import * as teeTimeIndexErrorLogs from "./teeTimeIndexErrorLogs";
-import * as automatedAgentTestLog from "./automatedAgentTestLog";
 
 export const schema = {
   ...teeTimeIndexLogs,
@@ -42,6 +41,5 @@ export const schema = {
   ...clarityMetrics,
   ...clarityDimensions,
   ...clarityMetricData,
-  ...teeTimeIndexErrorLogs,
-  ...automatedAgentTestLog
+  ...teeTimeIndexErrorLogs
 };
