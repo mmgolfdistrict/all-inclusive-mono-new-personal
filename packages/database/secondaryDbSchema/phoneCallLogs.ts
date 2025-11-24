@@ -9,6 +9,7 @@ export const phoneCallLogs = mySqlTable(
         id: varchar("id", { length: 36 }).notNull().primaryKey(),
         forwardingPhoneNumber: varchar("forwardingPhoneNumber", { length: 25 }).notNull(),
         callerPhoneNumber: varchar("callerPhoneNumber", { length: 25 }).notNull(),
+        courseId: varchar("courseId", { length: 36 }),
         sessionId: varchar("sessionId", { length: 36 }).notNull(),
         conversationId: varchar("conversationId", { length: 100 }),
         callSid: varchar("twillioCallSid", { length: 100 }),
