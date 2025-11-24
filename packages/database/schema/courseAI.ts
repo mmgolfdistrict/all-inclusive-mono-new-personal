@@ -7,7 +7,7 @@ import { mySqlTable } from "./_table";
 import { courses } from "./courses";
 
 export const courseAI = mySqlTable(
-    "courseAI",
+    "courseAi",
     {
         id: varchar("id", { length: 36 }).notNull().primaryKey(),
 
