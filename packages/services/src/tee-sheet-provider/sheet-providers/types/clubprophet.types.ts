@@ -100,7 +100,6 @@ export interface ClubProphetCustomerCreationData {
   lastName: string;
   email: string;
   phone: string;
-  acct: string;
 }
 
 export interface ClubProphetCustomerCreationResponse {
