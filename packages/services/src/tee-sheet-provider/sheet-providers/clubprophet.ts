@@ -452,6 +452,7 @@ export class clubprophet extends BaseProvider {
       phone: buyerData.phone ?? "",
       firstName: nameOfCustomer?.[0] ? nameOfCustomer[0] : "guest",
       lastName: nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A",
+      acct: `GD${buyerData.accountNumber}`
     };
     return customer;
   }
