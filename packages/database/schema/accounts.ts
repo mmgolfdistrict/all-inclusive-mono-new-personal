@@ -11,7 +11,7 @@ export const accounts = mySqlTable(
     type: varchar("type", { length: 255 }).$type<AdapterAccount["type"]>().notNull(),
     provider: varchar("provider", { length: 255 }).notNull(),
     providerAccountId: varchar("providerAccountId", { length: 255 }).notNull(),
-    refresh_token: varchar("refresh_token", { length: 512 }),
+    refresh_token: varchar("refresh_token", { length: 1024 }),
     access_token: varchar("access_token", { length: 512 }),
     expires_at: int("expires_at"),
     token_type: varchar("token_type", { length: 255 }),
