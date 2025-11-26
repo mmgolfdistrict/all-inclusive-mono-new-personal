@@ -12,7 +12,7 @@ export const accounts = mySqlTable(
     provider: varchar("provider", { length: 255 }).notNull(),
     providerAccountId: varchar("providerAccountId", { length: 255 }).notNull(),
     refresh_token: varchar("refresh_token", { length: 1024 }),
-    access_token: varchar("access_token", { length: 512 }),
+    access_token: varchar("access_token", { length: 2048 }),
     expires_at: int("expires_at"),
     token_type: varchar("token_type", { length: 255 }),
     scope: varchar("scope", { length: 255 }),
