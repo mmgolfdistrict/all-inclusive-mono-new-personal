@@ -211,7 +211,6 @@ export const {
   ],
   logger: {
     error(error: Error) {
-      debugger;
       console.log(error.message);
     },
   },
