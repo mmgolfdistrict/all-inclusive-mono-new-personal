@@ -86,6 +86,9 @@ export const courses = mySqlTable(
     merchandiseTaxPercent: int("merchandiseTaxPercent").default(0),
     phoneNumber: varchar("phoneNumber", { length: 20 }),
     groupBookingFeePerPlayer: int("groupBookingFeePerPlayer"),
+    allowedDomainList: varchar("allowedDomainList", { length: 256 })
+      .notNull()
+      .default("example.com"),
   },
   (table) => {
     return {
