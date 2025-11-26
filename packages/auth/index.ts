@@ -190,9 +190,28 @@ export const {
       },
       allowDangerousEmailAccountLinking: true,
     }),
+    // Keycloak provider
+    {
+      id: "keycloak",
+      name: "Keycloak",
+      type: "oidc", // use OIDC instead of oauth
+      issuer: process.env.KEYCLOAK_ISSUER, // MUST be realm URL
+      clientId: process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID,
+      clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name ?? profile.preferred_username,
+          email: profile.email,
+          image: profile.picture,
+        };
+      },
+    },
   ],
   logger: {
     error(error: Error) {
+      debugger;
       console.log(error.message);
     },
   },
@@ -221,6 +240,7 @@ export const {
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async signIn({ user, account }) {
+      debugger;
       if ("error" in user && "message" in user) {
         return `/login?error=${user.message}`;
       }

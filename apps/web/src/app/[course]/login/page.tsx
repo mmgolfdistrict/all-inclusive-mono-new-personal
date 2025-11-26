@@ -353,6 +353,24 @@ export default function Login() {
     }
   };
 
+  const signinWithKeycloak = async () => {
+    try {
+      await signIn("keycloak", {
+        callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+          : extractedURL ?? "/"
+          }`,
+        redirect: true,
+      });
+      if (typeof window !== "undefined") {
+        localStorage.setItem("loginMethod", "KEYCLOAK");
+        localStorage.setItem("showBalanceToast", "true");
+      }
+    } catch (error) {
+      console.log("Keycloak sign-in error:", error);
+    }
+  };
+
   const linkedinSignIn = async () => {
     try {
       setLinkedinIsLoading(true);
@@ -471,7 +489,21 @@ export default function Login() {
             Simply use any social login like Google to login quickly.
           </p>
         )}
-
+        {
+          process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID ? (
+            <div className="w-full rounded-lg shadow-outline">
+              <SquareButton
+                onClick={signinWithKeycloak}
+                className="flex w-full items-center justify-center gap-3 text-primary-gray shadow-google-btn"
+                data-testid="login-with-google-id"
+              >
+                <Fragment>
+                  <Google className="w-6" />
+                  Log In with KeyCloak
+                </Fragment>
+              </SquareButton>
+            </div>
+          ) : null}
         {isMethodSupported(AuthenticationMethodEnum.GOOGLE) &&
           process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
           <div className="w-full rounded-lg shadow-outline">
@@ -638,6 +670,7 @@ export default function Login() {
             </FilledButton>
           </form>
         )}
+
       </section>
       {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) && (
         <div className="pt-4 text-center text-[0.875rem] text-primary-gray">
