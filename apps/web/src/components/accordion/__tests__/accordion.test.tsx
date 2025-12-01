@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect } from "vitest";
 import * as Accordion from "@radix-ui/react-accordion";
-import { AccordionRoot } from "./../accordion";
+import { AccordionRoot } from "../accordion";
 
 describe("AccordionRoot", () => {
     it("collapses and expands when trigger is clicked", async () => {
