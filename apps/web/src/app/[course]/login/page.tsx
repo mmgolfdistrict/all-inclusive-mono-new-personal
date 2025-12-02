@@ -9,6 +9,7 @@ import { SquareButton } from "~/components/buttons/square-button";
 import { Apple } from "~/components/icons/apple";
 import { Facebook } from "~/components/icons/facebook";
 import { Google } from "~/components/icons/google";
+import { Keycloak } from "~/components/icons/keycloak";
 import { Hidden } from "~/components/icons/hidden";
 import { LinkedinLogo } from "~/components/icons/linkedin";
 import { Visible } from "~/components/icons/visible";
@@ -498,7 +499,7 @@ export default function Login() {
                 data-testid="login-with-google-id"
               >
                 <Fragment>
-                  <Google className="w-6" />
+                  <Keycloak className="w-6" />
                   Log In with KeyCloak
                 </Fragment>
               </SquareButton>
