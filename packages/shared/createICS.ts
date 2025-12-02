@@ -76,7 +76,7 @@ export default function createICS(event: Event, sequence = 0): string {
 
   const formatICSDate = (d: dayjs.Dayjs) => d.format("YYYYMMDDTHHmmss");
 
-  const uidBase = event.reservationGroupId ?? event.reservationId ?? "reservation";
+  const uidBase = event.reservationGroupId ?? event.courseReservation ?? "reservation";
   const uid = `${uidBase}-${Date.now()}-${randomUUID()}@golfdistrict.com`;
 
   const dtStamp = dayjs.utc().format("YYYYMMDDTHHmmss") + "Z";
