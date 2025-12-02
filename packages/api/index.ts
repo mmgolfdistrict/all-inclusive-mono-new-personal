@@ -185,7 +185,9 @@ export const processUpdateWithdrawableBalance = async (req: { userId: string; am
     process.env.QSTASH_CURRENT_SIGNING_KEY!,
     process.env.QSTASH_NEXT_SIGNING_KEY!
   );
-  await updateWithdrawableBalanceService.processWebhook(req);
+  await updateWithdrawableBalanceService.processWebhook(req).catch((error) => {
+    console.log(error);
+  });
 };
 
 export const processHyperSwitchWebhook = async (req: any) => {
