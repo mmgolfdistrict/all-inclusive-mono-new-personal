@@ -943,6 +943,13 @@ export class SearchService extends CacheService {
     const firstHandSpecificCondition: SQL<unknown>[] = [];
     const secondHandSpecificCondition: SQL<unknown>[] = [];
 
+    firstHandSpecificCondition.push(
+      and(
+        gt(teeTimes.greenFeePerPlayer, 0),
+        gte(teeTimes.availableFirstHandSpots, (isGolferAny ? 1 : playersCount))
+      ) as any
+    );
+
     if (highestPrice !== upperPrice || lowestPrice !== lowerPrice) {
       firstHandSpecificCondition.push(
         sql`(${teeTimes.greenFeePerPlayer} + ${teeTimes.cartFeePerPlayer} + ${courses.markupFeesFixedPerPlayer})/100 >= ${lowerPrice}`
