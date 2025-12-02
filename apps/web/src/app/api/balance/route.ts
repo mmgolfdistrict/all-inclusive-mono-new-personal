@@ -6,7 +6,8 @@ export const POST = async (req: NextRequest) => {
     const body = (await req.json()) as { userId: string; amount: number };
     await processUpdateWithdrawableBalance(body);
     return NextResponse.json({ ok: true });
-  } catch (error) {
+  } catch (err) {
+    console.log(JSON.stringify(err))
     return NextResponse.json({ ok: false });
   }
 };
