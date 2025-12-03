@@ -54,24 +54,19 @@ export class clubprophet extends BaseProvider {
     const baseEndpoint = this.getBasePoint();
     const { RATECODE } = JSON.parse(this.providerConfiguration ?? "{}");
 
-    const url = `${baseEndpoint}/thirdpartyapi/api/v1/TeeSheet/TeeSheets`;
+    const fromDate = `${date}T00:00:00.000Z`;
+    const toDate = `${date}T23:59:58.000Z`;
+
+    const url = `${baseEndpoint}/thirdpartyapi/api/v2/TeeSheets/TeeSheets/${fromDate}/${toDate}/${courseId}?rateCode=${RATECODE}`;
 
     const headers = this.getHeaders(token);
-    const data = JSON.stringify({
-      fromDate: `${date}T00:00:04.192Z`,
-      toDate: `${date}T23:59:04.192Z`,
-      courseId: courseId,
-      rateCode: RATECODE,
-    });
 
     this.logger.info(`getTeeTimes - ${url}`);
-    this.logger.info(`getTeeTimesData - ${data}`);
     const config = {
       method: "GET",
       maxBodyLength: Infinity,
       url,
       headers,
-      data,
     };
     const resp = await axios.request(config as any);
     return resp.data as TeeTimeResponse[];
@@ -452,6 +447,7 @@ export class clubprophet extends BaseProvider {
       phone: buyerData.phone ?? "",
       firstName: nameOfCustomer?.[0] ? nameOfCustomer[0] : "guest",
       lastName: nameOfCustomer?.[1] ? nameOfCustomer[1] : "N/A",
+      acct: `GD${buyerData.accountNumber}`
     };
     return customer;
   }

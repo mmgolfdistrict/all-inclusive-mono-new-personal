@@ -24,6 +24,8 @@ import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
+import { OutlineButton } from "~/components/buttons/outline-button";
+import { Refresh } from "~/components/icons/refresh";
 
 function NotifyMe({ params }: { params: { course: string } }) {
   const router = useRouter();
@@ -210,6 +212,31 @@ function NotifyMe({ params }: { params: { course: string } }) {
       );
     setDisplayDates(datesToDisplay.join(", "));
   }, [selectedDates]);
+
+  const isModified =
+    selectedDates.length > 0 ||
+    players !== "1" ||
+    startTime[0] !== courseStartTimeNumber ||
+    startTime[1] !== courseEndTimeNumber;
+
+  const handleReset = () => {
+    setSelectedDates([]);
+    setDisplayDates("");
+    setLocalStartTime([
+      courseStartTimeNumber,
+      courseEndTimeNumber,
+    ]);
+    setStartTime([
+      courseStartTimeNumber,
+      courseEndTimeNumber,
+    ]);
+    setPlayers("1");
+    setTimeMobile([
+      courseStartTimeNumber,
+      courseEndTimeNumber,
+    ]);
+    toast.info("Selections reset");
+  };
 
   return (
     <section className="mx-auto px-2 flex w-full flex-col gap-4 pt-4 md:max-w-[85rem] md:px-6">
@@ -457,15 +484,26 @@ function NotifyMe({ params }: { params: { course: string } }) {
               />
             </div>
           </div>
-          <FilledButton
-            onClick={handleSubmit}
-            className="flex items-center justify-center gap-1 max-w-[12.5rem] w-full mt-4 self-center py-[.28rem] md:py-1.5 text-[0.625rem] md:text-[0.875rem] disabled:opacity-50 transition-opacity duration-300"
-            disabled={isCreatingNotifications}
-            id="notify-get-alerted"
-          >
-            <Bell width="0.9375rem" />
-            Get Alerted
-          </FilledButton>
+          <div className="flex justify-center items-center gap-3 mt-4">
+            <FilledButton
+              onClick={handleSubmit}
+              className="flex items-center justify-center gap-1 max-w-[12.5rem] w-full py-[.28rem] md:py-1.5 text-[0.625rem] md:text-[0.875rem] disabled:opacity-50 transition-opacity duration-300"
+              disabled={isCreatingNotifications}
+              id="notify-get-alerted"
+            >
+              <Bell width="0.9375rem" />
+              Get Alerted
+            </FilledButton>
+
+            <OutlineButton
+              onClick={handleReset}
+              disabled={!isModified}
+              className={`flex items-center justify-center gap-1 max-w-[12.5rem] w-full py-[.28rem] md:py-1.5 text-[0.625rem] md:text-[0.875rem] bg-gray-300 text-black transition-colors duration-300 ${!isModified && "opacity-50 cursor-not-allowed"}`}
+            >
+              <Refresh color={entity?.color1} width="0.75rem" />
+              Reset
+            </OutlineButton>
+          </div>
           <div className="flex justify-center items-center text-justify mt-2 italic text-primary-gray text-[0.75rem] md:text-[1rem] px-4 py-2 md:px-8 md:py-6">
             <p>
               Bookings are paid in advance and non-refundable. If plans change

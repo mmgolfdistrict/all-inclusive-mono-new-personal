@@ -46,7 +46,7 @@ export const CourseNav = () => {
   const session = useSession();
   const isAuthenticated =
     session.status === "authenticated" && !!session?.data?.user?.id;
-  const { setDateType } = useFiltersContext();
+  const { setDateType, setGolfers, setStartTime } = useFiltersContext();
   const router = useRouter();
   const bottomNavRef = useRef<HTMLDivElement | null>(null);
 
@@ -145,6 +145,8 @@ export const CourseNav = () => {
 
   const handleResetFilters = () => {
     setDateType("All");
+    // setGolfers("Any");
+    // setStartTime([course?.courseOpenTime ?? 0, course?.courseCloseTime ?? 0]);
   };
 
   const divHeight = !loadingCourseGlobalNotification || !loadingSystemNotifications ? document?.getElementById('header')?.offsetHeight || 0 : 0;

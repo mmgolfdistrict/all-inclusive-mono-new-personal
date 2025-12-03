@@ -5048,6 +5048,7 @@ export class BookingService {
         `${teeTime.time + 1}`.length === 3 ? `0${teeTime.time + 1}` : `${teeTime.time + 1}`,
         teeTime.providerDate.split("T")[0] ?? ""
       );
+
       if (providerDetailsGetTeeTime?.length) {
         const teeTimeData = provider.findTeeTimeById(teeTime.providerTeeTimeId, providerDetailsGetTeeTime);
 
@@ -5507,7 +5508,12 @@ export class BookingService {
           );
 
           //check if the teeTime has valid amount of spots available
-          const requiredSpots = Math.min(remainingPlayersToBook as number, minPlayersPerBooking as number);
+          let requiredSpots = Math.min(remainingPlayersToBook as number, minPlayersPerBooking as number);
+
+          if (remainingPlayersToBook === 5 && playerCount % 4 === 1) {
+            requiredSpots = 3
+          }
+
           if (requiredSpots > teeTime.firstHandSpotsAvailable) {
             void loggerService.errorLog({
               userId: userId,

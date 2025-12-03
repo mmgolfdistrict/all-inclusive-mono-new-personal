@@ -3,10 +3,10 @@ import GitHubProvider from "@auth/core/providers/github";
 import GoogleProvider from "@auth/core/providers/google";
 import LinkedInProvider from "@auth/core/providers/linkedin";
 import AppleProvider from "@auth/core/providers/apple";
+import KeycloakProvider from "@auth/core/providers/keycloak";
 import { eventHandler, toWebRequest } from "h3";
 import { SignJWT } from "jose";
 import { createPrivateKey } from "crypto";
-
 async function generateAppleClientSecret(): Promise<string> {
   const teamId = process.env.APPLE_TEAM_ID as string;
   const clientId = process.env.APPLE_CLIENT_ID as string;
@@ -61,6 +61,11 @@ export default eventHandler(async (event) =>
         clientId: process.env.APPLE_CLIENT_ID,
         clientSecret: process.env.APPLE_CLIENT_SECRET as string,
       }),
+      KeycloakProvider({
+        clientId: process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID as string,
+        clientSecret: process.env.KEYCLOAK_CLIENT_SECRET as string,
+        issuer: process.env.KEYCLOAK_ISSUER as string,
+      })
     ],
   })
 );
