@@ -34,7 +34,8 @@ import { formatMessage } from "~/utils/NotificationFormatter";
 import { GroupBooking } from "../icons/group-booking";
 import { SafeContent } from "~/utils/safe-content";
 
-export const CourseNav = () => {
+export const CourseNav = () =>
+{
   const { refetchMe } = useUserContext();
   const { entity, setPrevPath, isNavExpanded,
     setIsNavExpanded, setHeaderHeight } = useAppContext();
@@ -50,7 +51,8 @@ export const CourseNav = () => {
   const router = useRouter();
   const bottomNavRef = useRef<HTMLDivElement | null>(null);
 
-  const toggleNavExpansion = () => {
+  const toggleNavExpansion = () =>
+  {
     setIsNavExpanded(!isNavExpanded);
   };
 
@@ -77,7 +79,8 @@ export const CourseNav = () => {
 
   const auditLog = api.webhooks.auditLog.useMutation();
 
-  const logAudit = (func: () => unknown) => {
+  const logAudit = (func: () => unknown) =>
+  {
     auditLog
       .mutateAsync({
         userId: session?.data?.user?.id ?? "",
@@ -88,32 +91,42 @@ export const CourseNav = () => {
         eventId: "USER_LOGGED_OUT",
         json: `user logged out `,
       })
-      .then((res) => {
-        if (res) {
+      .then((res) =>
+      {
+        if (res)
+        {
           func();
         }
       })
-      .catch((err) => {
+      .catch((err) =>
+      {
         console.log("error", err);
       });
   };
 
-  useEffect(() => {
-    if (isAuthenticated) {
+  useEffect(() =>
+  {
+    if (isAuthenticated)
+    {
       void refetchMe();
     }
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    (() => {
-      if (isUserBlocked) {
-        logAudit(async () => {
+  useEffect(() =>
+  {
+    (() =>
+    {
+      if (isUserBlocked)
+      {
+        logAudit(async () =>
+        {
           localStorage.clear();
           sessionStorage.clear();
           session.data = null;
           session.status = "unauthenticated";
           await session.update(null);
-          if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
+          if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i)))
+          {
             const data = await signOut({
               callbackUrl: `/${courseId}`,
               redirect: false,
@@ -131,19 +144,24 @@ export const CourseNav = () => {
     })();
   }, [isUserBlocked]);
 
-  useEffect(() => {
-    if (isSideBarOpen && isMobile) {
+  useEffect(() =>
+  {
+    if (isSideBarOpen && isMobile)
+    {
       document.body.classList.add("overflow-hidden");
-    } else {
+    } else
+    {
       document.body.classList.remove("overflow-hidden");
     }
   }, [isSideBarOpen, isMobile]);
 
-  const toggleSideBar = () => {
+  const toggleSideBar = () =>
+  {
     setIsSideBarOpen(!isSideBarOpen);
   };
 
-  const handleResetFilters = () => {
+  const handleResetFilters = () =>
+  {
     setDateType("All");
     // setGolfers("Any");
     // setStartTime([course?.courseOpenTime ?? 0, course?.courseCloseTime ?? 0]);
@@ -271,10 +289,13 @@ export const CourseNav = () => {
                           ? "#"
                           : `/${course?.id}/login`
                       }
-                      onClick={(event) => {
-                        if (pathname === `/${course?.id}/login`) {
+                      onClick={(event) =>
+                      {
+                        if (pathname === `/${course?.id}/login`)
+                        {
                           event.preventDefault();
-                        } else {
+                        } else
+                        {
                           setPrevPath({
                             path: pathname,
                             createdAt: new Date().toISOString(),
@@ -286,7 +307,7 @@ export const CourseNav = () => {
                         className="hidden md:block"
                         data-testid="signin-button-id"
                       >
-                        Log In
+                        Login
                       </FilledButton>
                     </Link>
                   )
