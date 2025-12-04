@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { int, mysqlView, text, varchar } from "drizzle-orm/mysql-core";
 
 export const userACLView = mysqlView(
-    "user_acl_view",
+    "userACLView",
     {
         CourseID: int("CourseID"),
         CourseName: varchar("CourseName", { length: 255 }),
