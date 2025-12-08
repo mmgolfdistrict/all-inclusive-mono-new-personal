@@ -398,7 +398,7 @@ describe('RegisterPage', () => {
             // Wait for profanity check to run and error to appear
             await waitFor(() => {
                 expect(screen.getByText('Handle not available.')).toBeInTheDocument();
-            }, { timeout: 1500 }); // Increase timeout for debounced effects
+            });
 
             // Ensure registration mutation was NOT called
             expect(mockRegisterMutateAsync).not.toHaveBeenCalled();
