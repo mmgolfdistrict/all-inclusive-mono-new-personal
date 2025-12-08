@@ -1,5 +1,8 @@
 import { sql } from "drizzle-orm";
 import { int, mysqlView, text, varchar } from "drizzle-orm/mysql-core";
+import { courses } from "../schema/courses";
+import { adminUsers } from "../schema/adminUsers";
+import { adminUserCourse } from "../schema/adminUserCourse";
 
 export const userACLView = mysqlView(
     "userACLView",
@@ -11,13 +14,13 @@ export const userACLView = mysqlView(
 ).as(
     sql`
     SELECT 
-        CRS.id AS CourseID,
-        CRS.name AS CourseName,
-        GROUP_CONCAT(AUSR.email) AS EMailList
-    FROM golf_district_adminUser AUSR
-    INNER JOIN golf_district_adminUserCourse AUSRCRS
+        ${courses.id} AS CourseID,
+        ${courses.name} AS CourseName,
+        GROUP_CONCAT(${adminUsers.email}) AS EMailList
+    FROM ${adminUsers} AUSR
+    INNER JOIN ${adminUserCourse} AUSRCRS
         ON AUSR.id = AUSRCRS.adminUserId
-    INNER JOIN golf_district_course CRS
+    INNER JOIN ${courses} CRS
         ON CRS.id = AUSRCRS.courseId
     GROUP BY CRS.id, CRS.name
   `
