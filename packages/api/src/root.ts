@@ -9,6 +9,7 @@ import { courseRouter } from "./routers/course";
 import { courseExceptionRouter } from "./routers/courseException";
 import { domainRouter } from "./routers/domain";
 import { entityRouter } from "./routers/entity";
+import { failedBookingRouter } from "./routers/failedBooking";
 import { geoCodeRouter } from "./routers/geo";
 import { historyRouter } from "./routers/history";
 import { imageRouter } from "./routers/image";
@@ -54,7 +55,8 @@ export const appRouter = createTRPCRouter({
   courseException: courseExceptionRouter,
   systemNotification: systemNotificationRouter,
   releaseHistory: releaseHistoryRouter,
-  cache: cacheRouter
+  cache: cacheRouter,
+  failedBooking: failedBookingRouter,
 });
 
 export type AppRouter = typeof appRouter;

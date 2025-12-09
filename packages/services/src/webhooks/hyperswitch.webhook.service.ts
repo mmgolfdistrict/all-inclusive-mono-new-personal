@@ -701,7 +701,6 @@ export class HyperSwitchWebhookService {
     paymentId: string,
     golferPrice: number,
     redirectHref: string,
-    color1?: string
   ) => {
     let bookingStage = "Intializing Second hand Booking";
     try {
@@ -742,10 +741,19 @@ export class HyperSwitchWebhookService {
           transferId: transfers.id,
           cart: customerCarts.cart,
           newBookingPlayers: bookings.playerCount,
+          teeTimeId: bookings.teeTimeId,
+          courseId: teeTimes.courseId,
+          entityId: courses.entityId,
+          courseName: courses.name,
+          entityName: entities.name,
+          color1: entities.color1,
         })
         .from(customerCarts)
         .innerJoin(bookings, eq(bookings.cartId, customerCarts.id))
         .innerJoin(transfers, eq(transfers.bookingId, bookings.id))
+        .innerJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
+        .innerJoin(courses, eq(courses.id, teeTimes.courseId))
+        .innerJoin(entities, eq(entities.id, courses.entityId))
         .where(eq(customerCarts.paymentId, paymentId))
         .execute()
         .catch((error) => {
@@ -766,6 +774,8 @@ export class HyperSwitchWebhookService {
           });
           throw new Error("error fetching old and new bookingId");
         });
+
+      const entityColor1: string | undefined = bookingsIds?.color1 ?? "#000000";
 
       const [bookingDetails] = await this.database
         .select({
@@ -926,6 +936,7 @@ export class HyperSwitchWebhookService {
           timezoneCorrection: courses.timezoneCorrection,
           groupId: bookings.groupId,
           totalMerchandiseAmount: bookings.totalMerchandiseAmount,
+          timezoneISO: courses.timezoneISO,
         })
         .from(bookings)
         .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -1085,6 +1096,7 @@ export class HyperSwitchWebhookService {
           cartFeeTaxPerPlayer: teeTimes.cartFeeTaxPerPlayer,
           timezoneCorrection: courses.timezoneCorrection,
           cartFee: teeTimes.cartFeePerPlayer,
+          timezoneISO: courses.timezoneISO,
         })
         .from(teeTimes)
         .where(eq(teeTimes.id, firstBooking.teeTimeId))
@@ -1259,7 +1271,7 @@ export class HyperSwitchWebhookService {
                   ),
                   HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
                   CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
-                  color1: color1,
+                  color1: entityColor1,
                 },
                 [],
                 parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
@@ -1267,48 +1279,6 @@ export class HyperSwitchWebhookService {
             }
           }
         } catch (e: any) {
-          // await this.hyperSwitchService.refundPayment(paymentId);
-          // loggerService.auditLog({
-          //   id: randomUUID(),
-          //   userId: customer_id,
-          //   teeTimeId: existingTeeTime?.id ?? "",
-          //   bookingId: bookingsIds?.id ?? "",
-          //   listingId: listingId,
-          //   courseId: existingTeeTime?.courseId,
-          //   eventId: "REFUND_INITIATED",
-          //   json: `{paymentId:${paymentId}}`,
-          // });
-
-          // loggerService.errorLog({
-          //   userId: customer_id,
-          //   url: "/handleSecondHandItem",
-          //   userAgent: "",
-          //   message: "TEE TIME BOOKING FAILED ON PROVIDER",
-          //   stackTrace: `second hand booking at provider failed for teetime ${existingTeeTime?.id}`,
-          //   additionalDetailsJSON: JSON.stringify(e),
-          // });
-
-          // const template = {
-          //   CustomerFirstName: buyerCustomer?.username ?? "",
-          //   CourseLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${existingTeeTime?.cdnKey}.${existingTeeTime?.extension}`,
-          //   CourseURL: existingTeeTime?.websiteURL || "",
-          //   CourseName: existingTeeTime?.courseName || "-",
-          //   FacilityName: existingTeeTime?.entityName || "-",
-          //   PlayDateTime: formatTime(
-          //     existingTeeTime?.providerDate ?? "",
-          //     true,
-          //     existingTeeTime?.timezoneCorrection ?? 0
-          //   ),
-          //   HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
-          // };
-          // await this.notificationService.createNotification(
-          //   customer_id ?? "",
-          //   "Refund Initiated",
-          //   "Refund Initiated",
-          //   existingTeeTime?.courseId,
-          //   process.env.SENDGRID_REFUND_EMAIL_TEMPLATE_ID ?? "d-79ca4be6569940cdb19dd2b607c17221",
-          //   template
-          // );
           void this.hyperSwitchService.sendEmailForBookingFailed(
             paymentId,
             existingTeeTime?.courseId!,
@@ -1643,6 +1613,7 @@ export class HyperSwitchWebhookService {
           playTime: this.extractTime(
             formatTime(existingTeeTime?.providerDate ?? "", true, existingTeeTime?.timezoneCorrection ?? 0)
           ),
+          courseTimeZone: existingTeeTime?.timezoneISO ?? "",
         };
         const icsContent: string = createICS(event);
 
@@ -1688,7 +1659,7 @@ export class HyperSwitchWebhookService {
             TotalAmount: formatMoney(total / 100),
             SellTeeTImeURL: `${redirectHref}/my-tee-box`,
             ManageTeeTimesURL: `${redirectHref}/my-tee-box`,
-            color1: color1,
+            color1: entityColor1,
           };
 
           await this.notificationService.createNotification(
@@ -1737,13 +1708,13 @@ export class HyperSwitchWebhookService {
                 })}` || "-",
               Payout: formatMoney(
                 (listedPrice - totalTax) * (listedSlotsCount || 1) +
-                  sellerWeatherGuaranteeAmount / 100 +
-                  sellerMerchandiseAmount / 100
+                sellerWeatherGuaranteeAmount / 100 +
+                sellerMerchandiseAmount / 100
               ),
               PurchasedFrom: existingTeeTime?.courseName || "-",
               BuyTeeTImeURL: `${redirectHref}`,
               CashOutURL: `${redirectHref}/account-settings/${firstBooking.ownerId}`,
-              color1: color1,
+              color1: entityColor1,
             };
             await this.notificationService.createNotification(
               firstBooking.ownerId || "",
@@ -1774,14 +1745,14 @@ export class HyperSwitchWebhookService {
               })}` || "-",
             Payout: formatMoney(
               (listedPrice - totalTax) * (listedSlotsCount || 1) +
-                sellerWeatherGuaranteeAmount / 100 +
-                sellerMerchandiseAmount / 100
+              sellerWeatherGuaranteeAmount / 100 +
+              sellerMerchandiseAmount / 100
             ),
             SensibleWeatherIncluded: firstBooking.weatherGuaranteeId?.length ? "Yes" : "No",
             PurchasedFrom: existingTeeTime?.courseName || "-",
             BuyTeeTImeURL: `${redirectHref}`,
             CashOutURL: `${redirectHref}/account-settings/${firstBooking.ownerId}`,
-            color1: color1,
+            color1: entityColor1,
           };
           await this.notificationService.createNotification(
             firstBooking.ownerId || "",
@@ -1800,7 +1771,7 @@ export class HyperSwitchWebhookService {
               listingId,
               remainingSlots,
               firstBooking.ownerId,
-              color1
+              entityColor1
             );
           }
         }
@@ -1869,7 +1840,7 @@ export class HyperSwitchWebhookService {
           firstBooking.groupId,
           listedSlotsCount,
           firstBooking.ownerId,
-          color1
+          entityColor1
         );
       }
     } catch (err: any) {

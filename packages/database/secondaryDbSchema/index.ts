@@ -18,6 +18,7 @@ import * as userPhoneCall from "./userPhoneCall";
 import { userReminderNotificationAuditLogs } from "./userReminderNotificationAuditLogs";
 import * as userWaitlistAuditLogs from "./userWaitlistAuditLogs";
 import * as userWaitlistRecords from "./userWaitlistRecords";
+import * as teeTimeIndexErrorLogs from "./teeTimeIndexErrorLogs";
 
 export const schema = {
   ...teeTimeIndexLogs,
@@ -40,4 +41,5 @@ export const schema = {
   ...clarityMetrics,
   ...clarityDimensions,
   ...clarityMetricData,
+  ...teeTimeIndexErrorLogs
 };

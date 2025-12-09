@@ -13,7 +13,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 export default {
-  schema: "./schema",
+  schema: ["./schema", "./views"],
   breakpoints: true,
   driver: "mysql2",
   dbCredentials: {

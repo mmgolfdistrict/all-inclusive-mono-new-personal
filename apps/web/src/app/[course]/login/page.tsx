@@ -9,6 +9,7 @@ import { SquareButton } from "~/components/buttons/square-button";
 import { Apple } from "~/components/icons/apple";
 import { Facebook } from "~/components/icons/facebook";
 import { Google } from "~/components/icons/google";
+import { Keycloak } from "~/components/icons/keycloak";
 import { Hidden } from "~/components/icons/hidden";
 import { LinkedinLogo } from "~/components/icons/linkedin";
 import { Visible } from "~/components/icons/visible";
@@ -28,8 +29,10 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import { LoadingContainer } from "../loader";
 
-declare global {
-  interface Window {
+declare global
+{
+  interface Window
+  {
     gtag: (
       event: string,
       action: string,
@@ -38,7 +41,8 @@ declare global {
   }
 }
 
-export default function Login() {
+export default function Login()
+{
   const recaptchaRef = createRef<ReCAPTCHA>();
   const { prevPath } = useAppContext();
   const { isPathExpired } = usePreviousPath();
@@ -74,8 +78,10 @@ export default function Login() {
     category: string;
     label: string;
     value?: number;
-  }) => {
-    if (typeof window !== "undefined" && typeof window.gtag === "function") {
+  }) =>
+  {
+    if (typeof window !== "undefined" && typeof window.gtag === "function")
+    {
       const params: Record<string, unknown> = {
         event_category: category,
         event_label: label,
@@ -93,12 +99,15 @@ export default function Login() {
     courseId: course?.id ?? "",
   });
 
-  const isMethodSupported = (method: AuthenticationMethodEnum) => {
+  const isMethodSupported = (method: AuthenticationMethodEnum) =>
+  {
     return authenticationMethods?.includes(method);
   };
 
-  useEffect(() => {
-    if (errorKey === "AccessDenied" && !toast.isActive("accessDeniedToast")) {
+  useEffect(() =>
+  {
+    if (errorKey === "AccessDenied" && !toast.isActive("accessDeniedToast"))
+    {
       const url = new URL(window.location.href);
       url.searchParams.delete("error");
       router.push(url.pathname + url.search);
@@ -108,15 +117,18 @@ export default function Login() {
       );
     }
   }, [errorKey]);
-  useEffect(() => {
-    if (sessionData?.user?.id && course?.id && status === "authenticated") {
+  useEffect(() =>
+  {
+    if (sessionData?.user?.id && course?.id && status === "authenticated")
+    {
       addCourseToUser();
       addLoginSession();
       logAudit(sessionData.user.id, course.id);
     }
   }, [sessionData, course, status]);
 
-  const logAudit = (userId: string, courseId: string, func?: () => void) => {
+  const logAudit = (userId: string, courseId: string, func?: () => void) =>
+  {
     auditLog
       .mutateAsync({
         userId: userId,
@@ -127,32 +139,40 @@ export default function Login() {
         eventId: "USER_LOGGED_IN",
         json: `user logged in `,
       })
-      .then((res) => {
-        if (res && func) {
+      .then((res) =>
+      {
+        if (res && func)
+        {
           func();
         }
       })
-      .catch((err) => {
+      .catch((err) =>
+      {
         console.log("error", err);
       });
   };
 
-  const addCourseToUser = () => {
+  const addCourseToUser = () =>
+  {
     addCourseUser
       .mutateAsync({
         courseId: course?.id ? course?.id : "",
         userId: sessionData?.user?.id ? sessionData?.user?.id : "",
       })
-      .then(() => {
+      .then(() =>
+      {
         console.log("New courseUser entry added successfully");
       })
-      .catch((err) => {
+      .catch((err) =>
+      {
         console.log("error", err);
       });
   };
 
-  const addLoginSession = () => {
-    if (!hasSessionLogged) {
+  const addLoginSession = () =>
+  {
+    if (!hasSessionLogged)
+    {
       const loginMethod = localStorage.getItem(
         "loginMethod"
       ) as unknown as string;
@@ -162,18 +182,22 @@ export default function Login() {
           courseId: course?.id ?? "",
           loginMethod: loginMethod ?? "",
         })
-        .then(() => {
+        .then(() =>
+        {
           console.log("login user added successfully");
         })
-        .catch((err) => {
+        .catch((err) =>
+        {
           console.log("error", err);
         });
       setHasSessionLogged(true);
     }
   };
 
-  useEffect(() => {
-    if (loginError === "CallbackRouteError") {
+  useEffect(() =>
+  {
+    if (loginError === "CallbackRouteError")
+    {
       toast.error("An error occurred logging in, try another option.");
     }
   }, []);
@@ -199,16 +223,21 @@ export default function Login() {
   const match = prevPath?.path?.match(regexPattern);
   const extractedURL = match ? match[0] : prevPath?.path;
 
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true") {
+  useEffect(() =>
+  {
+    if (process.env.NEXT_PUBLIC_RECAPTCHA_IS_INVISIBLE === "true")
+    {
       recaptchaRef.current?.execute();
     }
   }, [recaptchaRef]);
 
-  const onSubmit: SubmitHandler<LoginSchemaType> = async (data) => {
-    try {
+  const onSubmit: SubmitHandler<LoginSchemaType> = async (data) =>
+  {
+    try
+    {
       setIsLoading(true);
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined")
+      {
         localStorage.setItem("credentials", "credentials");
         //setLocalStorageCredentials(localStorage.getItem("credentials"));
       }
@@ -226,23 +255,29 @@ export default function Login() {
           : undefined,
       });
 
-      if (res?.error) {
+      if (res?.error)
+      {
         await recaptchaRef.current?.executeAsync();
-        if (res.error === "AccessDenied") {
+        if (res.error === "AccessDenied")
+        {
           toast.error(
             "Unable to login. Please call customer support at 877-TeeTrade or email at support@golfdistrict.com"
           );
-          if (typeof window !== "undefined") {
+          if (typeof window !== "undefined")
+          {
             localStorage.removeItem("credentials");
           }
-        } else {
+        } else
+        {
           toast.error(res?.error);
-          if (typeof window !== "undefined") {
+          if (typeof window !== "undefined")
+          {
             localStorage.removeItem("credentials");
           }
         }
         setValue("password", "");
-      } else {
+      } else
+      {
         void refetchMe();
         router.push(String(res?.url));
         localStorage.setItem("loginMethod", "EMAIL_PASSWORD");
@@ -251,38 +286,46 @@ export default function Login() {
 
         localStorage.setItem("showBalanceToast", "true");
       }
-    } catch (error) {
+    } catch (error)
+    {
       toast.error(
         (error as Error)?.message ??
         "An error occurred logging in, try another option."
       );
-    } finally {
+    } finally
+    {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
+  useEffect(() =>
+  {
     if (
       process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY &&
       errors.ReCAPTCHA?.message &&
       !errors.email?.message &&
       !errors.password?.message
-    ) {
+    )
+    {
       toast.info("Please verify you are not a robot.");
     }
   }, [errors]);
 
-  const onReCAPTCHAChange = (captchaCode: string | null | undefined) => {
+  const onReCAPTCHAChange = (captchaCode: string | null | undefined) =>
+  {
     // If the reCAPTCHA code is null or undefined indicating that
     // the reCAPTCHA was expired then return early
-    if (!captchaCode) {
+    if (!captchaCode)
+    {
       return;
     }
     setValue("ReCAPTCHA", captchaCode);
   };
 
-  const facebookSignIn = async () => {
-    try {
+  const facebookSignIn = async () =>
+  {
+    try
+    {
       setFacebookIsLoading(true);
       const res = await signIn("facebook", {
         callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
@@ -292,20 +335,25 @@ export default function Login() {
         redirect: true,
       });
 
-      if (!res?.error) {
+      if (!res?.error)
+      {
         localStorage.setItem("loginMethod", "FACEBOOK");
         localStorage.setItem("showBalanceToast", "true");
       }
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined")
+      {
         localStorage.setItem("facebookstate", "loggedin");
       }
-    } catch (error) {
+    } catch (error)
+    {
       console.log(error);
     }
   };
 
-  const appleSignIn = async () => {
-    try {
+  const appleSignIn = async () =>
+  {
+    try
+    {
       setAppleIsLoading(true);
       await signIn("apple", {
         callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
@@ -315,19 +363,22 @@ export default function Login() {
         redirect: true,
       });
       localStorage.setItem("applestate", "loggedin");
-    } catch (error) {
+    } catch (error)
+    {
       console.log(error, "error");
     }
   };
 
-  const googleSignIn = async () => {
+  const googleSignIn = async () =>
+  {
     setGoogleIsLoading(true);
     event({
       action: "SIGNIN_USING_GOOGLE",
       category: "SIGNIN",
       label: "Sign in using google",
     });
-    try {
+    try
+    {
       const res = await signIn("google", {
         callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
           ? prevPath?.path
@@ -336,16 +387,20 @@ export default function Login() {
         redirect: true,
       });
 
-      if (!res?.error) {
+      if (!res?.error)
+      {
         localStorage.setItem("showBalanceToast", "true");
         localStorage.setItem("loginMethod", "GOOGLE");
       }
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined")
+      {
         localStorage.setItem("googlestate", "loggedin");
       }
-    } catch (error) {
+    } catch (error)
+    {
       console.log("error", error);
-    } finally {
+    } finally
+    {
       // if (typeof window !== "undefined") {
       //   localStorage.removeItem("googlestate");
       // }
@@ -353,8 +408,32 @@ export default function Login() {
     }
   };
 
-  const linkedinSignIn = async () => {
-    try {
+  const signinWithKeycloak = async () =>
+  {
+    try
+    {
+      await signIn("keycloak", {
+        callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
+          ? prevPath?.path
+          : extractedURL ?? "/"
+          }`,
+        redirect: true,
+      });
+      if (typeof window !== "undefined")
+      {
+        localStorage.setItem("loginMethod", "KEYCLOAK");
+        localStorage.setItem("showBalanceToast", "true");
+      }
+    } catch (error)
+    {
+      console.log("Keycloak sign-in error:", error);
+    }
+  };
+
+  const linkedinSignIn = async () =>
+  {
+    try
+    {
       setLinkedinIsLoading(true);
       const res = await signIn("linkedin", {
         callbackUrl: `${window.location.origin}${GO_TO_PREV_PATH && !isPathExpired(prevPath?.createdAt)
@@ -363,14 +442,17 @@ export default function Login() {
           }`,
         redirect: true,
       });
-      if (!res?.error) {
+      if (!res?.error)
+      {
         localStorage.setItem("loginMethod", "LINKEDIN");
         localStorage.setItem("showBalanceToast", "true");
       }
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined")
+      {
         localStorage.setItem("linkedinstate", "loggedin");
       }
-    } catch (error) {
+    } catch (error)
+    {
       console.log(error, "error");
     }
   };
@@ -378,9 +460,12 @@ export default function Login() {
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_APPLE_ID;
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (localStorage.getItem("googlestate")) {
+  useEffect(() =>
+  {
+    if (typeof window !== "undefined")
+    {
+      if (localStorage.getItem("googlestate"))
+      {
         setGoogleIsLoading(true);
       }
       // if (!localStorage.getItem("googlestate")) {
@@ -389,47 +474,61 @@ export default function Login() {
       // }
     }
   }, []);
-  useEffect(() => {
-    if (typeof window !== "undefined") {
+  useEffect(() =>
+  {
+    if (typeof window !== "undefined")
+    {
       setLocalStorageGoogle(localStorage.getItem("googlestate") || "");
     }
-    setTimeout(() => {
+    setTimeout(() =>
+    {
       setGoogleIsLoading(false);
       setLocalStorageGoogle("");
       localStorage.removeItem("googlestate");
     }, 3000);
   }, []);
-  useEffect(() => {
-    if (typeof window !== "undefined") {
+  useEffect(() =>
+  {
+    if (typeof window !== "undefined")
+    {
       setLocalStorageLinkedin(localStorage.getItem("linkedinstate") || "");
     }
-    setTimeout(() => {
+    setTimeout(() =>
+    {
       setLinkedinIsLoading(false);
       setLocalStorageLinkedin("");
       localStorage.removeItem("linkedinstate");
     }, 3000);
   }, []);
-  useEffect(() => {
-    if (typeof window !== "undefined") {
+  useEffect(() =>
+  {
+    if (typeof window !== "undefined")
+    {
       setLocalStorageCredentials(localStorage.getItem("credentials") || "");
     }
   }, []);
-  useEffect(() => {
-    if (typeof window !== "undefined") {
+  useEffect(() =>
+  {
+    if (typeof window !== "undefined")
+    {
       setLocalStorageFacebook(localStorage.getItem("facebookstate") || "");
     }
-    setTimeout(() => {
+    setTimeout(() =>
+    {
       setFacebookIsLoading(false);
       setLocalStorageFacebook("");
       localStorage.removeItem("facebookstate");
     }, 3000);
   }, []);
-  useEffect(() => {
-    if (typeof window !== "undefined") {
+  useEffect(() =>
+  {
+    if (typeof window !== "undefined")
+    {
       const appleLocalStorage = localStorage.getItem("applestate") ?? "";
       setLocalStorageApple(appleLocalStorage);
     }
-    setTimeout(() => {
+    setTimeout(() =>
+    {
       setLocalStorageApple("");
       localStorage.removeItem("applestate");
     }, 3000);
@@ -471,7 +570,21 @@ export default function Login() {
             Simply use any social login like Google to login quickly.
           </p>
         )}
-
+        {
+          process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID ? (
+            <div className="w-full rounded-lg shadow-outline">
+              <SquareButton
+                onClick={signinWithKeycloak}
+                className="flex w-full items-center justify-center gap-3 text-primary-gray shadow-google-btn"
+                data-testid="login-with-google-id"
+              >
+                <Fragment>
+                  <Keycloak className="w-6" />
+                  Login with KeyCloak
+                </Fragment>
+              </SquareButton>
+            </div>
+          ) : null}
         {isMethodSupported(AuthenticationMethodEnum.GOOGLE) &&
           process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
           <div className="w-full rounded-lg shadow-outline">
@@ -487,7 +600,7 @@ export default function Login() {
               ) : (
                 <Fragment>
                   <Google className="w-6" />
-                  Log In with Google
+                  Login with Google
                 </Fragment>
               )}
             </SquareButton>
@@ -508,7 +621,7 @@ export default function Login() {
               ) : (
                 <Fragment>
                   <LinkedinLogo className="w-[1.875rem] h-[1.875rem]" />
-                  Log In with Linkedin
+                  Login with Linkedin
                 </Fragment>
               )}
             </SquareButton>
@@ -528,7 +641,7 @@ export default function Login() {
             ) : (
               <Fragment>
                 <Apple className="w-6" />
-                Log In with Apple
+                Login with Apple
               </Fragment>
             )}
           </SquareButton>
@@ -549,7 +662,7 @@ export default function Login() {
             ) : (
               <Fragment>
                 <Facebook className="w-6" />
-                Log In with Facebook
+                Login with Facebook
               </Fragment>
             )}
           </SquareButton>
@@ -591,7 +704,8 @@ export default function Login() {
               />
               <IconButton
                 type="button"
-                onClick={(e) => {
+                onClick={(e) =>
+                {
                   e.preventDefault();
                   setShowPassword(!showPassword);
                 }}
@@ -633,11 +747,12 @@ export default function Login() {
               {localstorageCredentials ? (
                 <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin "></div>
               ) : (
-                "Log In"
+                "Login"
               )}
             </FilledButton>
           </form>
         )}
+
       </section>
       {isMethodSupported(AuthenticationMethodEnum.EMAIL_PASSWORD) && (
         <div className="pt-4 text-center text-[0.875rem] text-primary-gray">

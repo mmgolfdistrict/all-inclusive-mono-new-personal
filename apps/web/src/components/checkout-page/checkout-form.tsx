@@ -175,7 +175,7 @@ export const CheckoutForm = ({
     };
   }, [router]);
 
-
+  const { data: failedBooking } = api.failedBooking.userHasFailedBooking.useQuery({ userId: user?.id || '' });
 
   useEffect(function getCurrentCountryCode() {
     const phoneNumber = userData?.phoneNumber;
@@ -1671,7 +1671,7 @@ export const CheckoutForm = ({
                   </Fragment>
                 </div>
                 <div className="flex justify-between" id="total-checkout">
-                  <div>Total</div>
+                  <div>Total Reservation Fee</div>
                   {isLoadingTotalAmount ? (
                     <Skeleton />
                   ) : (
@@ -1868,7 +1868,7 @@ export const CheckoutForm = ({
                   </CheckoutItemAccordion>
                   <Fragment>
                     <div className="flex justify-between px-2">
-                      <div className="px-10">Total</div>
+                      <div className="px-10">Total Reservation Fee</div>
                       {isLoadingTotalAmount ? (
                         <Skeleton />
                       ) : (
@@ -1907,7 +1907,7 @@ export const CheckoutForm = ({
           />
           <div className="cursor-pointer ml-2 text-[0.875rem] font-bold text-justify">
             I understand and agree that I am purchasing a non-refundable, non-cancellable and non-changeable tee time.
-            By checking the box and completing this reservation, I agree to the{" "}
+            By checking the box and completing this reservation, {isFirstHandGroup.length ? "I agree that my group will play continuous tee times in a party of 4," : ""} I agree to the{" "}
             <Link
               href="/terms-of-service"
               className="text-blue-600 underline"
@@ -1939,11 +1939,12 @@ export const CheckoutForm = ({
           ) : (
             ""
           ))}
+        {failedBooking?.isFailedBooking && (<p className="pb-2 text-red text-justify">{failedBooking?.message}</p>)}
         {nextAction?.type === "redirect_to_url" ? (
           <Fragment>
             <FilledButton
               className={`w-full rounded-full disabled:opacity-60`}
-              disabled={!hyper || !widgets || callingRef || !isChecked}
+              disabled={!hyper || !widgets || callingRef || !isChecked || failedBooking?.isFailedBooking}
               onClick={() => {
                 if (nextAction?.redirect_to_url) {
                   window.location.href = nextAction?.redirect_to_url;
@@ -1960,7 +1961,7 @@ export const CheckoutForm = ({
             type="submit"
             className={`w-full rounded-full disabled:opacity-60`}
             disabled={
-              isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername || !isChecked || isUpdatingPaymentIntent || !maxReservation?.success
+              isLoading || !hyper || !widgets || message === "Payment Successful" || !isValidUsername || !isChecked || isUpdatingPaymentIntent || !maxReservation?.success || failedBooking?.isFailedBooking
             }
             data-testid="pay-now-id"
           >
