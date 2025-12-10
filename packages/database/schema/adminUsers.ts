@@ -1,6 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
-import { boolean, index, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, index, int, smallint, timestamp, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { courses } from "./courses";
 
@@ -14,6 +14,8 @@ export const adminUsers = mySqlTable(
     lastname: varchar("lastname", { length: 191 }),
     email: varchar("email", { length: 191 }).unique(),
     phoneNumber: varchar("phoneNumber", { length: 191 }),
+    phoneNumberCountryCode: smallint('phoneNumberCountryCode').default(1).notNull(),
+    entityId: varchar("entityId", { length: 36 }),
     isActive: boolean("isActive").notNull().default(true),
     createdDateTime: timestamp("createdDateTime", { mode: "string", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
