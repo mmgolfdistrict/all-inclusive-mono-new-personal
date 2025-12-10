@@ -78,6 +78,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
+  const [usernameErrorMessage, setUsernameErrorMessage] = useState<string | null>(null);
   const router = useRouter();
   const {
     mutateAsync: checkProfanity,
@@ -227,6 +228,7 @@ export default function RegisterPage() {
       setError("username", {
         message: "Handle not available.",
       });
+      setUsernameErrorMessage("Handle not available.");
     }
   };
 
@@ -240,12 +242,14 @@ export default function RegisterPage() {
       setError("username", {
         message: "",
       });
+      setUsernameErrorMessage(null);
       resetProfanityCheck();
       return;
     }
     setError("username", {
       message: "",
     });
+    setUsernameErrorMessage(null);
     debouncedHandleCheckProfanity(username);
   }, [username]);
 
@@ -545,6 +549,9 @@ export default function RegisterPage() {
             >
               <Refresh className="h-[0.875rem] w-[0.875rem]" />
             </IconButton>
+            {usernameErrorMessage && (
+              <p className="text-[0.75rem] text-red">{usernameErrorMessage}</p>
+            )}
           </div>
           {/* <Input
             label="Location"

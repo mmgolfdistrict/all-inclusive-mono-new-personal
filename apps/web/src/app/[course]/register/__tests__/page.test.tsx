@@ -383,26 +383,32 @@ describe('RegisterPage', () => {
 
         it('should show error and prevent submission if username is profane', async () => {
             mockCheckProfanityMutateAsync.mockResolvedValue({ isProfane: true });
+
             const user = userEvent.setup();
             render(<RegisterPage />);
 
-            // Simulate typing a profane word and waiting for debounced check
+            // Trigger profanity check
             const usernameInput = screen.getByTestId('register-user-name-id');
             await user.clear(usernameInput);
             await user.type(usernameInput, 'badword');
 
-            await fillAllRequiredFields(user); // Fill others to ensure form is otherwise valid
-            const submitButton = screen.getByText('Register');
-            await user.click(submitButton);
+            // 🔥 Wait for debounce + mutation to complete
+            await waitFor(() =>
+                expect(mockCheckProfanityMutateAsync).toHaveBeenCalledWith({ text: 'badword' })
+            );
 
-            // Wait for profanity check to run and error to appear
-            await waitFor(() => {
-                expect(screen.getByText('Handle not available.')).toBeInTheDocument();
-            }, { timeout: 1500 }); // Increase timeout for debounced effects
+            await fillAllRequiredFields(user);
+            await user.click(screen.getByText('Register'));
 
-            // Ensure registration mutation was NOT called
+            // 🔥 Now expect UI
+            await waitFor(() =>
+                expect(screen.getByText('Handle not available.')).toBeInTheDocument()
+            );
+
+            // Registration should NOT run
             expect(mockRegisterMutateAsync).not.toHaveBeenCalled();
         });
+
     });
 
     // --- Form Validation Tests ---
