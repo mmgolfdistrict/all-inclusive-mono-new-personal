@@ -472,6 +472,7 @@ export class BookingService {
           gte(teeTimes.providerDate, localDateTimePlus1Hour.format("YYYY-MM-DDTHH:mm:ss")) //Exclude past tee times
         )
       )
+      .orderBy(asc(teeTimes.providerDate))
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving tee times: ${err}`);

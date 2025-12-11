@@ -49,8 +49,8 @@ export const Cashouts = () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const arrayOfObjects: TxnHistoryType[] = Object.values(objectOfObjects);
     arrayOfObjects.sort((a, b) => {
-      const dateA = Number(new Date(a.date));
-      const dateB = Number(new Date(b.date));
+      const dateA = new Date(a.createdDateTime ?? "").getTime();
+      const dateB = new Date(b.createdDateTime ?? "").getTime();
       return dateB - dateA;
     });
 
