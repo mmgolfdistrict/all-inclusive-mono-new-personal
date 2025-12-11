@@ -533,6 +533,22 @@ export default function Login()
       localStorage.removeItem("applestate");
     }, 3000);
   }, []);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      // Check if prevPath exists and is not a login route
+      if (prevPath?.path && !prevPath.path.endsWith("/login")) {
+        router.push(prevPath.path); // go back to last non-login page
+      } else {
+        router.push("/"); // fallback (home)
+      }
+    }
+  }, [status, router, prevPath]);
+
+  if (status === "authenticated") {
+    return null; // Prevent login form from flashing
+  }
+
   return isLoading ||
     localStorageGoogle ||
     localstorageLinkedin ||
