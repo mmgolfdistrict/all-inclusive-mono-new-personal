@@ -102,7 +102,11 @@ const config = {
       },
     ],
   },
-  transpilePackages: ["@juspay-tech/hyper-js", "@juspay-tech/react-hyper-js"],
+  transpilePackages: [
+    "@juspay-tech/hyper-js",
+    "@juspay-tech/react-hyper-js",
+    "@golf-district/database",
+  ],
   webpack: (config) => {
     config.resolve.fallback = {
       fs: false,

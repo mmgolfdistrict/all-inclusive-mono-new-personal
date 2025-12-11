@@ -12,8 +12,8 @@
     "clean": "rm -rf .turbo node_modules",
     "format": "prettier --check \"**/*.{mjs,ts,md,json}\"",
     "lint": "eslint .",
-    "push:primary": "drizzle-kit push:mysql",
-    "push:secondary": "drizzle-kit push:mysql --config=secondaryDatabaseDrizzle.config.ts",
+    "push:primary": "drizzle-kit push",
+    "push:secondary": "drizzle-kit push --config=secondaryDatabaseDrizzle.config.ts",
     "studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit"
   },
@@ -27,13 +27,13 @@
     "@golf-district/eslint-config": "^0.1.0",
     "@golf-district/tsconfig": "^0.1.0",
     "@planetscale/database": "^1.11.0",
-    "drizzle-orm": "^0.29.0",
+    "drizzle-orm": "^0.45.0",
     "typescript": "^5.2.2"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.3.1",
     "dotenv-cli": "^7.3.0",
-    "drizzle-kit": "^0.20.18",
+    "drizzle-kit": "^0.31.8",
     "mysql2": "^3.6.5"
   }
 }

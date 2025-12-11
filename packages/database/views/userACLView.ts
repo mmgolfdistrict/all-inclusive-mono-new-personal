@@ -5,7 +5,7 @@ import { adminUsers } from "../schema/adminUsers";
 import { adminUserCourse } from "../schema/adminUserCourse";
 
 export const userACLView = mysqlView(
-    "userACLView",
+    "user_acl_view",
     {
         CourseID: int("CourseID"),
         CourseName: varchar("CourseName", { length: 255 }),
@@ -17,11 +17,11 @@ export const userACLView = mysqlView(
         ${courses.id} AS CourseID,
         ${courses.name} AS CourseName,
         GROUP_CONCAT(${adminUsers.email}) AS EMailList
-    FROM ${adminUsers} AUSR
-    INNER JOIN ${adminUserCourse} AUSRCRS
-        ON AUSR.id = AUSRCRS.adminUserId
-    INNER JOIN ${courses} CRS
-        ON CRS.id = AUSRCRS.courseId
-    GROUP BY CRS.id, CRS.name
+    FROM ${adminUsers} 
+    INNER JOIN ${adminUserCourse} 
+        ON ${adminUsers.id} = ${adminUserCourse.adminUserId}
+    INNER JOIN ${courses} 
+        ON ${courses.id} = ${adminUserCourse.courseId}
+    GROUP BY ${courses.id}, ${courses.name}
   `
 );

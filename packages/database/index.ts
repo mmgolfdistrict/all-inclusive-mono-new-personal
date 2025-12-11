@@ -17,10 +17,10 @@ export type Db = typeof db;
 */
 const primaryDatabaseClient = new Client({
   url: process.env.DATABASE_URL,
-}).connection();
+});
 const secondaryDatabaseClient = new Client({
   url: process.env.SECONDARY_DATABASE_URL,
-}).connection();
+});
 
 export const db = drizzle(primaryDatabaseClient, { schema, logger: false });
 
