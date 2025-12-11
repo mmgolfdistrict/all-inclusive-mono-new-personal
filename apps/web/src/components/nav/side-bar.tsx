@@ -9,7 +9,6 @@ import { type Dispatch, type SetStateAction } from "react";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
 import { Auction } from "../icons/auction";
-import { Calendar } from "../icons/calendar";
 import { Close } from "../icons/close";
 import { Marketplace } from "../icons/marketplace";
 import { Megaphone } from "../icons/megaphone";
@@ -19,14 +18,14 @@ import { PoweredBy } from "../powered-by";
 import { PathsThatNeedRedirectOnLogout } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
 import { GroupBooking } from "../icons/group-booking";
+import { MyTeeBoxIcon } from "../icons/my-tee-box";
 
 type SideBarProps = {
   isSideBarOpen: boolean;
   setIsSideBarOpen: Dispatch<SetStateAction<boolean>>;
 };
 
-export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) =>
-{
+export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
   const { user } = useUserContext();
   const { course } = useCourseContext();
   const courseId = course?.id;
@@ -60,8 +59,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) =>
 
   const auditLog = api.webhooks.auditLog.useMutation();
 
-  const logAudit = (func: () => unknown) =>
-  {
+  const logAudit = (func: () => unknown) => {
     auditLog
       .mutateAsync({
         userId: user?.id ?? "",
@@ -72,67 +70,52 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) =>
         eventId: "USER_LOGGED_OUT",
         json: `user logged out `,
       })
-      .then((res) =>
-      {
-        if (res)
-        {
+      .then((res) => {
+        if (res) {
           func();
         }
       })
-      .catch((err) =>
-      {
+      .catch((err) => {
         console.log("error", err);
       });
   };
 
-  const logOutUser = () =>
-  {
-    try
-    {
-      logAudit(async () =>
-      {
+  const logOutUser = () => {
+    try {
+      logAudit(async () => {
         localStorage.clear();
         sessionStorage.clear();
-        try
-        {
+        try {
           const cacheKeys = await caches.keys();
           await Promise.all(cacheKeys.map((key) => caches.delete(key)));
           console.log("All caches cleared.");
-        } catch (error)
-        {
+        } catch (error) {
           console.error("Error clearing caches:", error);
         }
-        if (document.cookie)
-        {
-          document.cookie.split(";").forEach((cookie) =>
-          {
+        if (document.cookie) {
+          document.cookie.split(";").forEach((cookie) => {
             const cookieName = cookie.split("=")[0]?.trim();
-            if (cookieName)
-            {
+            if (cookieName) {
               document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
             }
           });
         }
-        if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i)))
-        {
+        if (PathsThatNeedRedirectOnLogout.some((i) => pathname.includes(i))) {
           const data = await signOut({
             callbackUrl: `/${courseId}`,
             redirect: false,
           });
           router.push(data.url);
           return;
-        } else
-        {
+        } else {
           await signOut();
         }
       });
       localStorage.removeItem("googlestate");
       localStorage.removeItem("linkedinstate");
-    } catch (error)
-    {
+    } catch (error) {
       console.log(error);
-    } finally
-    {
+    } finally {
       localStorage.removeItem("googlestate");
       toggleSidebar();
     }
@@ -226,7 +209,8 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) =>
               <NavItem
                 href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
                 text="My Tee Times"
-                icon={<Calendar className="w-4" />}
+                // icon={<Calendar className="w-4" />}
+                icon={<MyTeeBoxIcon className="w-4" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
                 onClick={toggleSidebar}
                 data-testid="my-tee-box-id"
@@ -241,8 +225,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) =>
                       : `/${courseId}/login`
                   }
                   text="My Offers"
-                  onClick={() =>
-                  {
+                  onClick={() => {
                     toggleSidebar();
                   }}
                   icon={
