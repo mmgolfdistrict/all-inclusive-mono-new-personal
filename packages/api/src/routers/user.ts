@@ -140,6 +140,18 @@ export const userRouter = createTRPCRouter({
         input.color1
       );
   }),
+  verifyForgotPasswordToken: publicProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        verificationToken: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.serviceFactory
+        .getUserService()
+        .verifyForgotPasswordToken(input.userId, input.verificationToken);
+    }),
   getUpcomingTeeTimesForUser: publicProcedure
     .input(z.object({ userId: z.string(), courseId: z.string() }))
     .query(async ({ ctx, input }) => {

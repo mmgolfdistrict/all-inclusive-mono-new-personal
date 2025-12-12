@@ -1564,6 +1564,31 @@ export class UserService {
     }
   };
 
+  verifyForgotPasswordToken = async (userId: string, token: string) => {
+    const [user] = await this.database
+      .select({
+        forgotPasswordToken: users.forgotPasswordToken,
+        forgotPasswordTokenExpiry: users.forgotPasswordTokenExpiry,
+      })
+      .from(users)
+      .where(eq(users.id, userId));
+
+    if (!user || !user.forgotPasswordToken || !user.forgotPasswordTokenExpiry) {
+      throw new Error("This link is no longer valid.");
+    }
+
+    if (user.forgotPasswordTokenExpiry < currentUtcTimestamp()) {
+      throw new Error("This link has expired.");
+    }
+
+    const valid = await bcrypt.compare(token, user.forgotPasswordToken);
+    if (!valid) {
+      throw new Error("Invalid or expired link.");
+    }
+
+    return { valid: true };
+  };
+
   /**
    * Asynchronously updates the password of a user.
    *

@@ -1,11 +1,10 @@
 "use client";
 
 import { isValidPassword } from "@golf-district/shared";
-import
-  {
-    resetPasswordSchema,
-    type ResetPasswordSchemaType,
-  } from "@golf-district/shared/src/schema/reset-password-schema";
+import {
+  resetPasswordSchema,
+  type ResetPasswordSchemaType,
+} from "@golf-district/shared/src/schema/reset-password-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
@@ -21,17 +20,36 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 
-export default function ResetPassword()
-{
+export default function ResetPassword() {
   const { course } = useCourseContext();
-  const { setPrevPath } = useAppContext();
+  const { setPrevPath, entity } = useAppContext();
   const params = useSearchParams();
   const userId = params.get("userId");
   const verificationToken = params.get("verificationToken");
 
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const verifyToken = api.user?.verifyForgotPasswordToken?.useMutation?.();
+  const resetFn = api.user.executeForgotPassword.useMutation();
+
+  useEffect(() => {
+    if (!userId || !verificationToken) return;
+
+    if (verifyToken) {
+      verifyToken
+        .mutateAsync({ userId, verificationToken })
+        .catch((err) => {
+          console.error(err);
+          // ✅ Instead, just clear session if you want
+          fetch("/api/auth/signout", { method: "POST" }).catch(() => {
+            console.warn("Session already cleared or expired");
+          });
+        });
+    }
+    // ✅ Run only once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     register,
@@ -44,25 +62,22 @@ export default function ResetPassword()
     resolver: zodResolver(resetPasswordSchema),
   });
 
-  const resetFn = api.user.executeForgotPassword.useMutation();
-  const { entity } = useAppContext();
-
-  useEffect(() =>
-  {
+  useEffect(() => {
     if (!userId || !verificationToken) return;
     setValue("userId", userId);
     setValue("verificationToken", verificationToken);
   }, [userId, verificationToken]);
 
-  const onSubmit: SubmitHandler<ResetPasswordSchemaType> = async (data) =>
-  {
-    if (resetFn.isSuccess) return;
-    if (resetFn.isLoading) return;
-    try
-    {
-      await resetFn.mutateAsync({ ...data, courseId: course?.id, color1: entity?.color1 ?? "#000000" });
-    } catch (error)
-    {
+  const onSubmit: SubmitHandler<ResetPasswordSchemaType> = async (data) => {
+    if (resetFn.isSuccess || resetFn.isLoading) return;
+
+    try {
+      await resetFn.mutateAsync({
+        ...data,
+        courseId: course?.id,
+        color1: entity?.color1 ?? "#000000",
+      });
+    } catch (error) {
       toast.error(
         (error as Error)?.message ??
         "An error occurred submitting your request."
@@ -72,11 +87,9 @@ export default function ResetPassword()
 
   const password = watch("password");
 
-  const passwordFeedback = useMemo(() =>
-  {
+  const passwordFeedback = useMemo(() => {
     if (!password) return;
-    const feedback = isValidPassword(password).feedback;
-    return feedback;
+    return isValidPassword(password).feedback;
   }, [password]);
 
   return (
@@ -85,30 +98,24 @@ export default function ResetPassword()
         Reset Password
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[31.25rem] sm:rounded-xl sm:p-6">
-        {resetFn.isSuccess ? (
-          <div className="flex flex-col gap-4 items-center">
-            <div className="text-[1rem] text-center fade-in text-primary-gray">
-              Successfully reset password!
+        {/* 1️⃣ Loading or Verifying State */}
+        {
+          verifyToken?.isLoading && (
+            <div className="text-center text-primary-gray">Verifying link...</div>
+          )
+        }
+
+        {/* 2️⃣ Invalid or Expired Link */}
+        {
+          verifyToken?.isError && (
+            <div className="text-center text-red font-medium">
+              This link is no longer valid.
             </div>
-            <Link href={`/${course?.id}/login`} data-testid="login-button-id">
-              <FilledButton
-                onClick={() =>
-                {
-                  setPrevPath({
-                    path: `/${course?.id}`,
-                    createdAt: new Date().toISOString(),
-                  });
-                }}
-              >
-                Login
-              </FilledButton>
-            </Link>
-          </div>
-        ) : (
-          <form
-            className="flex flex-col gap-2"
-            onSubmit={handleSubmit(onSubmit)}
-          >
+          )}
+
+        {/* 3️⃣ Valid Token & Password Reset Form */}
+        {verifyToken?.data?.valid && !resetFn?.isSuccess && (
+          <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
             <div className="relative">
               <Input
                 label="Password"
@@ -117,16 +124,15 @@ export default function ResetPassword()
                 placeholder="Enter your password"
                 register={register}
                 name="password"
-                error={errors.password?.message}
+                error={errors?.password?.message}
                 data-testid="reset-password-id"
               />
               <IconButton
-                onClick={(e) =>
-                {
+                onClick={(e) => {
                   e.preventDefault();
-                  setShowPassword(!showPassword);
+                  setShowPassword((prev) => !prev);
                 }}
-                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors.password?.message ? "pb-10" : ""}`}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors?.password?.message ? "pb-10" : ""}`}
                 data-testid="show-password-id"
               >
                 {showPassword ? (
@@ -136,10 +142,14 @@ export default function ResetPassword()
                 )}
               </IconButton>
             </div>
-            {passwordFeedback && passwordFeedback.length > 0 ? (
-              <ul className={`flex flex-col gap-2 list-disc pl-4`}>
-                {passwordFeedback?.map((advice, idx) => (
-                  <li className="text-[0.75rem] text-red" key={`${idx}+passsword`}>
+
+            {passwordFeedback?.length ? (
+              <ul className="flex flex-col gap-2 list-disc pl-4">
+                {passwordFeedback.map((advice, idx) => (
+                  <li
+                    className="text-[0.75rem] text-red"
+                    key={`${idx}+password`}
+                  >
                     {advice}
                   </li>
                 ))}
@@ -153,16 +163,15 @@ export default function ResetPassword()
                 placeholder="Confirm your password"
                 register={register}
                 name="confirmPassword"
-                error={errors.confirmPassword?.message}
+                error={errors?.confirmPassword?.message}
                 data-testid="reset-confirm-password-id"
               />
               <IconButton
-                onClick={(e) =>
-                {
+                onClick={(e) => {
                   e.preventDefault();
-                  setShowConfirmPassword(!showConfirmPassword);
+                  setShowConfirmPassword((prev) => !prev);
                 }}
-                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors.confirmPassword?.message ? "pb-10" : ""}`}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors?.confirmPassword?.message ? "pb-10" : ""}`}
                 data-testid="show-confirm-password-id"
               >
                 {showConfirmPassword ? (
@@ -173,13 +182,34 @@ export default function ResetPassword()
               </IconButton>
             </div>
             <FilledButton
-              className={`w-full rounded-full ${resetFn.isLoading ? "animate-pulse cursor-not-allopwed" : ""
+              className={`w-full rounded-full ${resetFn?.isLoading ? "animate-pulse cursor-not-allowed" : ""
                 }`}
               data-testid="submit-button-id"
             >
-              {resetFn.isLoading ? "Submitting..." : "Submit"}
+              {resetFn?.isLoading ? "Submitting..." : "Submit"}
             </FilledButton>
           </form>
+        )}
+
+        {/* 4️⃣ Success Message */}
+        {resetFn.isSuccess && (
+          <div className="flex flex-col gap-4 items-center">
+            <div className="text-[1rem] text-center fade-in text-primary-gray">
+              Successfully reset password!
+            </div>
+            <Link href={`/${course?.id}/login`} data-testid="login-button-id">
+              <FilledButton
+                onClick={() =>
+                  setPrevPath({
+                    path: `/${course?.id}`,
+                    createdAt: new Date().toISOString(),
+                  })
+                }
+              >
+                Log In
+              </FilledButton>
+            </Link>
+          </div>
         )}
       </section>
       <div className="flex max-w-fit mx-auto items-center gap-4 justify-center flex-col md:flex-row">
@@ -203,6 +233,6 @@ export default function ResetPassword()
           Back to Login
         </Link>
       </div>
-    </main>
+    </main >
   );
 }

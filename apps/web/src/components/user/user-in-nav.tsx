@@ -24,6 +24,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
   const courseId = course?.id;
   const pathname = usePathname();
   const router = useRouter();
+  const auditLog = api.webhooks.auditLog.useMutation();
   // const addUserSession = api.user.addUserSession.useMutation();
   const { data: imageUrl } = api.image.getAssetUrl.useQuery(
     { assetId: user?.image ?? "" },
@@ -35,7 +36,10 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
     }
   );
 
-  const auditLog = api.webhooks.auditLog.useMutation();
+  if (pathname?.includes("reset-password")) {
+    return null; // don't show user dropdown on reset password page
+  }
+
   const logAudit = (func: () => unknown) => {
     auditLog
       .mutateAsync({
