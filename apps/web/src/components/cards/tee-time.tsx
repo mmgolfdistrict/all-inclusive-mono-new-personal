@@ -26,6 +26,7 @@ import { ManageTeeTimeListing } from "../my-tee-box-page/manage-tee-time-listing
 import { Tooltip } from "../tooltip";
 import { MakeAnOffer } from "../watchlist-page/make-an-offer";
 import { Share } from "../icons/share";
+import { useFiltersContext } from "~/contexts/FiltersContext";
 
 const PlayersOptions = ["1", "2", "3", "4"];
 
@@ -86,6 +87,7 @@ export const TeeTime = ({
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const { course, getAllowedPlayersForTeeTime } = useCourseContext();
   const courseId = course?.id;
+  const { golfers } = useFiltersContext();
 
   const allowedPlayers = useMemo(() => getAllowedPlayersForTeeTime(
     items.time,
@@ -323,6 +325,17 @@ export const TeeTime = ({
     router.push(`/${courseId}/my-tee-box?section=my-listed-tee-times&listId=${listingId}`);
     // setIsManageOpen(true);
   };
+
+  // useEffect(() => {
+  //   if (golfers && golfers !== "Any") {
+  //     const golfersStr = golfers.toString();
+  //     if (selectedPlayers !== golfersStr) {
+  //       setSelectedPlayers(golfersStr);
+  //     }
+  //   } else if (golfers && golfers === "Any") {
+  //     setSelectedPlayers(numberOfPlayers[0] ?? "1");
+  //   }
+  // }, [golfers]);
 
   return (
     <>

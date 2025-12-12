@@ -30,6 +30,9 @@ export const entities = mySqlTable(
     updatedById: varchar("updatedById", { length: 36 }),
     redirectToCourseFlag: boolean("redirectToCourseFlag").default(false).notNull(),
     clarityAPIToken: varchar("clarityAPIToken", { length: 2048 }),
+    allowedDomainList: varchar("allowedDomainList", { length: 256 })
+      .notNull()
+      .default("example.com"),
   },
   (table) => {
     return {

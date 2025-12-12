@@ -56,6 +56,7 @@ export default function RegisterPage() {
     setError,
     control,
     getValues,
+    trigger,
     formState: { errors },
   } = useForm<RegisterSchemaType>({
     resolver: zodResolver(registerSchema),
@@ -77,6 +78,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
+  const [usernameErrorMessage, setUsernameErrorMessage] = useState<string | null>(null);
   const router = useRouter();
   const {
     mutateAsync: checkProfanity,
@@ -152,44 +154,35 @@ export default function RegisterPage() {
 
   const onPlaceChanged = () => {
     const place = autocompleteRef.current?.getPlace();
-    if (place?.address_components) {
-      const addressComponents = place.address_components;
+    if (!place?.address_components) return;
 
-      const getAddressComponent = (type: string): string => {
-        return (
-          addressComponents.find((component) => component.types.includes(type))
-            ?.long_name || ""
-        );
-      };
+    const getComponent = (type: string) =>
+      place?.address_components?.find((c) => c.types.includes(type))?.long_name || "";
 
-      const streetNumber = getAddressComponent("street_number");
-      const route = getAddressComponent("route");
-      const address1 = `${streetNumber} ${route}`.trim();
-      const address2 = getAddressComponent("sublocality");
-      let state = getAddressComponent("administrative_area_level_1");
-      const city = getAddressComponent("locality");
-      const zipcode = getAddressComponent("postal_code");
-      const country = getAddressComponent("country");
+    const streetNumber = getComponent("street_number");
+    const route = getComponent("route");
+    const subpremise = getComponent("subpremise");
+    const sublocality = getComponent("sublocality");
+    const locality =
+      getComponent("locality") ||
+      getComponent("sublocality_level_1") ||
+      getComponent("administrative_area_level_2");
+    const state = getComponent("administrative_area_level_1");
+    const zipcode = getComponent("postal_code");
+    const zipcodeSuffix = getComponent("postal_code_suffix");
+    const country = getComponent("country");
 
-      state = normalizeString(state);
+    const address1 = [streetNumber, route].filter(Boolean).join(" ");
+    const address2 = [subpremise, sublocality].filter(Boolean).join(", ");
+    const fullZip = zipcodeSuffix ? `${zipcode}-${zipcodeSuffix}` : zipcode;
 
-      let countryByCode = country;
-      if (country === "United States") {
-        countryByCode = "USA";
-      }
-
-      if (inputRef?.current) {
-        inputRef.current.value = address1;
-      }
-
-      // Type guard before passing to setValue
-      if (typeof address1 === "string") setValue("address1", address1);
-      if (typeof address2 === "string") setValue("address2", address2);
-      if (typeof state === "string") setValue("state", state);
-      if (typeof city === "string") setValue("city", city);
-      if (typeof zipcode === "string") setValue("zipcode", zipcode);
-      if (typeof country === "string") setValue("country", countryByCode);
-    }
+    setValue("address1", address1);
+    setValue("address2", address2);
+    setValue("city", locality);
+    setValue("state", state);
+    setValue("zipcode", fullZip);
+    setValue("country", country === "United States" ? "USA" : country);
+    void trigger(["address1", "address2", "city", "state", "zipcode", "country"]);
   };
 
   useEffect(() => {
@@ -235,6 +228,7 @@ export default function RegisterPage() {
       setError("username", {
         message: "Handle not available.",
       });
+      setUsernameErrorMessage("Handle not available.");
     }
   };
 
@@ -248,12 +242,14 @@ export default function RegisterPage() {
       setError("username", {
         message: "",
       });
+      setUsernameErrorMessage(null);
       resetProfanityCheck();
       return;
     }
     setError("username", {
       message: "",
     });
+    setUsernameErrorMessage(null);
     debouncedHandleCheckProfanity(username);
   }, [username]);
 
@@ -284,6 +280,56 @@ export default function RegisterPage() {
     }
   }, [recaptchaRef]);
 
+  const countryAliases: Record<string, string[]> = {
+    USA: [
+      "USA",
+      "United States",
+      "United States of America",
+      "US",
+      "U.S.",
+      "U.S.A",
+      "America"
+    ],
+    Canada: [
+      "Canada",
+      "CA",
+      "C.A.",
+      "Canadian"
+    ]
+  };
+
+  const cleanCity = (city: string, state: string, country: string) => {
+    if (!city) return "";
+
+    let result = city.trim();
+
+    // Do NOT clean if the entire city is exactly equal to the state
+    // Example: city="New York", state="New York"
+    if (result.toLowerCase() === state.toLowerCase()) {
+      return state; // return as is
+    }
+
+    // Remove state only when it's an EXTRA part of the string
+    if (state) {
+      const stateRegex = new RegExp(state, "i");
+      if (result.toLowerCase().includes(state.toLowerCase())) {
+        result = result.replace(stateRegex, "");
+      }
+    }
+
+    // Remove country + aliases
+    if (country) {
+      const aliases = countryAliases[country] || [country];
+
+      aliases.forEach(alias => {
+        const aliasRegex = new RegExp(alias, "i");
+        result = result.replace(aliasRegex, "");
+      });
+    }
+
+    return result.replace(/\s+/g, " ").trim();
+  };
+
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
     setIsSubmitting(true);
     if (profanityCheckData?.isProfane) {
@@ -303,6 +349,7 @@ export default function RegisterPage() {
       const response = await registerUser.mutateAsync({
         ...data,
         // country: "USA",
+        city: cleanCity(data.city, data.state, data.country),
         courseId: course?.id,
         color1: entity?.color1,
       });
@@ -436,7 +483,11 @@ export default function RegisterPage() {
                     placeholder="9988776655"
                     id="phoneNumber"
                     name="phoneNumber"
-                    onChange={handlePhoneNumberChange}
+                    onChange={(e) => {
+                      field.onChange(e); // Update react-hook-form
+                      handlePhoneNumberChange(e);
+                      void trigger("phoneNumber"); // Immediately validate this field
+                    }}
                     value={getValues("phoneNumber")}
                     data-testid="profile-phone-number-id"
                     autoComplete="off"
@@ -498,6 +549,9 @@ export default function RegisterPage() {
             >
               <Refresh className="h-[0.875rem] w-[0.875rem]" />
             </IconButton>
+            {usernameErrorMessage && (
+              <p className="text-[0.75rem] text-red">{usernameErrorMessage}</p>
+            )}
           </div>
           {/* <Input
             label="Location"

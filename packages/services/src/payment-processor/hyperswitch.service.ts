@@ -539,8 +539,7 @@ export class HyperSwitchService {
         await this.notificationService.sendEmail(
           email,
           "A payment has failed ",
-          `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, ${
-            teeTimeId ? `TeeTimeId: ${teeTimeId}` : `ListingId: ${listingId}`
+          `payment with paymentid ${paymentMethodId} failed. UserId: ${userId}, Email: ${userEmail}, Phone: ${phone}, ${teeTimeId ? `TeeTimeId: ${teeTimeId}` : `ListingId: ${listingId}`
           }, CourseId: ${courseId}, CartId: ${cartId}`
         );
       } catch (error) {
@@ -794,6 +793,8 @@ export class HyperSwitchService {
           facilityName: entities.name,
           bookingDateTime: teeTimes.providerDate,
           cdn: assets.cdn,
+          assetKey: assets.key,
+          assetExtension: assets.extension,
         })
         .from(bookings)
         .leftJoin(users, eq(bookings.ownerId, users.id))
@@ -808,6 +809,11 @@ export class HyperSwitchService {
       console.log("payementProcessor", paymentProcessor);
       const originalUserSplitAmount = amount * 100 - collectPaymentProcessorCharge;
       const splitPaymentEmailTemplateId = String(process.env.SPLIT_PAYMENT_EMAIL_TEMPLATE_ID);
+
+      // Construct the course logo URL from database assets
+      const courseLogoUrl = bookingResult?.assetKey && bookingResult?.assetExtension
+        ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${bookingResult.assetKey}.${bookingResult.assetExtension}`
+        : courseLogo; // Fallback to parameter if asset data is not available
       const paymentExpirationTime = await appSettingService.get("PAYMENT_EXPIRATION_TIME_IN_MINS");
       if (paymentProcessor === "finix") {
         const referencePaymentId = randomUUID();
@@ -832,7 +838,7 @@ export class HyperSwitchService {
             `,
               quantity: "1",
               image_details: {
-                primary_image_url: `${courseLogo}`,
+                primary_image_url: `${courseLogoUrl}`,
               },
               price_details: {
                 sale_amount: amount * 100,
@@ -931,7 +937,7 @@ export class HyperSwitchService {
                 //TRACKING_URL: `https://webhook.site/tracking-email?id=${referencePaymentId}`
                 TRACKING_URL: `${origin}/api/trackemail/?id=${referencePaymentId}`,
                 SUBJECT_LINE: `Payment Requested for Your Golf Tee Time by ${username}`,
-                LOGO_URL: courseLogo,
+                LOGO_URL: courseLogoUrl,
                 HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
                 ADDITIONAL_MESSAGE: additonalMessge,
                 color1: color1,
@@ -982,7 +988,7 @@ Thank you for choosing us.`;
             `,
             payment_link_config: {
               theme: "#014E28",
-              logo: `${courseLogo}`,
+              logo: `${courseLogoUrl}`,
               seller_name: "Golfdistrict",
               sdk_layout: "tabs",
             },
@@ -1047,7 +1053,7 @@ Thank you for choosing us.`;
                 TRACKING_URL: `${origin}/trackemail/?id=${hyperswitchUUID}`,
                 //TRACKING_URL: `https://webhook.site/tracking-email?id=${hyperswitchUUID}`
                 SUBJECT_LINE: `Payment Requested for Your Golf Tee Time by ${username}`,
-                LOGO_URL: courseLogo,
+                LOGO_URL: courseLogoUrl,
                 HeaderLogoURL: `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/emailheaderlogo.png`,
                 ADDITIONAL_MESSAGE: additonalMessge,
                 color1: color1,
@@ -1267,9 +1273,8 @@ Thank you for choosing us.`;
         // email send the admins after payment completed of the user
         console.log("emailSend", emailSend);
 
-        const messageAdmin = `Payment of  $${
-          Number(result?.collectedAmount) / 100
-        } has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin = `Payment of  $${Number(result?.collectedAmount) / 100
+          } has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {
@@ -1448,9 +1453,8 @@ Thank you for choosing us.`;
         );
         // email send the admins after payment completed of the user
 
-        const messageAdmin = `Payment of $${
-          Number(result?.collectedAmount) / 100
-        } has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
+        const messageAdmin = `Payment of $${Number(result?.collectedAmount) / 100
+          } has been successfully processed for the user ${result?.email}. Thank you for your payment.`;
         const adminEmails = process.env.ADMIN_EMAIL_LIST!.split(",");
 
         for (const email of adminEmails) {

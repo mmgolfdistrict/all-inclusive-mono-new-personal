@@ -16,6 +16,9 @@ export default function VerifyEmail() {
           A verification link was just sent to the email provided. Please open
           the email and click the verify button.
         </p>
+        <p className="text-red text-center">
+          Please check your Junk or Spam folder if you don&apos;t receive any email.
+        </p>
       </section>
       <div className="flex max-w-fit mx-auto items-center gap-4 justify-center flex-col md:flex-row">
         <div className="pt-4 text-center text-[0.875rem] text-primary-gray">

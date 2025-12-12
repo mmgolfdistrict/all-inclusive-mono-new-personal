@@ -126,7 +126,12 @@ export default function CheckoutGroupBooking({
         for (const t of teeTimesSorted) {
             if (remaining <= 0) break;
             const capacity = Math.max(0, t.availableSlots);
-            const count = Math.min(remaining, capacity);
+            let count = Math.min(remaining, capacity);
+
+            if (remaining === 5 && totalPlayers % 4 === 1) {
+                count = 3;
+            }
+
             if (count > 0) {
                 allocations.push({ label: getTime(t.date, timezoneCorrection), count });
                 remaining -= count;

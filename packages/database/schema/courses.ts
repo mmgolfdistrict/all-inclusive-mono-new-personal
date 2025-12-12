@@ -1,6 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { relations, sql } from "drizzle-orm";
-import { boolean, datetime, double, index, int, text, tinyint, varchar } from "drizzle-orm/mysql-core";
+import { boolean, datetime, double, index, int, longtext, text, tinyint, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 import { adminUsers } from "./adminUsers";
 import { assets } from "./assets";
@@ -86,6 +86,10 @@ export const courses = mySqlTable(
     merchandiseTaxPercent: int("merchandiseTaxPercent").default(0),
     phoneNumber: varchar("phoneNumber", { length: 20 }),
     groupBookingFeePerPlayer: int("groupBookingFeePerPlayer"),
+    allowedDomainList: varchar("allowedDomainList", { length: 256 })
+      .notNull()
+      .default("example.com"),
+    additionalDetails: longtext('additionalDetails')
   },
   (table) => {
     return {

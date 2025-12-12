@@ -97,16 +97,19 @@ export default function ResetPassword() {
       </h1>
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[31.25rem] sm:rounded-xl sm:p-6">
         {/* 1️⃣ Loading or Verifying State */}
-        {verifyToken.isLoading && (
-          <div className="text-center text-primary-gray">Verifying link...</div>
-        )}
+        {
+          verifyToken.isLoading && (
+            <div className="text-center text-primary-gray">Verifying link...</div>
+          )
+        }
 
         {/* 2️⃣ Invalid or Expired Link */}
-        {verifyToken.isError && (
-          <div className="text-center text-red font-medium">
-            This link is no longer valid.
-          </div>
-        )}
+        {
+          verifyToken.isError && (
+            <div className="text-center text-red font-medium">
+              This link is no longer valid.
+            </div>
+          )}
 
         {/* 3️⃣ Valid Token & Password Reset Form */}
         {verifyToken.data?.valid && !resetFn.isSuccess && (
@@ -228,6 +231,6 @@ export default function ResetPassword() {
           Back to Login
         </Link>
       </div>
-    </main>
+    </main >
   );
 }
