@@ -30,21 +30,23 @@ export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const verifyToken = api.user.verifyForgotPasswordToken.useMutation();
+  const verifyToken = api.user?.verifyForgotPasswordToken?.useMutation?.();
   const resetFn = api.user.executeForgotPassword.useMutation();
 
   useEffect(() => {
     if (!userId || !verificationToken) return;
 
-    verifyToken
-      .mutateAsync({ userId, verificationToken })
-      .catch((err) => {
-        console.error(err);
-        // ✅ Instead, just clear session if you want
-        fetch("/api/auth/signout", { method: "POST" }).catch(() => {
-          console.warn("Session already cleared or expired");
+    if (verifyToken) {
+      verifyToken
+        .mutateAsync({ userId, verificationToken })
+        .catch((err) => {
+          console.error(err);
+          // ✅ Instead, just clear session if you want
+          fetch("/api/auth/signout", { method: "POST" }).catch(() => {
+            console.warn("Session already cleared or expired");
+          });
         });
-      });
+    }
     // ✅ Run only once
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -98,21 +100,21 @@ export default function ResetPassword() {
       <section className="mx-auto flex w-full flex-col gap-2 bg-white p-5 sm:max-w-[31.25rem] sm:rounded-xl sm:p-6">
         {/* 1️⃣ Loading or Verifying State */}
         {
-          verifyToken.isLoading && (
+          verifyToken?.isLoading && (
             <div className="text-center text-primary-gray">Verifying link...</div>
           )
         }
 
         {/* 2️⃣ Invalid or Expired Link */}
         {
-          verifyToken.isError && (
+          verifyToken?.isError && (
             <div className="text-center text-red font-medium">
               This link is no longer valid.
             </div>
           )}
 
         {/* 3️⃣ Valid Token & Password Reset Form */}
-        {verifyToken.data?.valid && !resetFn.isSuccess && (
+        {verifyToken?.data?.valid && !resetFn?.isSuccess && (
           <form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
             <div className="relative">
               <Input
@@ -122,7 +124,7 @@ export default function ResetPassword() {
                 placeholder="Enter your password"
                 register={register}
                 name="password"
-                error={errors.password?.message}
+                error={errors?.password?.message}
                 data-testid="reset-password-id"
               />
               <IconButton
@@ -130,7 +132,7 @@ export default function ResetPassword() {
                   e.preventDefault();
                   setShowPassword((prev) => !prev);
                 }}
-                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors.password?.message ? "pb-10" : ""}`}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors?.password?.message ? "pb-10" : ""}`}
                 data-testid="show-password-id"
               >
                 {showPassword ? (
@@ -161,7 +163,7 @@ export default function ResetPassword() {
                 placeholder="Confirm your password"
                 register={register}
                 name="confirmPassword"
-                error={errors.confirmPassword?.message}
+                error={errors?.confirmPassword?.message}
                 data-testid="reset-confirm-password-id"
               />
               <IconButton
@@ -169,7 +171,7 @@ export default function ResetPassword() {
                   e.preventDefault();
                   setShowConfirmPassword((prev) => !prev);
                 }}
-                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors.confirmPassword?.message ? "pb-10" : ""}`}
+                className={`absolute right-2 !top-[90%] border-none !bg-transparent !transform !-translate-y-[90%] ${errors?.confirmPassword?.message ? "pb-10" : ""}`}
                 data-testid="show-confirm-password-id"
               >
                 {showConfirmPassword ? (
@@ -180,11 +182,11 @@ export default function ResetPassword() {
               </IconButton>
             </div>
             <FilledButton
-              className={`w-full rounded-full ${resetFn.isLoading ? "animate-pulse cursor-not-allowed" : ""
+              className={`w-full rounded-full ${resetFn?.isLoading ? "animate-pulse cursor-not-allowed" : ""
                 }`}
               data-testid="submit-button-id"
             >
-              {resetFn.isLoading ? "Submitting..." : "Submit"}
+              {resetFn?.isLoading ? "Submitting..." : "Submit"}
             </FilledButton>
           </form>
         )}
