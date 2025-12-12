@@ -26,6 +26,7 @@ import { toast } from "react-toastify";
 import { useMediaQuery } from "usehooks-ts";
 import { OutlineButton } from "~/components/buttons/outline-button";
 import { Refresh } from "~/components/icons/refresh";
+import { Marketplace } from "~/components/icons/marketplace";
 
 function NotifyMe({ params }: { params: { course: string } }) {
   const router = useRouter();
@@ -491,7 +492,8 @@ function NotifyMe({ params }: { params: { course: string } }) {
               disabled={isCreatingNotifications}
               id="notify-get-alerted"
             >
-              <Bell width="0.9375rem" />
+              {/* <Bell width="0.9375rem" /> */}
+              <Marketplace className="w-4" />
               Get Alerted
             </FilledButton>
 
