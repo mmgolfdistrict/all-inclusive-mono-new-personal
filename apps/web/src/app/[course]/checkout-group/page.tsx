@@ -1,5 +1,8 @@
 "use client";
 
+import type {
+    SearchObject
+} from "@golf-district/shared";
 import {
     formatDate,
     formatQueryDate,
@@ -12,7 +15,7 @@ import { CheckoutBreadcumbs } from "~/components/nav/checkout-breadcrumbs";
 import { useCheckoutContext } from "~/contexts/CheckoutContext";
 import { useCourseContext } from "~/contexts/CourseContext";
 import { api } from "~/utils/api";
-import { formatMoney, getPromoCodePrice } from "~/utils/formatters";
+import { formatMoney, getPromoCodePrice, getTime } from "~/utils/formatters";
 import type {
     AdvancedBookingFees,
     AuctionProduct,
@@ -57,6 +60,7 @@ export default function CheckoutGroupBooking({
     const playerCount = searchParams?.playerCount;
 
     const { course } = useCourseContext();
+    const timezoneCorrection = course?.timezoneCorrection;
 
     const [isSessionLoading, setIsSessionLoading] = useState(true);
     const [hasErrorOccured, setHasErrorOccured] = useState(false);
@@ -111,7 +115,37 @@ export default function CheckoutGroupBooking({
             }
             return teeTimes;
         }
-    }, [teeTimeData])
+    }, [teeTimeData]);
+
+    const allocatePlayersAcrossTeeTimes = (group: SearchObject[], totalPlayers: number): { label: string; count: number }[] => {
+        const teeTimesSorted = group.sort((a, b) => a.time - b.time);
+
+        let remaining = totalPlayers;
+        const allocations: { label: string; count: number }[] = [];
+
+        for (const t of teeTimesSorted) {
+            if (remaining <= 0) break;
+            const capacity = Math.max(0, t.availableSlots);
+            let count = Math.min(remaining, capacity);
+
+            if (remaining === 5 && totalPlayers % 4 === 1) {
+                count = 3;
+            }
+
+            if (count > 0) {
+                allocations.push({ label: getTime(t.date, timezoneCorrection), count });
+                remaining -= count;
+            }
+        }
+
+        return allocations;
+    };
+
+    const getPlayersPerSlotLabelFull = (group: SearchObject[], totalPlayers: number): string => {
+        const allocations = allocatePlayersAcrossTeeTimes(group, totalPlayers);
+        const parts = allocations.map((a) => `${a.label} (${a.count})`.replace(/ /g, "\u00A0"));
+        return parts.join(" • ");
+    };
 
     let isError = isErrorTeeTime, error;
 
@@ -638,6 +672,8 @@ export default function CheckoutGroupBooking({
                             isSensibleInvalid={isSensibleInvalid}
                             privacyPolicyAndTCByCourseUrl={privacyPolicyAndTCByCourseUrl}
                             isGroupBooking={true}
+                            getPlayersPerSlotLabelFull={getPlayersPerSlotLabelFull}
+                            selectedTeeTimes={teeTimesSelectedForBooking}
                         />
                     </div>
                     <div className="md:w-2/5">

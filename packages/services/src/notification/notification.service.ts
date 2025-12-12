@@ -77,6 +77,8 @@ interface EmailParams {
   ListType?: string;
   InviteRegisterURL?: string;
   InviteLoginURL?: string;
+  PlayerDistribution?: string;
+  InvitedName?: string;
 }
 
 interface Attachment {

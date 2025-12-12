@@ -160,7 +160,7 @@ function GroupBooking({ params }: { params: { course: string } }) {
         minimumGolferGroup: 4
       });
       if (data) {
-        setTeeTimeData(data);
+        setTeeTimeData(data as TeeTimeGroups);
         document.getElementById('your-selection')?.scrollIntoView({ behavior: 'smooth' });
       } else {
         setTeeTimeData(null);

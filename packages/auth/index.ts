@@ -190,6 +190,24 @@ export const {
       },
       allowDangerousEmailAccountLinking: true,
     }),
+    // Keycloak provider
+    {
+      id: "keycloak",
+      name: "Keycloak",
+      type: "oidc", // use OIDC instead of oauth
+      issuer: process.env.KEYCLOAK_ISSUER, // MUST be realm URL
+      clientId: process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID,
+      clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name ?? profile.preferred_username,
+          email: profile.email,
+          image: profile.picture,
+        };
+      },
+    },
   ],
   logger: {
     error(error: Error) {
@@ -221,6 +239,7 @@ export const {
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async signIn({ user, account }) {
+      debugger;
       if ("error" in user && "message" in user) {
         return `/login?error=${user.message}`;
       }
@@ -246,15 +265,15 @@ export const {
           process.env.REDIS_TOKEN!
         );
 
-        const userService = new UserService(db, notificationService);
-        const existingUser = await userService.getUserById(user.id ?? "");
+        // const userService = new UserService(db, notificationService);
+        // const existingUser = await userService.getUserById(user.id ?? "");
 
-        if (existingUser && !existingUser.handle) {
-          const username = await userService.generateUsername(6);
-          await userService.updateUser(user.id ?? "", {
-            handle: username,
-          });
-        }
+        // if (existingUser && !existingUser.handle) {
+        //   const username = await userService.generateUsername(6);
+        //   await userService.updateUser(user.id ?? "", {
+        //     handle: username,
+        //   });
+        // }
 
         // const isUserBlocked = await authService.isUserBlocked(user.email ?? "");
         // if (isUserBlocked) {

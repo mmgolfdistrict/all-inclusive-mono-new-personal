@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Db } from "@golf-district/database";
-import { and, db, eq, inArray } from "@golf-district/database";
+import { and, asc, db, eq, inArray } from "@golf-district/database";
 import { assets } from "@golf-district/database/schema/assets";
 import type { InsertBooking } from "@golf-district/database/schema/bookings";
 import { bookings } from "@golf-district/database/schema/bookings";
@@ -13,7 +13,7 @@ import { teeTimes } from "@golf-district/database/schema/teeTimes";
 import type { InsertTransfer } from "@golf-district/database/schema/transfers";
 import { transfers } from "@golf-district/database/schema/transfers";
 import { users } from "@golf-district/database/schema/users";
-import { formatMoney, formatTime } from "@golf-district/shared";
+import { formatMoney, formatTime, formatTimeWithoutDate } from "@golf-district/shared";
 import createICS from "@golf-district/shared/createICS";
 import type { Event } from "@golf-district/shared/createICS";
 import Logger from "@golf-district/shared/src/logger";
@@ -68,7 +68,7 @@ export class TokenizeService {
     private readonly database: Db,
     private readonly notificationService: NotificationService,
     private readonly sensibleService: SensibleService
-  ) {}
+  ) { }
   getCartData = async ({ courseId = "", ownerId = "", paymentId = "" }) => {
     const [customerCartData]: any = await this.database
       .select({ cart: customerCarts.cart, cartId: customerCarts.id })
@@ -271,6 +271,7 @@ export class TokenizeService {
         cdnKey: assets.key,
         extension: assets.extension,
         timezoneCorrection: courses.timezoneCorrection,
+        timezoneISO: courses.timezoneISO,
       })
       .from(teeTimes)
       .where(isFirstHandGroupBooking ? inArray(teeTimes.id, teeTimeIds) : eq(teeTimes.id, providerTeeTimeId))
@@ -278,6 +279,7 @@ export class TokenizeService {
       .leftJoin(assets, eq(assets.id, courses.logoId))
       .leftJoin(entities, eq(courses.entityId, entities.id))
       .leftJoin(users, eq(users.id, userId))
+      .orderBy(asc(teeTimes.providerDate))
       .execute()
       .catch((err) => {
         this.logger.error(err);
@@ -341,6 +343,10 @@ export class TokenizeService {
       id: string;
       availableSecondHandSpots: number;
       availableFirstHandSpots: number;
+    }[] = [];
+    const teeTimeDistributionOnGroupBooking: {
+      time: string;
+      player: number;
     }[] = [];
 
     let acceptedQuote: AcceptedQuoteParams = { id: null, price_charged: 0 };
@@ -620,6 +626,10 @@ export class TokenizeService {
           availableFirstHandSpots: teeTimeData.availableFirstHandSpots - booking.playerCount,
         });
         remainingAmount = remainingAmount - totalAmountForBooking;
+        teeTimeDistributionOnGroupBooking.push({
+          time: teeTimeData.providerDate,
+          player: booking.playerCount
+        })
       }
     } else {
       bookingsToCreate.push({
@@ -913,6 +923,11 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
     `;
     let event: Event, template;
     if (isFirstHandGroupBooking) {
+      const playerDistributionParts = teeTimeDistributionOnGroupBooking.map((teeTime) => {
+        return `${formatTimeWithoutDate(teeTime.time, true, existingTeeTime.timezoneCorrection ?? 0)
+          } (${teeTime.player})`.replace(/ /g, "\u00A0")
+      })
+      const playerDistribution = playerDistributionParts.join(" • ");
       event = {
         startDate: existingTeeTime.date,
         endDate: existingTeeTime.date,
@@ -924,6 +939,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         playTime: this.extractTime(
           formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0)
         ),
+        courseTimeZone: existingTeeTime.timezoneISO ?? "",
       };
 
       template = {
@@ -946,6 +962,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         PurchasedMerchandise: purchasedMerchandise?.length > 0 ? true : false,
         MerchandiseDetails: merchandiseDetails,
         color1: color1,
+        PlayerDistribution: playerDistribution
       };
     } else {
       event = {
@@ -960,6 +977,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
         playTime: this.extractTime(
           formatTime(existingTeeTime.providerDate, true, existingTeeTime.timezoneCorrection ?? 0)
         ),
+        courseTimeZone: existingTeeTime.timezoneISO ?? "",
       };
 
       template = {
@@ -975,7 +993,7 @@ ${players} tee times have been purchased for ${existingTeeTime.date} at ${existi
             (existingTeeTime.greenFee +
               Number(cartFeeCharge) +
               (normalizedCartData?.markupCharge ?? 0) * 100) /
-              100 +
+            100 +
             normalizedCartData.advancedBookingAmount
           ).toLocaleString("en-US", {
             minimumFractionDigits: 2,

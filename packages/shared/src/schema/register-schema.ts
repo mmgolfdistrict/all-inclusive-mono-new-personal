@@ -1,18 +1,19 @@
 import { z } from "zod";
 
-export const NAME_VALIDATION_REGEX = /^[A-Za-zÀ-ÿ'’ ]+$/;
+// export const NAME_VALIDATION_REGEX = /^[A-Za-zÀ-ÿ'’ ]+$/;
+export const NAME_VALIDATION_REGEX = /^[A-Za-z ]+'?([A-Za-z ]+)?$/;
 
 export const registerSchema = z
   .object({
     firstName: z
       .string({ required_error: "First name is required" })
       .min(1, { message: "First name is required" })
-      .regex(NAME_VALIDATION_REGEX, { message: "First name can only contain letters and single quotes" })
+      .regex(NAME_VALIDATION_REGEX, { message: "First name can only contain letters and a single quote" })
       .transform((name) => name.trim().replace(/\s{2,}/g, " ")),
     lastName: z
       .string({ required_error: "Last name is required" })
       .min(1, { message: "Last name is required" })
-      .regex(NAME_VALIDATION_REGEX, { message: "Last name can only contain letters and single quotes" })
+      .regex(NAME_VALIDATION_REGEX, { message: "Last name can only contain letters and a single quote" })
       .transform((name) => name.trim().replace(/\s{2,}/g, " ")),
     username: z
       .string({ required_error: "Username is required" })
@@ -23,14 +24,20 @@ export const registerSchema = z
     // }),
     email: z
       .string({ required_error: "Email is required" })
-      .email({ message: "Invalid email" })
-      .min(1, "Email is required"),
+      .min(1, { message: "Email is required" })
+      .email({ message: "Invalid email" }),
     phoneNumberCountryCode: z.number().min(1, { message: "Phone number country code is required" }),
     phoneNumber: z
       .string({ required_error: "Phone number is required" })
-      .min(10, { message: "Invalid phone number, it should have 10 digits." })
-      .max(10, { message: "Invalid phone number, it should have 10 digits." })
-      .refine((phoneNumber) => /^\d{10}$/.test(phoneNumber)),
+      .trim()
+      .refine(
+        (val) => val.length > 0,       // When empty → required error
+        { message: "Phone number is required" }
+      )
+      .refine(
+        (val) => /^\d{10}$/.test(val), // When not empty → check 10 digits
+        { message: "Invalid phone number, it should have 10 digits." }
+      ),
     // location: z.string().min(1, { message: "Location is required" }),
     address1: z
       .string({ required_error: "Address1 is required" })

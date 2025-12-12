@@ -8,7 +8,8 @@
     "dev": "next dev  ",
     "lint": "next lint",
     "start": "next start",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "eslintConfig": {
     "extends": [
@@ -62,6 +63,7 @@
     "framer-motion": "^10.16.1",
     "google-libphonenumber": "^3.2.40",
     "next": "14.0.4",
+    "next-auth": "^4.24.13",
     "payment": "^2.4.6",
     "pdfmake": "^0.2.18",
     "react": "18.2.0",
@@ -83,10 +85,12 @@
   "devDependencies": {
     "@golf-district/eslint-config": "^0.1.0",
     "@golf-district/tsconfig": "^0.1.0",
+    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcrypt": "^5.0.0",
     "@types/eslint": "^8.37.0",
-    "@types/node": "^18.16.0",
+    "@types/node": "^22.12.0",
     "@types/prettier": "^2.7.2",
     "@types/react": "^18.2.6",
     "@types/react-dom": "^18.2.4",
@@ -94,6 +98,7 @@
     "@typescript-eslint/eslint-plugin": "6.0.0",
     "@typescript-eslint/parser": "6.0.0",
     "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-istanbul": "^3.2.4",
     "autoprefixer": "^10.4.14",
     "encoding": "^0.1.13",
     "eslint": "^8.40.0",
@@ -103,7 +108,9 @@
     "prettier-plugin-tailwindcss": "^0.2.8",
     "tailwindcss": "^3.3.3",
     "typescript": "^5.2.2",
-    "vitest": "^3.2.4"
+    "vite": "^5.4.10",
+    "vite-node": "^3.0.4",
+    "vitest": "^3.0.4"
   },
   "brower": {
     "fs": false

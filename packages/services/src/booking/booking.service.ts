@@ -114,6 +114,10 @@ interface OwnedTeeTimeData {
   groupId: string;
   allowSplit?: boolean | null;
   totalMerchandiseAmount: number;
+  teeTimeInfo?: {
+    time: string;
+    player: number;
+  }[]
 }
 
 interface ListingData {
@@ -468,6 +472,7 @@ export class BookingService {
           gte(teeTimes.providerDate, localDateTimePlus1Hour.format("YYYY-MM-DDTHH:mm:ss")) //Exclude past tee times
         )
       )
+      .orderBy(asc(teeTimes.providerDate))
       .execute()
       .catch((err) => {
         this.logger.error(`Error retrieving tee times: ${err}`);
@@ -1084,6 +1089,10 @@ export class BookingService {
           isGroupBooking: true,
           groupId: teeTime.groupId ?? "",
           totalMerchandiseAmount: teeTime.totalMerchandiseAmount ?? 0,
+          teeTimeInfo: [{
+            time: teeTime.date,
+            player: teeTime.playerCount
+          }]
         };
       } else {
         const currentEntry = combinedGroupData[teeTime.groupId!];
@@ -1111,6 +1120,13 @@ export class BookingService {
           }
           currentEntry.purchasedFor =
             (currentEntry.purchasedFor ?? 0) + Number(teeTime.purchasedFor) / (teeTime.playerCount * 100);
+          const hasDuplicateTeeTimeInfo = currentEntry.teeTimeInfo?.some((teeTimeInfo) => teeTimeInfo.time === teeTime.date);
+          if (!hasDuplicateTeeTimeInfo) {
+            currentEntry.teeTimeInfo?.push({
+              time: teeTime.date,
+              player: teeTime.playerCount
+            })
+          }
         }
       }
     });
@@ -5033,6 +5049,7 @@ export class BookingService {
         `${teeTime.time + 1}`.length === 3 ? `0${teeTime.time + 1}` : `${teeTime.time + 1}`,
         teeTime.providerDate.split("T")[0] ?? ""
       );
+
       if (providerDetailsGetTeeTime?.length) {
         const teeTimeData = provider.findTeeTimeById(teeTime.providerTeeTimeId, providerDetailsGetTeeTime);
 
@@ -5492,7 +5509,12 @@ export class BookingService {
           );
 
           //check if the teeTime has valid amount of spots available
-          const requiredSpots = Math.min(remainingPlayersToBook as number, minPlayersPerBooking as number);
+          let requiredSpots = Math.min(remainingPlayersToBook as number, minPlayersPerBooking as number);
+
+          if (remainingPlayersToBook === 5 && playerCount % 4 === 1) {
+            requiredSpots = 3
+          }
+
           if (requiredSpots > teeTime.firstHandSpotsAvailable) {
             void loggerService.errorLog({
               userId: userId,
@@ -5983,6 +6005,9 @@ export class BookingService {
         totalAmount: bookings.totalAmount,
         timezoneCorrection: courses.timezoneCorrection,
         providerBookingId: bookings.providerBookingId,
+        sellerFees: courses.sellerFee,
+        weatherGuaranteeAmount: bookings.weatherGuaranteeAmount,
+        merchandiseAmount: bookings.totalMerchandiseAmount
       })
       .from(bookings)
       .leftJoin(teeTimes, eq(teeTimes.id, bookings.teeTimeId))
@@ -6200,6 +6225,12 @@ export class BookingService {
       return;
     }
     console.log("######", ownedBookings);
+    const amount = (listPrice * 100) ?? 1;
+    const serviceCharge = amount * ((firstBooking.sellerFees ?? 0) / 100);
+    const payable =
+      (amount - serviceCharge) * (slots) +
+      (firstBooking.weatherGuaranteeAmount ?? 0) +
+      (firstBooking.merchandiseAmount ?? 0);
     if (user.email && user.name) {
       await this.notificationService
         .sendEmailByTemplate(
@@ -6222,13 +6253,15 @@ export class BookingService {
             ListedPricePerPlayer: listPrice ? `${listPrice}` : "-",
             TotalAmount: formatMoney(lastBooking.totalAmount / 100 ?? 0),
             color1: color1,
+            PayableAmount: formatMoney(payable / 100 ?? 0),
+            ListType: "Whole",
           },
           [],
           parseInt(process.env.SENDGRID_TRANSACTIONAL_UNSUB_GROUP_ID!)
         )
         .catch((err) => {
           this.logger.error(`Error sending email: ${err}`);
-          loggerService.errorLog({
+          void loggerService.errorLog({
             userId: userId,
             url: "/createListingForGroupBookings",
             userAgent: "",

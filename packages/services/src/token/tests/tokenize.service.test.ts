@@ -13,6 +13,7 @@ const mockDatabase = {
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     leftJoin: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockReturnThis(),
     execute: vi.fn(),
     transaction: vi.fn(async (callback) => {
         const tx = {
@@ -420,7 +421,7 @@ describe('TokenizeService', () => {
     describe('Chaos Level: Combined Feature Torture Tests', () => {
         it('CHAOS: Group booking with uneven players, merchandise, and sensible weather', async () => {
             // Arrange
-            const mockExistingTeeTime = { id: 'tee-time-123', availableFirstHandSpots: 10, greenFee: 5000, courseName: 'Chaos Course', providerDate: '2025-07-24T10:00:00.000Z' };
+            const mockExistingTeeTime = { id: 'tee-time-123', availableFirstHandSpots: 10, greenFee: 5000, courseName: 'Chaos Course', providerDate: '2025-07-24T10:00:00.000Z', date: '2025-07-24T10:00:00.000Z' };
             const mockSecondTeeTime = { ...mockExistingTeeTime, id: 'tee-time-456' };
             const sensibleQuoteId = 'sensible-chaos-quote';
             const sensiblePrice = 1500; // $15.00

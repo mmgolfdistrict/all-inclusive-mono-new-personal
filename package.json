@@ -26,6 +26,7 @@
     "revision": "node ./revision/generateRevision.js && node ./revision/route.js",
     "start": "npm run dev",
     "test": "turbo run test --filter=golf-district-platforms",
+    "test:coverage": "npm --workspace apps/web run test:coverage",
     "typecheck": "turbo typecheck"
   },
   "husky": {

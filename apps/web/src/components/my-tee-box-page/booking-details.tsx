@@ -218,7 +218,7 @@ export const BookingDetails = ({
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            {(selectedReceipt?.status === "PURCHASED" ||
+            {(selectedReceipt?.status === "CONFIRMED" ||
               selectedReceipt?.status === "SOLD") && (
                 <PDFDownloadLink
                   className="w-full"

@@ -26,6 +26,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const { status } = useSession();
   const { entity } = useAppContext();
+  console.log("hello from layout", status);
 
   const getRecievables = api.cashOut.getRecievablesMute.useMutation();
 

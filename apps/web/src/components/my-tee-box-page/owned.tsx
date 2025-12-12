@@ -3,9 +3,8 @@
 import { useCourseContext } from "~/contexts/CourseContext";
 import { useUserContext } from "~/contexts/UserContext";
 import { api } from "~/utils/api";
-import { formatTime } from "~/utils/formatters";
+import { formatTime, getTime } from "~/utils/formatters";
 import { type InviteFriend } from "~/utils/types";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "../avatar";
 import { FilledButton } from "../buttons/filled-button";
@@ -43,6 +42,10 @@ export type OwnedTeeTime = {
   groupId: string;
   allowSplit?: boolean;
   totalMerchandiseAmount: number;
+  teeTimeInfo?: {
+    time: string;
+    player: number;
+  }[]
 };
 
 export const Owned = () => {
@@ -91,10 +94,10 @@ export const Owned = () => {
         return { ...data[key], teeTimeId: data[key].teeTimeId } as OwnedTeeTime;
       })
       .sort((a, b) => {
-        const dateA = a.date;
-        const dateB = b.date;
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
 
-        return Number(new Date(dateA)) - Number(new Date(dateB));
+        return dateA - dateB;
       });
   }, [data]);
   // const loadMore = () => {
@@ -221,6 +224,7 @@ export const Owned = () => {
                   bookingStatus={i.bookingStatus}
                   isGroupBooking={i.isGroupBooking}
                   isCollectPaymentEnabled={Boolean(isCollectPaymemtEnabled)}
+                  teeTimeInfo={i.teeTimeInfo}
                 />
               ))}
           </tbody>
@@ -305,7 +309,8 @@ const TableRow = ({
   collectPaymentList,
   bookingStatus,
   isGroupBooking,
-  isCollectPaymentEnabled
+  isCollectPaymentEnabled,
+  teeTimeInfo
 }: {
   course: string;
   date: string;
@@ -327,7 +332,18 @@ const TableRow = ({
   bookingStatus: string;
   isGroupBooking: boolean;
   isCollectPaymentEnabled?: boolean;
+  teeTimeInfo?: {
+    time: string;
+    player: number;
+  }[]
 }) => {
+  const [_teeTimeId, _listingId, _ownerId] = [teeTimeId, listingId, ownerId];
+  const getPlayersPerSlotLabelFull = (): string => {
+    if (teeTimeInfo === undefined) return "";
+    const parts = teeTimeInfo.map((teeTime) => `${getTime(teeTime.time, timezoneCorrection)
+      } (${teeTime.player})`.replace(/ /g, "\u00A0"));
+    return parts.join(" • ");
+  };
   // const href = useMemo(() => {
   //   if (isListed) {
   //     return `/${courseId}/${teeTimeId}/listing/${listingId}`;
@@ -337,9 +353,9 @@ const TableRow = ({
 
   return (
     <tr className="w-full border-b border-stroke text-primary-gray">
-      <td className="gap-2 px-4 py-3">
+      <td className="gap-2 px-4 py-3 ">
         {isGroupBooking ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-2">
             <Avatar src={iconSrc} isRounded={false} />
             <div className="flex flex-col">
               <div className="whitespace-nowrap text-secondary-black">
@@ -347,6 +363,9 @@ const TableRow = ({
               </div>
               <div className="text-primary-gray unmask-time">
                 {formatTime(date, false, timezoneCorrection)}
+              </div>
+              <div className="block text-[0.75rem] text-wrap md:text-[0.875rem] text-primary-gray mt-1 max-w-[24rem]">
+                <span className="text-secondary-black">Player Distrbution:</span> {getPlayersPerSlotLabelFull()}
               </div>
             </div>
           </div>
@@ -379,7 +398,7 @@ const TableRow = ({
             return `${i.name || "Guest"}, `;
           })}
       </td>
-      <td className="flex items-center gap-1 whitespace-nowrap px-4 pb-3 pt-6">
+      <td className="whitespace-nowrap px-4 py-3">
         {offers ? (
           <div className="flex items-center gap-1">
             <div className="flex min-w-[1.375rem] items-center justify-center rounded-full bg-alert-red px-1.5 text-white">

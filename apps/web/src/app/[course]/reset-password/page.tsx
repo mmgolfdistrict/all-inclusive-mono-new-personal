@@ -1,10 +1,11 @@
 "use client";
 
 import { isValidPassword } from "@golf-district/shared";
-import {
-  resetPasswordSchema,
-  type ResetPasswordSchemaType,
-} from "@golf-district/shared/src/schema/reset-password-schema";
+import
+  {
+    resetPasswordSchema,
+    type ResetPasswordSchemaType,
+  } from "@golf-district/shared/src/schema/reset-password-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilledButton } from "~/components/buttons/filled-button";
 import { IconButton } from "~/components/buttons/icon-button";
@@ -20,7 +21,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 
-export default function ResetPassword() {
+export default function ResetPassword()
+{
   const { course } = useCourseContext();
   const { setPrevPath } = useAppContext();
   const params = useSearchParams();
@@ -45,18 +47,22 @@ export default function ResetPassword() {
   const resetFn = api.user.executeForgotPassword.useMutation();
   const { entity } = useAppContext();
 
-  useEffect(() => {
+  useEffect(() =>
+  {
     if (!userId || !verificationToken) return;
     setValue("userId", userId);
     setValue("verificationToken", verificationToken);
   }, [userId, verificationToken]);
 
-  const onSubmit: SubmitHandler<ResetPasswordSchemaType> = async (data) => {
+  const onSubmit: SubmitHandler<ResetPasswordSchemaType> = async (data) =>
+  {
     if (resetFn.isSuccess) return;
     if (resetFn.isLoading) return;
-    try {
+    try
+    {
       await resetFn.mutateAsync({ ...data, courseId: course?.id, color1: entity?.color1 ?? "#000000" });
-    } catch (error) {
+    } catch (error)
+    {
       toast.error(
         (error as Error)?.message ??
         "An error occurred submitting your request."
@@ -66,7 +72,8 @@ export default function ResetPassword() {
 
   const password = watch("password");
 
-  const passwordFeedback = useMemo(() => {
+  const passwordFeedback = useMemo(() =>
+  {
     if (!password) return;
     const feedback = isValidPassword(password).feedback;
     return feedback;
@@ -85,14 +92,15 @@ export default function ResetPassword() {
             </div>
             <Link href={`/${course?.id}/login`} data-testid="login-button-id">
               <FilledButton
-                onClick={() => {
+                onClick={() =>
+                {
                   setPrevPath({
                     path: `/${course?.id}`,
                     createdAt: new Date().toISOString(),
                   });
                 }}
               >
-                Log In
+                Login
               </FilledButton>
             </Link>
           </div>
@@ -113,7 +121,8 @@ export default function ResetPassword() {
                 data-testid="reset-password-id"
               />
               <IconButton
-                onClick={(e) => {
+                onClick={(e) =>
+                {
                   e.preventDefault();
                   setShowPassword(!showPassword);
                 }}
@@ -148,7 +157,8 @@ export default function ResetPassword() {
                 data-testid="reset-confirm-password-id"
               />
               <IconButton
-                onClick={(e) => {
+                onClick={(e) =>
+                {
                   e.preventDefault();
                   setShowConfirmPassword(!showConfirmPassword);
                 }}

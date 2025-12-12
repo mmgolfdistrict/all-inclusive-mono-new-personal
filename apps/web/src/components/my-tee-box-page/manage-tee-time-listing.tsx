@@ -509,7 +509,7 @@ export const ManageTeeTimeListing = ({
             </ToggleGroup.Root>
           </div>
 
-          {!selectedTeeTime?.isGroupBooking
+          {!selectedTeeTime?.groupId
             ? <SaleTypeSelector
               className="flex flex-col w-full mb-4"
               value={saleType}
