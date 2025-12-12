@@ -1,5 +1,5 @@
 import * as dotenv from "dotenv";
-import type { Config } from "drizzle-kit";
+import { defineConfig } from "drizzle-kit";
 
 dotenv.config({
   path: "../../.env",
@@ -12,11 +12,11 @@ if (!process.env.SECONDARY_DATABASE_URL) {
   throw new Error("SECONDARY_DATABASE_URL is not set");
 }
 
-export default {
+export default defineConfig({
   schema: "./secondaryDbSchema",
   breakpoints: true,
-  driver: "mysql2",
+  dialect: "mysql",
   dbCredentials: {
-    uri: process.env.SECONDARY_DATABASE_URL!,
+    url: process.env.SECONDARY_DATABASE_URL!,
   },
-} satisfies Config;
+});
