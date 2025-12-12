@@ -595,7 +595,7 @@ export class BookingService {
         purchasedAt: booking.purchasedAt,
         purchasedByImage: booking.purchasedByImage
           ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${booking.purchasedByImage.key}.${booking.purchasedByImage.extension}`
-          : "/defaults/default-profile.webp",
+          : "",
       };
     });
     return res;
@@ -3002,7 +3002,7 @@ export class BookingService {
           handle: offer.offeredBy.handle,
           image: offer.offeredBy.key
             ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${offer.offeredBy.key}.${offer.offeredBy.extension}`
-            : "/defaults/default-profile.webp",
+            : "",
         },
         amountOffered: offer.price,
         originalPrice: offer.originalGreenFee,
@@ -3156,7 +3156,7 @@ export class BookingService {
           handle: offer.offeredBy.handle,
           image: offer.offeredBy.key
             ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${offer.offeredBy.key}.${offer.offeredBy.extension}`
-            : "/defaults/default-profile.webp",
+            : "",
         },
         ownedBy: {
           userId: offer.ownedBy.userId,
@@ -3164,7 +3164,7 @@ export class BookingService {
           handle: offer.ownedBy.handle,
           image: offer.ownedBy.key
             ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${offer.ownedBy.key}.${offer.ownedBy.extension}`
-            : "/defaults/default-profile.webp",
+            : "",
         },
         offerAmount: offer.price,
         originalPrice: offer.originalGreenFee,
@@ -3293,7 +3293,7 @@ export class BookingService {
           handle: offer.offeredBy.handle,
           image: offer.offeredBy.key
             ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${offer.offeredBy.key}.${offer.offeredBy.extension}`
-            : "/defaults/default-profile.webp",
+            : "",
         },
         amountOffered: offer.price,
         originalPrice: offer.originalGreenFee,

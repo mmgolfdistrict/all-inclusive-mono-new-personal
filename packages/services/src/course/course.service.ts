@@ -638,7 +638,7 @@ export class CourseService extends DomainService {
     return {
       logo: logo[0]
         ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${logo[0].key}.${logo[0].extension}`
-        : "/defaults/default-profile.webp",
+        : "",
       images: images
         // .filter((i) => i.coursesId === courseId && i.id !== i.courseLogoId)
         .sort((a, b) => {

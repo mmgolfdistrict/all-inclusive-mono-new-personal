@@ -45,7 +45,6 @@ const countryList: Country[] = allCountries.map(({ name, iso2, dialCode }: Count
   flag: `https://flagcdn.com/w40/${iso2.toLowerCase()}.png`
 }));
 
-const defaultProfilePhoto = "/defaults/default-profile.webp";
 const defaultBannerPhoto = "/defaults/default-banner.webp";
 const libraries: Libraries = ["places"];
 
@@ -383,14 +382,8 @@ export const EditProfileForm = () => {
         country: data?.country,
         phoneNumberCountryCode: data.phoneNumberCountryCode,
         phoneNumber: data.phoneNumber,
-        profilePictureAssetId:
-          data.profilePictureAssetId === defaultProfilePhoto
-            ? defaultProfilePhoto
-            : assetIds.profilePictureId || undefined,
-        bannerImageAssetId:
-          data.bannerImageAssetId === defaultBannerPhoto
-            ? defaultBannerPhoto
-            : assetIds.bannerId || undefined,
+        profilePictureAssetId: assetIds.profilePictureId || "",
+        bannerImageAssetId: assetIds.bannerId || "",
       };
       const keys = Object.keys(dataToUpdate);
 
@@ -411,7 +404,8 @@ export const EditProfileForm = () => {
         return;
       }
       //check if profilePictureAssetId is defaultProfilePhoto and then set it to empty string if it is
-      if (dataToUpdate?.profilePictureAssetId === defaultProfilePhoto) {
+      if (!dataToUpdate?.profilePictureAssetId) {
+        // User removed or reset the profile photo
         dataToUpdate.profilePictureAssetId = "";
         deleteFileAsset({ fileType: "profileImage" });
       }
@@ -431,14 +425,12 @@ export const EditProfileForm = () => {
         toast.error(response.message);
         return;
       }
-      if (profilePhoto && assetIds.profilePictureId && profilePhoto !== defaultProfilePhoto) {
-        setProfilePhoto(null);
+      if (profilePhoto && assetIds.profilePictureId) {
         await update({ image: assetIds.profilePictureId });
         setAssetIds((prev) => ({ ...prev, profilePictureId: "" }));
       }
-      if (profilePhoto && profilePhoto === defaultProfilePhoto) {
+      if (!profilePhoto) {
         await update({ image: "" });
-        setProfilePhoto(null);
       }
       if (banner) {
         setBanner(null);
@@ -470,8 +462,8 @@ export const EditProfileForm = () => {
 
   const resetProfilePicture = (e: FormEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setProfilePhoto(defaultProfilePhoto);
-    setValue("profilePictureAssetId", defaultProfilePhoto);
+    setProfilePhoto(null);
+    setValue("profilePictureAssetId", null);
   };
 
   const resetBanner = (e: FormEvent<HTMLButtonElement>) => {
@@ -850,14 +842,14 @@ export const EditProfileForm = () => {
             src={profilePhoto}
             dataTestId="upload-profile-photo-id"
           />
-          {userData?.profilePicture !== defaultProfilePhoto ? (
+          {profilePhoto && (
             <OutlineButton
               className="!px-2 !py-1 text-sm rounded-md"
               onClick={resetProfilePicture}
             >
               Reset
             </OutlineButton>
-          ) : null}
+          )}
         </div>
 
         <div

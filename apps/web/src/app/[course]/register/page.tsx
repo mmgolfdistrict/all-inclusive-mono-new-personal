@@ -547,7 +547,7 @@ export default function RegisterPage() {
                 }`}
               data-testid="register-user-name-refresh-id"
             >
-              <Refresh className="h-[0.875rem] w-[0.875rem]" />
+              <Refresh color={entity?.color1} className="h-[0.875rem] w-[0.875rem]" />
             </IconButton>
             {usernameErrorMessage && (
               <p className="text-[0.75rem] text-red">{usernameErrorMessage}</p>

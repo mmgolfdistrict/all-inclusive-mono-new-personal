@@ -42,7 +42,7 @@ export class WatchlistService {
    *
    * @param {Db} database - The database instance.
    */
-  constructor(protected readonly database: Db) {}
+  constructor(protected readonly database: Db) { }
 
   /**
    * Toggles a tee time in the user's watchlist.
@@ -293,7 +293,7 @@ export class WatchlistService {
             minimumOfferPrice: item.minimumOfferPrice,
             image: item.image
               ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${item.image.key}.${item.image.extension}`
-              : "/defaults/default-profile.webp",
+              : "",
           };
         }
         const group = groupedBookings[key]!;

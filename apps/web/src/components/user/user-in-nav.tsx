@@ -107,7 +107,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
               src={
                 user?.image?.includes("https://")
                   ? user?.image
-                  : imageUrl ?? "/defaults/default-profile.webp"
+                  : imageUrl ?? ""
               }
               name={user?.name}
             />
@@ -128,7 +128,7 @@ export const UserInNav = ({ alwaysShow }: { alwaysShow?: boolean }) => {
                   src={
                     user?.image?.includes("https://")
                       ? user?.image
-                      : imageUrl ?? "/defaults/default-profile.webp"
+                      : imageUrl ?? ""
                   }
                   name={user?.name}
                 />

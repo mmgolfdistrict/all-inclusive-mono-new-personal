@@ -1879,7 +1879,7 @@ export class UserService {
    * const callerId = "exampleCallerId";
    * const userId = "exampleUserId";
    * const result = await getUserById(callerId, userId);
-   * // result: { id: "exampleUserId", // additional user properties..., profilePicture: "/defaults/default-profile.webp", bannerPicture: "/defaults/default-banner.webp" }
+   * // result: { id: "exampleUserId", // additional user properties..., profilePicture: "", bannerPicture: "/defaults/default-banner.webp" }
    */
   getUserById = async (userId: string, callerId?: string) => {
     console.log("getUserById called with userId: ", userId);
@@ -1921,7 +1921,7 @@ export class UserService {
         key: profileImage.assetKey,
         extension: profileImage.assetExtension,
       })
-      : "/defaults/default-profile.webp";
+      : "";
     const bannerPicture = bannerImage
       ? assetToURL({
         key: bannerImage.assetKey,
@@ -2058,7 +2058,7 @@ export class UserService {
           soldByName: booking.ownerHandle ? booking.ownerHandle : "Anonymous",
           soldByImage: booking.profilePicture
             ? `https://${process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL}/${booking.profilePicture.key}.${booking.profilePicture.extension}`
-            : "/defaults/default-profile.webp",
+            : "",
           availableSlots: booking.listed ? 0 : 1,
           pricePerGolfer: booking.listPrice ? booking.listPrice : 0,
           teeTimeId: booking.teeTimeId,

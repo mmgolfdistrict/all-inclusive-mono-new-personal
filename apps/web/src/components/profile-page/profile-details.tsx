@@ -5,8 +5,8 @@ import { placeholderBlurhash } from "~/utils/formatters";
 import { useParams } from "next/navigation";
 import bannerPlaceholder from "../../../public/placeholders/profile-banner.png";
 import userPlaceholder from "../../../public/placeholders/profile-user.png";
-import { Location } from "../icons/location";
 import { BlurImage } from "../images/blur-image";
+import { UserIcon } from "../icons/UserIcon";
 
 export const ProfileDetails = ({
   isThirdPartyProfile,
@@ -29,14 +29,20 @@ export const ProfileDetails = ({
         />
         <div className="w-full absolute bottom-0 flex justify-center items-center translate-y-[75%] flex-col md:items-end md:translate-x-10 md:translate-y-[50%] md:flex-row md:gap-4">
           <div className="md:w-2/12">
-            <BlurImage
-              src={userData?.profilePicture ?? placeholderBlurhash}
-              width={userPlaceholder.width}
-              height={userPlaceholder.height}
-              unoptimized
-              alt="banner"
-              className="mx-auto h-[7.5rem] w-[7.5rem] rounded-full border-2 md:border-4 border-stroke object-cover md:h-[12.5rem] md:w-[12.5rem]"
-            />
+            {userData?.profilePicture ? (
+              <BlurImage
+                src={userData?.profilePicture ?? placeholderBlurhash}
+                width={userPlaceholder.width}
+                height={userPlaceholder.height}
+                unoptimized
+                alt="banner"
+                className="mx-auto h-[7.5rem] w-[7.5rem] rounded-full border-2 md:border-4 border-stroke object-cover md:h-[12.5rem] md:w-[12.5rem]"
+              />
+            ) : (
+              <div className="mx-auto h-[7.5rem] w-[7.5rem] md:h-[12.5rem] md:w-[12.5rem] rounded-full border-2 md:border-4 border-stroke bg-primary text-white flex items-center justify-center text-[3rem] md:text-[6rem] font-semibold leading-none">
+                <UserIcon />
+              </div>
+            )}
           </div>
           <div className="md:w-10/12 w-full flex flex-col gap-1 md:pb-3 md:justify-start justify-center">
             <div className="flex flex-col items-center md:justify-start justify-center gap-1 text-[1.375rem] md:flex-row md:gap-4 md:text-[2rem]">
