@@ -5,7 +5,7 @@ import { adminUsers } from "../schema/adminUsers";
 import { adminUserCourse } from "../schema/adminUserCourse";
 
 export const userACLView = mysqlView(
-    "user_acl_view",
+    "userACLView",
     {
         CourseID: int("CourseID"),
         CourseName: varchar("CourseName", { length: 255 }),
