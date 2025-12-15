@@ -4,31 +4,57 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-/* -------------------------------------------------------
-   HOISTED MOCK STATE (must be above vi.mock)
-------------------------------------------------------- */
+/* -------------------------------------------------
+   Types
+------------------------------------------------- */
 
-// Search params
-const mockSearchParams = { get: vi.fn() };
+type VerifyTokenData = { valid: boolean };
 
-// verify token mutation mock (CONTROLLED PER TEST)
-const verifyMutationMock = vi.fn();
+interface MockMutation<TData> {
+    mutate: () => void;
+    mutateAsync: () => Promise<unknown>;
+    reset: () => void;
+    data?: TData;
+    isLoading: boolean;
+    isError: boolean;
+    isSuccess: boolean;
+}
 
-// reset password mutation mock (CONTROLLED PER TEST)
-let resetMutationMock = vi.fn();
+/* -------------------------------------------------
+   Stable mutation instances (NO hoisting issues)
+------------------------------------------------- */
 
-/* -------------------------------------------------------
-   MODULE MOCKS (HOISTED)
-------------------------------------------------------- */
+const verifyTokenMutation: MockMutation<VerifyTokenData> = {
+    mutate: vi.fn(),
+    mutateAsync: vi.fn().mockResolvedValue(undefined),
+    reset: vi.fn(),
+    data: { valid: true },
+    isLoading: false,
+    isError: false,
+    isSuccess: true,
+};
+
+const resetPasswordMutation: MockMutation<void> = {
+    mutate: vi.fn(),
+    mutateAsync: vi.fn().mockResolvedValue(undefined),
+    reset: vi.fn(),
+    isLoading: false,
+    isError: false,
+    isSuccess: false,
+};
+
+/* -------------------------------------------------
+   Module mocks (PURE, hoist-safe)
+------------------------------------------------- */
 
 vi.mock("~/utils/api", () => ({
     api: {
         user: {
             verifyForgotPasswordToken: {
-                useMutation: () => verifyMutationMock(),
+                useMutation: () => verifyTokenMutation,
             },
             executeForgotPassword: {
-                useMutation: () => resetMutationMock(),
+                useMutation: () => resetPasswordMutation,
             },
         },
     },
@@ -47,6 +73,8 @@ vi.mock("~/contexts/CourseContext", () => ({
     }),
 }));
 
+const mockSearchParams = { get: vi.fn() };
+
 vi.mock("next/navigation", () => ({
     useSearchParams: () => mockSearchParams,
 }));
@@ -58,36 +86,15 @@ vi.mock("react-toastify", () => ({
     },
 }));
 
-/* -------------------------------------------------------
-   MUTATION FACTORY (SAFE + PROMISE-CORRECT)
-------------------------------------------------------- */
-
-function createMutation(overrides: Partial<any> = {}) {
-    return {
-        mutate: vi.fn(),
-        mutateAsync: vi.fn().mockResolvedValue(undefined), // IMPORTANT
-        reset: vi.fn(),
-        data: undefined,
-        isError: false,
-        isIdle: true,
-        isLoading: false,
-        isPaused: false,
-        isSuccess: false,
-        status: "idle",
-        failureCount: 0,
-        ...overrides,
-    };
-}
-
-/* -------------------------------------------------------
-   IMPORT COMPONENT (AFTER MOCKS)
-------------------------------------------------------- */
+/* -------------------------------------------------
+   Import component AFTER mocks
+------------------------------------------------- */
 
 import ResetPassword from "../page";
 
-/* -------------------------------------------------------
-   TESTS
-------------------------------------------------------- */
+/* -------------------------------------------------
+   Tests
+------------------------------------------------- */
 
 describe("ResetPassword Component", () => {
     beforeEach(() => {
@@ -101,27 +108,23 @@ describe("ResetPassword Component", () => {
                     : null
         );
 
-        // Default: valid token
-        verifyMutationMock.mockReturnValue(
-            createMutation({
-                data: { valid: true },
-                isSuccess: true,
-            })
-        );
+        // reset mutation state
+        verifyTokenMutation.data = { valid: true };
+        verifyTokenMutation.isError = false;
+        verifyTokenMutation.isLoading = false;
+        verifyTokenMutation.isSuccess = true;
 
-        resetMutationMock = vi.fn(() =>
-            createMutation({
-                isLoading: false,
-                isSuccess: false,
-            })
-        );
+        resetPasswordMutation.isSuccess = false;
+        resetPasswordMutation.isLoading = false;
     });
 
     it("renders form inputs when token is valid", () => {
         render(<ResetPassword />);
 
         expect(screen.getByTestId("reset-password-id")).toBeInTheDocument();
-        expect(screen.getByTestId("reset-confirm-password-id")).toBeInTheDocument();
+        expect(
+            screen.getByTestId("reset-confirm-password-id")
+        ).toBeInTheDocument();
         expect(screen.getByTestId("submit-button-id")).toBeInTheDocument();
     });
 
@@ -141,21 +144,17 @@ describe("ResetPassword Component", () => {
     });
 
     it("shows invalid link message when token is invalid", () => {
-        verifyMutationMock.mockReturnValue(
-            createMutation({
-                data: { valid: false },
-                isError: true,
-            })
-        );
+        verifyTokenMutation.data = { valid: false };
+        verifyTokenMutation.isError = true;
 
         render(<ResetPassword />);
 
         expect(
-            screen.getByText(/this link is no longer valid/i)
+            screen.getByText(/link is no longer valid/i)
         ).toBeInTheDocument();
     });
 
-    it("shows password feedback when typing weak password", async () => {
+    it("shows password feedback for weak password", async () => {
         render(<ResetPassword />);
 
         fireEvent.change(screen.getByTestId("reset-password-id"), {
