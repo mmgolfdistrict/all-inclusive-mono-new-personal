@@ -1,49 +1,60 @@
 // src/app/[course]/reset-password/__tests__/page.test.tsx
-/**
- * ResetPassword page tests - rewritten with vi.hoisted to avoid hoisted mock errors.
- */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-/* ---------------------------
-   Hoisted spies for react-toastify
-   --------------------------- */
-const { toastErrorSpy, toastSuccessSpy } = vi.hoisted(() => {
-    return {
-        toastErrorSpy: vi.fn(),
-        toastSuccessSpy: vi.fn(),
-    };
-});
+/* -------------------------------------------------
+   Types
+------------------------------------------------- */
 
-/* mutationMock will be assigned inside tests (must exist before vi.mock) */
-let mutationMock = vi.fn(() =>
-({
-    mutateAsync: vi.fn().mockRejectedValue(new Error("Failed reset")),
-    isSuccess: false,
+type VerifyTokenData = { valid: boolean };
+
+interface MockMutation<TData> {
+    mutate: () => void;
+    mutateAsync: () => Promise<unknown>;
+    reset: () => void;
+    data?: TData;
+    isLoading: boolean;
+    isError: boolean;
+    isSuccess: boolean;
+}
+
+/* -------------------------------------------------
+   Stable mutation instances (NO hoisting issues)
+------------------------------------------------- */
+
+const verifyTokenMutation: MockMutation<VerifyTokenData> = {
+    mutate: vi.fn(),
+    mutateAsync: vi.fn().mockResolvedValue(undefined),
+    reset: vi.fn(),
+    data: { valid: true },
     isLoading: false,
-})
-);
+    isError: false,
+    isSuccess: true,
+};
 
-/* mockSearchParams used by next/navigation mock */
-const mockSearchParams = { get: vi.fn() };
+const resetPasswordMutation: MockMutation<void> = {
+    mutate: vi.fn(),
+    mutateAsync: vi.fn().mockResolvedValue(undefined),
+    reset: vi.fn(),
+    isLoading: false,
+    isError: false,
+    isSuccess: false,
+};
 
-/* ---------------------------
-   Mocks
-   --------------------------- */
-vi.mock("react-toastify", () => ({
-    toast: {
-        error: toastErrorSpy,
-        success: toastSuccessSpy,
-    },
-}));
+/* -------------------------------------------------
+   Module mocks (PURE, hoist-safe)
+------------------------------------------------- */
 
 vi.mock("~/utils/api", () => ({
     api: {
         user: {
+            verifyForgotPasswordToken: {
+                useMutation: () => verifyTokenMutation,
+            },
             executeForgotPassword: {
-                useMutation: () => mutationMock(),
+                useMutation: () => resetPasswordMutation,
             },
         },
     },
@@ -62,86 +73,62 @@ vi.mock("~/contexts/CourseContext", () => ({
     }),
 }));
 
+const mockSearchParams = { get: vi.fn() };
+
 vi.mock("next/navigation", () => ({
     useSearchParams: () => mockSearchParams,
 }));
 
-/* ---------------------------
-   Helper: factory for mutation-like object returned by trpc hook
-   --------------------------- */
-type MutationStatus =
-    | "idle"
-    | "loading"
-    | "success"
-    | "error"
-    | "paused";
+vi.mock("react-toastify", () => ({
+    toast: {
+        error: vi.fn(),
+        success: vi.fn(),
+    },
+}));
 
-interface MutationResult<TData = unknown, TVariables = unknown> {
-    mutate: ReturnType<typeof vi.fn>;
-    mutateAsync: ReturnType<typeof vi.fn>;
-    reset: ReturnType<typeof vi.fn>;
-    data?: TData;
-    variables?: TVariables;
-    isError: boolean;
-    isIdle: boolean;
-    isLoading: boolean;
-    isPaused: boolean;
-    isSuccess: boolean;
-    status: MutationStatus;
-    failureCount: number;
-    trpc: { path: string };
-}
+/* -------------------------------------------------
+   Import component AFTER mocks
+------------------------------------------------- */
 
-export function createMutation<TData = unknown, TVariables = unknown>(
-    overrides?: Partial<MutationResult<TData, TVariables>>
-): MutationResult<TData, TVariables> {
-    return {
-        mutate: vi.fn(),
-        mutateAsync: vi.fn(),
-        reset: vi.fn(),
-        data: undefined,
-        variables: undefined,
-        isError: false,
-        isIdle: true,
-        isLoading: false,
-        isPaused: false,
-        isSuccess: false,
-        status: "idle",
-        failureCount: 0,
-        trpc: { path: "user.executeForgotPassword" },
-        ...overrides,
-    };
-}
-
-
-/* Import the component AFTER mocks */
 import ResetPassword from "../page";
 
-/* ---------------------------
+/* -------------------------------------------------
    Tests
-   --------------------------- */
+------------------------------------------------- */
+
 describe("ResetPassword Component", () => {
     beforeEach(() => {
         vi.clearAllMocks();
 
         mockSearchParams.get.mockImplementation((key: string) =>
-            key === "userId" ? "user-123" : key === "verificationToken" ? "token-999" : null
+            key === "userId"
+                ? "user-123"
+                : key === "verificationToken"
+                    ? "token-999"
+                    : null
         );
+
+        // reset mutation state
+        verifyTokenMutation.data = { valid: true };
+        verifyTokenMutation.isError = false;
+        verifyTokenMutation.isLoading = false;
+        verifyTokenMutation.isSuccess = true;
+
+        resetPasswordMutation.isSuccess = false;
+        resetPasswordMutation.isLoading = false;
     });
 
-    it("renders form inputs", () => {
-        mutationMock = vi.fn(() => createMutation());
-
+    it("renders form inputs when token is valid", () => {
         render(<ResetPassword />);
 
         expect(screen.getByTestId("reset-password-id")).toBeInTheDocument();
-        expect(screen.getByTestId("reset-confirm-password-id")).toBeInTheDocument();
+        expect(
+            screen.getByTestId("reset-confirm-password-id")
+        ).toBeInTheDocument();
         expect(screen.getByTestId("submit-button-id")).toBeInTheDocument();
     });
 
     it("toggles password visibility", () => {
-        mutationMock = vi.fn(() => createMutation());
-
         render(<ResetPassword />);
 
         const input = screen.getByTestId("reset-password-id");
@@ -156,9 +143,18 @@ describe("ResetPassword Component", () => {
         expect(input).toHaveAttribute("type", "password");
     });
 
-    it("shows password feedback when typing weak password", async () => {
-        mutationMock = vi.fn(() => createMutation());
+    it("shows invalid link message when token is invalid", () => {
+        verifyTokenMutation.data = { valid: false };
+        verifyTokenMutation.isError = true;
 
+        render(<ResetPassword />);
+
+        expect(
+            screen.getByText(/link is no longer valid/i)
+        ).toBeInTheDocument();
+    });
+
+    it("shows password feedback for weak password", async () => {
         render(<ResetPassword />);
 
         fireEvent.change(screen.getByTestId("reset-password-id"), {
@@ -166,7 +162,6 @@ describe("ResetPassword Component", () => {
         });
 
         await waitFor(() => {
-            // allow multiple matches
             expect(screen.getAllByText(/password/i).length).toBeGreaterThan(0);
         });
     });
