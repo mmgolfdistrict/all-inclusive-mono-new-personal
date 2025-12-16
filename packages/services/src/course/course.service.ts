@@ -31,6 +31,7 @@ import { DomainService } from "../domain/domain.service";
 import type { ProviderService } from "../tee-sheet-provider/providers.service";
 import { loggerService } from "../webhooks/logging.service";
 import { courseSetting } from "@golf-district/database/schema/courseSetting";
+import { courseSettingMetadata } from "@golf-district/database/schema/courseSettingMetadata";
 import { appSettingService } from "../app-settings/initialized";
 import { parseSettingValue } from "../../helpers";
 import { courseMerchandise } from "@golf-district/database/schema/courseMerchandise";
@@ -453,9 +454,13 @@ export class CourseService extends DomainService {
           id: courseSetting.id,
           internalName: courseSetting.internalName,
           value: courseSetting.value,
-          datatype: courseSetting.datatype,
+          datatype: courseSettingMetadata.datatype,
         })
         .from(courseSetting)
+        .innerJoin(
+          courseSettingMetadata,
+          eq(courseSetting.internalName, courseSettingMetadata.internalName)
+        )
         .where(eq(courseSetting.courseId, courseId))
         .execute()
         .catch((err) => {
