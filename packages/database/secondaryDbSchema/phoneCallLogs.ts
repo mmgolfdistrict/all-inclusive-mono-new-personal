@@ -4,7 +4,7 @@ import { datetime, text, varchar } from "drizzle-orm/mysql-core";
 import { mySqlTable } from "./_table";
 
 export const phoneCallLogs = mySqlTable(
-    "elevenlabsphonelog",
+    "elevenLabsPhoneLog",
     {
         id: varchar("id", { length: 36 }).notNull().primaryKey(),
         forwardingPhoneNumber: varchar("forwardingPhoneNumber", { length: 25 }).notNull(),
