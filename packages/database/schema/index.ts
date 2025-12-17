@@ -72,6 +72,8 @@ import * as courseMerchandise from "./courseMerchandise";
 import * as bookingMerchandise from "./bookingMerchandise";
 import * as courseAdvancedBookingFee from "./courseAdvancedBookingFee";
 import * as courseSetting from "./courseSetting";
+import * as courseSettingMetadata from "./courseSettingMetadata";
+import * as appSettingMetadata from "./appSettingMetadata";
 
 export const schema = {
   ...accounts,
@@ -148,4 +150,6 @@ export const schema = {
   ...bookingMerchandise,
   ...courseAdvancedBookingFee,
   ...courseSetting,
+  ...courseSettingMetadata,
+  ...appSettingMetadata
 };
