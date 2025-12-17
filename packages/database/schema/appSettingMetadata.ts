@@ -1,4 +1,3 @@
-
 import type { InferInsertModel } from "drizzle-orm";
 import { sql, type InferSelectModel } from "drizzle-orm";
 import { datetime, varchar } from "drizzle-orm/mysql-core";
