@@ -15,20 +15,20 @@ export const Footer = () => {
         />
       </div>
       <div className="flex flex-col items-start gap-2 md:items-end lg:flex-row lg:items-center">
-        <Link href={`/faq`} data-testid="footer-help-id">
+        <Link href={`/faq`} data-testid="footer-help-id" prefetch={false}>
           Help
         </Link>
-        <Link href={`/how-to-guide`} data-testid="footer-how-to-guide-id">
+        <Link href={`/how-to-guide`} data-testid="footer-how-to-guide-id" prefetch={false}>
           How to Guide
         </Link>
         {/* <Link href={`/about-us`} data-testid="footer-about-us-id">
           About Us
         </Link> */}
-        <Link href={`/privacy-policy`} data-testid="footer-privacy-policy-id">
+        <Link href={`/privacy-policy`} data-testid="footer-privacy-policy-id" prefetch={false}>
           Privacy Policy
         </Link>
         <Link
-          href={`/terms-of-service`}
+          href={`/terms-of-service`} prefetch={false}
           data-testid="footer-terms-of-service-id"
         >
           Terms of Service
