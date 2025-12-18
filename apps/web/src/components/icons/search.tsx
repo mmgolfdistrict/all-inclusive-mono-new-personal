@@ -16,14 +16,19 @@ export const Search = (props: SVGProps<SVGSVGElement>) => {
     //     fill={fill ?? "#353B3F"}
     //   />
     // </svg>
-
     <svg
       preserveAspectRatio="xMidYMid meet"
       width="20px" height="20px" viewBox="0 0 512 512"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       {...props}>
-      <g transform="translate(1 1)">
+      <g
+        transform="translate(1 1)"
+        stroke="#000"
+        strokeWidth="15"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path fill="#FDCC00" d="M296.387,273.773c-6.827,8.533-15.36,17.067-23.893,23.893l73.387,73.387l23.893-23.893
 		L296.387,273.773z"/>
         <path fill="#FFE100" d="M332.227,171.373c0,89.6-72.533,162.133-162.133,162.133S7.96,260.973,7.96,171.373
