@@ -20,7 +20,7 @@ function StopNotification({ params }: { params: { notification: string } }) {
   return (
     <div className="flex justify-center flex-col items-center h-[12.5rem]">
       <span>Stopped notification successfully</span>
-      <Link href="/" className="underline">
+      <Link href="/" className="underline" prefetch={false}>
         Return to home
       </Link>
     </div>

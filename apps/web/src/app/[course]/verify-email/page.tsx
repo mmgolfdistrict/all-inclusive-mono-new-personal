@@ -26,7 +26,7 @@ export default function VerifyEmail() {
           <Link
             className="text-primary"
             href={`/${course?.id}/register`}
-            data-testid="signup-button-id"
+            data-testid="signup-button-id" prefetch={false}
           >
             Sign Up
           </Link>{" "}
@@ -36,7 +36,7 @@ export default function VerifyEmail() {
         <Link
           className="text-primary  md:self-end text-[0.875rem]"
           href={`/${course?.id}/login`}
-          data-testid="back-to-login-button-id"
+          data-testid="back-to-login-button-id" prefetch={false}
         >
           Back to Login
         </Link>

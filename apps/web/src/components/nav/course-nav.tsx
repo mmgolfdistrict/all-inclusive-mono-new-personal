@@ -230,7 +230,7 @@ export const CourseNav = () => {
                   data-testid="course-logo-id"
                 />
               ) : (
-                <Link href="/" data-testid="course-logo-id">
+                <Link href="/" data-testid="course-logo-id" prefetch={false}>
                   {isMobile ? <BlurImage
                     src={course?.logo ?? ""}
                     alt="course logo"
@@ -282,6 +282,7 @@ export const CourseNav = () => {
                           });
                         }
                       }}
+                      prefetch={false}
                     >
                       <FilledButton
                         className="hidden md:block"
