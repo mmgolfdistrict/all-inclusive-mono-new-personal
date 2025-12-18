@@ -197,7 +197,7 @@ export default function ResetPassword() {
             <div className="text-[1rem] text-center fade-in text-primary-gray">
               Successfully reset password!
             </div>
-            <Link href={`/${course?.id}/login`} data-testid="login-button-id">
+            <Link href={`/${course?.id}/login`} data-testid="login-button-id" prefetch={false}>
               <FilledButton
                 onClick={() =>
                   setPrevPath({
@@ -218,7 +218,7 @@ export default function ResetPassword() {
           <Link
             className="text-primary"
             href={`/${course?.id}/register`}
-            data-testid="signup-button-id"
+            data-testid="signup-button-id" prefetch={false}
           >
             Sign Up
           </Link>{" "}
@@ -228,7 +228,7 @@ export default function ResetPassword() {
         <Link
           className="text-primary  md:self-end text-[0.875rem]"
           href={`/${course?.id}/login`}
-          data-testid="back-to-login-button-id"
+          data-testid="back-to-login-button-id" prefetch={false}
         >
           Back to Login
         </Link>

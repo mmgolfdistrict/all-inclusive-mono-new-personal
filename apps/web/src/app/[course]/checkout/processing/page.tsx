@@ -283,7 +283,7 @@ export default function CheckoutProcessing() {
               <br />
             </div>
             <div className="flex w-full flex-col items-center justify-center gap-2 md:flex-row">
-              <Link
+              <Link prefetch={false}
                 href={`/${course?.id}/my-tee-box`}
                 className="w-full md:w-fit md:min-w-[15.625rem]"
                 data-testid="go-to-my-tee-box-button-id"

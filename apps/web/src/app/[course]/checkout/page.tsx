@@ -667,7 +667,7 @@ export default function Checkout({
         style={{ height }}
       >
         <div className="text-center">Error: {error?.message}</div>
-        <Link href={`/${course?.id}`} className="underline">
+        <Link href={`/${course?.id}`} className="underline" prefetch={false}>
           Return to home
         </Link>
       </div>
@@ -681,7 +681,7 @@ export default function Checkout({
         style={{ height }}
       >
         <div className="text-center">Error: {errorMessage}</div>
-        <Link href={`/${course?.id}`} className="underline">
+        <Link href={`/${course?.id}`} className="underline" prefetch={false}>
           Return to home
         </Link>
       </div>

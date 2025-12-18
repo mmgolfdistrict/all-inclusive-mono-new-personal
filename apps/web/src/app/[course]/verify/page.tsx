@@ -89,7 +89,7 @@ export default function Verify() {
           ) : isSuccess ? (
             <div className="flex flex-col gap-2 items-center">
               <div>Your email address has been verified!</div>
-              <Link href={`/${course?.id}/login`} data-testid="login-button-id">
+              <Link href={`/${course?.id}/login`} data-testid="login-button-id" prefetch={false}>
                 <FilledButton
                   onClick={() => {
                     setPrevPath({
@@ -115,7 +115,7 @@ export default function Verify() {
           <Link
             className="text-primary"
             href={`/${course?.id}/register`}
-            data-testid="signup-button-id"
+            data-testid="signup-button-id" prefetch={false}
           >
             Sign Up
           </Link>{" "}
@@ -125,7 +125,7 @@ export default function Verify() {
         <Link
           className="text-primary  md:self-end text-[0.875rem]"
           href={`/${course?.id}/login`}
-          data-testid="back-to-login-button-id"
+          data-testid="back-to-login-button-id" prefetch={false}
         >
           Back to Login
         </Link>

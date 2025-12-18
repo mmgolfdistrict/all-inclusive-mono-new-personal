@@ -936,7 +936,7 @@ export default function RegisterPage() {
         <Link
           className="text-primary"
           href={`/${course?.id}/login`}
-          data-testid="signin-button-id"
+          data-testid="signin-button-id" prefetch={false}
         >
           Sign In
         </Link>{" "}
