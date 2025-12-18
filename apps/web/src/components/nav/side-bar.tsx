@@ -19,6 +19,7 @@ import { PathsThatNeedRedirectOnLogout } from "../user/user-in-nav";
 import { NavItem } from "./nav-item";
 import { GroupBooking } from "../icons/group-booking";
 import { MyTeeBoxIcon } from "../icons/my-tee-box";
+import { useMediaQuery } from "usehooks-ts";
 
 type SideBarProps = {
   isSideBarOpen: boolean;
@@ -32,6 +33,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
   const session = useSession();
   const pathname = usePathname();
   const router = useRouter();
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const { data: unreadOffers } = api.user.getUnreadOffersForCourse.useQuery(
     {
@@ -208,7 +210,7 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
               />
               <NavItem
                 href={`/${courseId}/my-tee-box?section=my-listed-tee-times`}
-                text="My Tee Times"
+                text="My Tee Box"
                 // icon={<Calendar className="w-4" />}
                 icon={<MyTeeBoxIcon className="w-4" />}
                 className="border-t border-stroke-secondary p-2 md:p-4"
@@ -271,14 +273,14 @@ export const SideBar = ({ isSideBarOpen, setIsSideBarOpen }: SideBarProps) => {
                   data-testid="account-setting-id"
                   data-test={user?.id}
                 />
-                <NavItem
+                {!isMobile && <NavItem
                   href={`/${courseId}/my-tee-box`}
                   text="My Tee Box"
                   className="border-t border-stroke-secondary p-4"
                   onClick={toggleSidebar}
                   data-testid="my-tee-box-id"
                   data-test={courseId}
-                />
+                />}
                 <NavItem
                   href={`/${courseId}/watchlist`}
                   text="Watchlist"
