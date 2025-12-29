@@ -156,4 +156,33 @@ export class CacheService {
     // this.logger.info(`Cache miss for key: ${key}`);
     return null;
   };
+  getMultipleCache = async <T>(keys: string[]): Promise<Record<string, T | null>> => {
+    console.log("====>Cache: getMultipleCache", keys);
+    const cachedData = await this.redis.mget<any>(keys).catch((err) => {
+      this.logger.error(`Error getting cache for keys: ${keys.join(", ")}, ${err}`);
+      loggerService.errorLog({
+        userId: "",
+        url: "/CacheService/getMultipleCache",
+        userAgent: "",
+        message: "ERROR_GETTING_CACHE",
+        stackTrace: `${err.stack}`,
+        additionalDetailsJSON: JSON.stringify({
+          keys,
+        }),
+      });
+      return null;
+    });
+
+    const result: Record<string, T | null> = {};
+    if (cachedData && Array.isArray(cachedData)) {
+      keys.forEach((key, idx) => {
+        result[key] = cachedData[idx] ?? null;
+      });
+    } else {
+      keys.forEach((key) => {
+        result[key] = null;
+      });
+    }
+    return result;
+  };
 }
