@@ -36,7 +36,7 @@ export class AppSettingsService {
 
   getAppSetting = async (internalName: string) => {
     try {
-      console.log("getting app settings", internalName);
+      console.log("===>Appsetting: getting app settings", internalName);
       const cache = createCache({
         ttl: 600000,
         refreshThreshold: 3000,
@@ -198,6 +198,7 @@ export class AppSettingsService {
     If it does not exist in the cache, then it retrieves from the database and adds it to the cache and then returns the value.
     If the value does not exist in the database then it throws an error
     */
+    console.log("===>Appsetting:  get", internalName);
     try {
       if (!this.cacheService) {
         throw new Error("Cache service not available");
@@ -243,22 +244,16 @@ export class AppSettingsService {
   };
 
   getMultiple = async (...internalNames: string[]) => {
+    console.log("===>Appsetting: multiple get", internalNames);
     /* Same functionality as a single get except this takes multiple internal names. */
     try {
       if (!this.cacheService) {
         throw new Error("Cache service not available");
       }
-      const cachedData: Record<string, any> = {};
+      let cachedData: Record<string, any> = {};
       const missingNames: string[] = [];
 
-      for (const internalName of internalNames) {
-        const cachedValue = await this.cacheService.getCache(internalName);
-        if (cachedValue) {
-          cachedData[internalName] = cachedValue;
-        } else {
-          missingNames.push(internalName);
-        }
-      }
+      cachedData = await this.cacheService.getMultipleCache(internalNames);
 
       if (missingNames.length > 0) {
         const appSettingsData = await Promise.all(
