@@ -56,6 +56,7 @@ export class CacheService {
     ttl = 1200 // default 20 minutes
   ): Promise<T> => {
     // Try getting the value from cache
+    console.log("====>Cache: withCache", key);
     const cachedData = await this.redis.get<any>(key);
     if (cachedData) {
       this.logger.info(`Cache hit for key: ${key}`);
@@ -77,6 +78,7 @@ export class CacheService {
    * @returns {Promise<void>} A promise that resolves when the cache item is invalidated.
    */
   invalidateCache = async (key: string): Promise<void> => {
+    console.log("====>Cache: invalidateCache", key);
     await this.redis.del(key);
   };
 
@@ -96,6 +98,7 @@ export class CacheService {
     ttl = 1200 // default 20 minutes
   ): Promise<void> => {
     // this.logger.info(`Setting cache for key: ${key}`);
+    console.log("====>Cache: setCache", key);
     await this.redis.set(key, JSON.stringify(data), { ex: ttl });
   };
 
@@ -107,6 +110,7 @@ export class CacheService {
    */
   incrementOrSetKey = async (key: string): Promise<number> => {
     // this.logger.info(`Incrementing cache for key: ${key}`);
+    console.log("====>Cache: incrementOrSetKey", key);
     const keyExists = await this.redis.exists(key);
     let count;
 
@@ -130,6 +134,7 @@ export class CacheService {
    */
   getCache = async <T>(key: string): Promise<T | null> => {
     // this.logger.info(`Getting cache for key: ${key}`);
+    console.log("====>Cache: getcache", key);
     const cachedData = await this.redis.get<any>(key).catch((err) => {
       this.logger.error(`Error getting cache for key: ${key}, ${err}`);
       loggerService.errorLog({
